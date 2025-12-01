@@ -23,11 +23,32 @@ export async function POST(request: Request) {
       )
     }
 
+    const normalizedEmail = email.toLowerCase().trim()
     const supabase = createServerClient()
+    
+    // Check if email already exists
+    const { data: existing } = await supabase
+      .from('onboardings')
+      .select('id, status')
+      .eq('email', normalizedEmail)
+      .single()
+    
+    if (existing) {
+      // Return existing onboarding
+      const contractLink = `${BASE_URL}/register/${existing.id}`
+      return NextResponse.json({
+        success: true,
+        id: existing.id,
+        registrationLink: contractLink,
+        emailSent: false,
+        message: `Onboarding already exists (status: ${existing.status})`,
+        existing: true,
+      })
+    }
 
     // 1. Create the onboarding record
     const { data: onboardingId, error: createError } = await supabase
-      .rpc('create_onboarding', { p_email: email })
+      .rpc('create_onboarding', { p_email: normalizedEmail })
 
     if (createError) {
       console.error('Failed to create onboarding:', createError)
@@ -45,7 +66,7 @@ export async function POST(request: Request) {
       const emailResponse = await fetch(`${BASE_URL}/api/send-onboarding`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: email, contractLink }),
+        body: JSON.stringify({ to: normalizedEmail, contractLink }),
       })
 
       if (!emailResponse.ok) {
