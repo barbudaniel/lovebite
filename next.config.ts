@@ -72,6 +72,18 @@ const nextConfig: NextConfig = {
         destination: 'https://mirrabelle13.online/',
         permanent: true,
       },
+      // 2b) Any non-root path on www.mirrabelle13.online -> root
+      {
+        source: '/:path+',
+        has: [
+          {
+            type: 'host',
+            value: 'www.mirrabelle13.online',
+          },
+        ],
+        destination: 'https://www.mirrabelle13.online/',
+        permanent: true,
+      },
     ];
   },
 
@@ -109,6 +121,17 @@ const nextConfig: NextConfig = {
           {
             type: 'host',
             value: 'mirrabelle13.online',
+          },
+        ],
+        destination: '/creator/mirrabelle13',
+      },
+      // 4b) www.mirrabelle13.online root -> /creator/mirrabelle13
+      {
+        source: '/',
+        has: [
+          {
+            type: 'host',
+            value: 'www.mirrabelle13.online',
           },
         ],
         destination: '/creator/mirrabelle13',
