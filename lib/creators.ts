@@ -109,6 +109,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     tagline: "Creator • Model • Exclusive",
     subtitle: "Private moments, hidden pleasures",
     profileImage: "https://i.imgur.com/X2AIRD8.png",
+    galleryImage: "https://i.imgur.com/0g90fXC.jpeg",
     welcomeTitle: "Welcome to my world",
     welcomeText: "I create private moments. The motive is simple, hidden pleasure. Step into my exclusive space and discover what makes every moment unforgettable.",
     socialLinks: {
