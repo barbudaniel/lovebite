@@ -33,6 +33,7 @@ export interface CreatorProfile {
   };
   links: CreatorLink[];
   primaryLink: string; // For "Join me" CTA
+  customDomains?: string[]; // Custom domains for this creator (e.g., ["mirrabelle13.online"])
 }
 
 export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
@@ -46,6 +47,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     galleryImage: "https://cdn.beacons.ai/user_content/T9B1Qi8wa4VpOBt78oxpdzvjqz03/referenced_images/generated-images__link-in-bio__image-block__home__4f658e27-a4b1-442c-bd41-cda4ed6354a3__56c55766-9548-4aba-82cf-921289c27593.jpg?t=1761453961066",
     welcomeTitle: "Welcome to my official site!",
     welcomeText: "As a live model and digital creator, I love turning fantasy into experience. My content is all about confidence, charm, and authentic energy that makes every moment special.",
+    customDomains: ["mirrabelle13.online"],
     socialLinks: {
       x: "https://x.com/mirrabelle_",
       reddit: "https://www.reddit.com/user/mirabelle13/",
@@ -281,6 +283,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     galleryImage: "https://i.imgur.com/j3ah9BA.png",
     welcomeTitle: "Welcome to my world",
     welcomeText: "I create private moments. The motive is simple, hidden pleasure. Step into my exclusive space and discover what makes every moment unforgettable.",
+    customDomains: ["bohobabelexy.online"],
     socialLinks: {
       x: "https://x.com/bohobabelexy",
     },
@@ -330,5 +333,18 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
 // Helper function to get creator by ID
 export function getCreator(creatorID: string): CreatorProfile | null {
   return CREATORS_DATABASE[creatorID?.toLowerCase()] || null;
+}
+
+// Helper function to get creator by custom domain
+export function getCreatorByDomain(hostname: string): CreatorProfile | null {
+  // Remove www. prefix if present
+  const domain = hostname.replace(/^www\./, '').toLowerCase();
+  
+  for (const creator of Object.values(CREATORS_DATABASE)) {
+    if (creator.customDomains?.some(d => d.toLowerCase() === domain)) {
+      return creator;
+    }
+  }
+  return null;
 }
 

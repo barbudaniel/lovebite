@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getCreatorByDomain } from '@/lib/creators';
 
 export function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || '';
@@ -9,11 +10,12 @@ export function middleware(request: NextRequest) {
   // CUSTOM DOMAIN ROUTING
   // ============================================
 
-  // mirrabelle13.online -> /creator/mirrabelle13
-  if (hostname.includes('mirrabelle13.online')) {
+  // Check if this is a creator's custom domain
+  const creator = getCreatorByDomain(hostname);
+  if (creator) {
     // Root path -> show creator profile
     if (pathname === '/') {
-      return NextResponse.rewrite(new URL('/creator/mirrabelle13', request.url));
+      return NextResponse.rewrite(new URL(`/creator/${creator.id}`, request.url));
     }
     // Any other path -> redirect to root
     return NextResponse.redirect(new URL('/', request.url));
