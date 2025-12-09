@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
   // ============================================
   // This allows multiple domains to work with the same Vercel project:
   // - lovebite.fans (main domain)
-  // - bites.bio (short bio links)
+  // - bites.bio / www.bites.bio (short bio links)
   // - mirrabelle13.online (custom creator domain)
   
   async redirects() {
@@ -41,6 +41,18 @@ const nextConfig: NextConfig = {
           {
             type: 'host',
             value: 'bites.bio',
+          },
+        ],
+        destination: 'https://lovebite.fans',
+        permanent: true,
+      },
+      // 1b) Root of www.bites.bio -> lovebite.fans
+      {
+        source: '/',
+        has: [
+          {
+            type: 'host',
+            value: 'www.bites.bio',
           },
         ],
         destination: 'https://lovebite.fans',
@@ -65,17 +77,28 @@ const nextConfig: NextConfig = {
 
   async rewrites() {
     return [
-      // 3) bites.bio/mirrabelle13 -> use the profile page at /creator/mirrabelle13
-      //    URL stays bites.bio/mirrabelle13, but content is from /creator/mirrabelle13
+      // 3) bites.bio/:username -> /creator/:username (dynamic for any creator)
+      //    URL stays bites.bio/username, but content is from /creator/username
       {
-        source: '/mirrabelle13',
+        source: '/:username',
         has: [
           {
             type: 'host',
             value: 'bites.bio',
           },
         ],
-        destination: '/creator/mirrabelle13',
+        destination: '/creator/:username',
+      },
+      // 3b) www.bites.bio/:username -> /creator/:username
+      {
+        source: '/:username',
+        has: [
+          {
+            type: 'host',
+            value: 'www.bites.bio',
+          },
+        ],
+        destination: '/creator/:username',
       },
 
       // 4) mirrabelle13.online root -> /creator/mirrabelle13 in the same app
