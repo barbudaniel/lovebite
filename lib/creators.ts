@@ -102,14 +102,69 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     primaryLink: "https://onlyfans.com/mirrabellee",
   },
 
+  // ===== ANTONIASNOW =====
+  "antoniasnow": {
+    id: "antoniasnow",
+    name: "AntoniaSnow",
+    tagline: "Creator • Model • Exclusive",
+    subtitle: "Private moments, hidden pleasures",
+    profileImage: "https://i.imgur.com/X2AIRD8.png",
+    welcomeTitle: "Welcome to my world",
+    welcomeText: "I create private moments. The motive is simple, hidden pleasure. Step into my exclusive space and discover what makes every moment unforgettable.",
+    socialLinks: {
+      x: "https://x.com/RealAntoniaSnow",
+      reddit: "https://www.reddit.com/user/AntoniaSnow/",
+      instagram: "https://www.instagram.com/antoniaasnow/",
+    },
+    links: [
+      {
+        id: "onlyfans",
+        label: "OnlyFans",
+        sub: "Exclusive content just for you ✨",
+        href: "https://onlyfans.com/antoniasnow",
+        pill: "VIP",
+        pillColor: "bg-sky-100 text-sky-600",
+        iconType: "crown",
+        iconColor: "text-sky-500",
+      },
+      {
+        id: "chaturbate",
+        label: "Chaturbate",
+        sub: "Watch me live",
+        href: "https://chaturbate.com/AntoniaSnow",
+        iconType: "video",
+        iconColor: "text-orange-500",
+      },
+      {
+        id: "bongacams",
+        label: "BongaCams",
+        sub: "Live streaming & shows",
+        href: "https://bongacams.com/SkinnyJennifer",
+        iconType: "video",
+        iconColor: "text-pink-500",
+      },
+      {
+        id: "loyalfans",
+        label: "LoyalFans",
+        sub: "Exclusive content & direct messages",
+        href: "https://www.loyalfans.com/antoniasnow",
+        iconType: "heart",
+        iconColor: "text-rose-500",
+      },
+      {
+        id: "feetfinder",
+        label: "FeetFinder",
+        sub: "Exclusive feet content",
+        href: "https://app.feetfinder.com/userProfile/antoniasnow",
+        iconType: "footprints",
+        iconColor: "text-rose-400",
+      },
+    ],
+    primaryLink: "https://onlyfans.com/antoniasnow",
+  },
+
   // ===== ADD MORE CREATORS HERE =====
   // Copy the structure above and modify for each new creator
-  // Example:
-  // "username": {
-  //   id: "username",
-  //   name: "Display Name",
-  //   ...
-  // },
 };
 
 // Helper function to get creator by ID
