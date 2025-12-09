@@ -230,7 +230,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     welcomeTitle: "Welcome to my world",
     welcomeText: "I create private moments. The motive is simple, hidden pleasure. Step into my exclusive space and discover what makes every moment unforgettable.",
     socialLinks: {
-      instagram: "https://www.instagram.com/EnergyEliza/",
+      x: "https://x.com/EnergyEliza",
     },
     links: [
       {
