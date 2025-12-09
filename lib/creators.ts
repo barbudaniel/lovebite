@@ -165,7 +165,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     name: "TinyBlair",
     tagline: "Model • Creator • Live",
     subtitle: "Petite & playful energy",
-    profileImage: "https://i.imgur.com/KMHf9rn.png",
+    profileImage: "https://i.imgur.com/Ev71UCw.png",
     galleryImage: "https://i.imgur.com/UdgPFJ0.jpeg",
     welcomeTitle: "Hey there! 💕",
     welcomeText: "Welcome to my exclusive space. I'm all about creating memorable moments and connecting with amazing people like you.",
