@@ -159,6 +159,66 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     primaryLink: "https://onlyfans.com/antoniasnow",
   },
 
+  // ===== TINYBLAIR =====
+  "tinyblair": {
+    id: "tinyblair",
+    name: "TinyBlair",
+    tagline: "Model • Creator • Live",
+    subtitle: "Petite & playful energy",
+    profileImage: "https://i.imgur.com/KMHf9rn.png",
+    galleryImage: "https://i.imgur.com/UdgPFJ0.jpeg",
+    welcomeTitle: "Hey there! 💕",
+    welcomeText: "Welcome to my exclusive space. I'm all about creating memorable moments and connecting with amazing people like you.",
+    socialLinks: {
+      x: "https://x.com/realtinyblair",
+    },
+    links: [
+      {
+        id: "onlyfans",
+        label: "OnlyFans",
+        sub: "Exclusive content just for you ✨",
+        href: "https://onlyfans.com/tinyblair",
+        pill: "VIP",
+        pillColor: "bg-sky-100 text-sky-600",
+        iconType: "crown",
+        iconColor: "text-sky-500",
+      },
+      {
+        id: "loyalfans",
+        label: "LoyalFans",
+        sub: "Exclusive content & direct messages",
+        href: "https://www.loyalfans.com/tinyblair",
+        iconType: "heart",
+        iconColor: "text-rose-500",
+      },
+      {
+        id: "chaturbate",
+        label: "Chaturbate",
+        sub: "Watch me live",
+        href: "https://chaturbate.com/tinyblair",
+        iconType: "video",
+        iconColor: "text-orange-500",
+      },
+      {
+        id: "stripchat",
+        label: "Stripchat",
+        sub: "Live shows & private sessions",
+        href: "https://stripchat.com/tinyblair",
+        iconType: "video",
+        iconColor: "text-purple-500",
+      },
+      {
+        id: "bongacams",
+        label: "BongaCams",
+        sub: "Live streaming & shows",
+        href: "https://bongacams.com/tineblair",
+        iconType: "video",
+        iconColor: "text-pink-500",
+      },
+    ],
+    primaryLink: "https://onlyfans.com/tinyblair",
+  },
+
   // ===== ADD MORE CREATORS HERE =====
   // Copy the structure above and modify for each new creator
 };
