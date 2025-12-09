@@ -271,6 +271,58 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     primaryLink: "https://onlyfans.com/energyeliza",
   },
 
+  // ===== BOHOBABELEXY =====
+  "bohobabelexy": {
+    id: "bohobabelexy",
+    name: "bohobabelexy",
+    tagline: "Creator • Model • Exclusive",
+    subtitle: "Private moments, hidden pleasures",
+    profileImage: "https://i.imgur.com/JyjGyiE.png",
+    galleryImage: "https://i.imgur.com/j3ah9BA.png",
+    welcomeTitle: "Welcome to my world",
+    welcomeText: "I create private moments. The motive is simple, hidden pleasure. Step into my exclusive space and discover what makes every moment unforgettable.",
+    socialLinks: {
+      x: "https://x.com/bohobabelexy",
+    },
+    links: [
+      {
+        id: "onlyfans",
+        label: "OnlyFans",
+        sub: "Exclusive content just for you ✨",
+        href: "https://onlyfans.com/bohobabelexy",
+        pill: "VIP",
+        pillColor: "bg-sky-100 text-sky-600",
+        iconType: "crown",
+        iconColor: "text-sky-500",
+      },
+      {
+        id: "chaturbate",
+        label: "Chaturbate",
+        sub: "Watch me live",
+        href: "https://chaturbate.com/bohobabelexy",
+        iconType: "video",
+        iconColor: "text-orange-500",
+      },
+      {
+        id: "bongacams",
+        label: "BongaCams",
+        sub: "Live streaming & shows",
+        href: "https://bongacams.com/bohobabelexy",
+        iconType: "video",
+        iconColor: "text-pink-500",
+      },
+      {
+        id: "stripchat",
+        label: "Stripchat",
+        sub: "Live shows & private sessions",
+        href: "https://stripchat.com/bohobabelexy",
+        iconType: "video",
+        iconColor: "text-purple-500",
+      },
+    ],
+    primaryLink: "https://onlyfans.com/bohobabelexy",
+  },
+
   // ===== ADD MORE CREATORS HERE =====
   // Copy the structure above and modify for each new creator
 };
