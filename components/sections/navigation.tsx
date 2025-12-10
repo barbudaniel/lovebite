@@ -14,9 +14,16 @@ const navLinks: { href: string; label: string; isNew?: boolean }[] = [
   { href: "#faq", label: "FAQ" },
 ];
 
-export function Navigation() {
+interface NavigationProps {
+  variant?: "light" | "dark";
+}
+
+export function Navigation({ variant = "light" }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // When on dark background and not scrolled, use light text
+  const isDarkMode = variant === "dark" && !isScrolled;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -65,7 +72,9 @@ export function Navigation() {
               <div className="w-9 h-9 bg-brand-600 rounded-lg flex items-center justify-center text-white transition-transform duration-200 group-hover:scale-110 group-active:scale-95">
                 <Heart className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" strokeWidth={2.5} />
               </div>
-              <span className="font-bold text-lg sm:text-xl text-slate-900 transition-colors duration-200 group-hover:text-brand-600">Lovebite</span>
+              <span className={`font-bold text-lg sm:text-xl transition-colors duration-200 group-hover:text-brand-600 ${
+                isDarkMode ? "text-white" : "text-slate-900"
+              }`}>Lovebite</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -76,8 +85,12 @@ export function Navigation() {
                   href={link.href}
                   className={`relative px-4 py-2 font-medium transition-all duration-200 rounded-lg group ${
                     link.isNew
-                      ? "text-violet-600 hover:text-violet-700 hover:bg-violet-50"
-                      : "text-slate-600 hover:text-brand-600 hover:bg-brand-50"
+                      ? isDarkMode 
+                        ? "text-violet-300 hover:text-violet-200 hover:bg-violet-500/20"
+                        : "text-violet-600 hover:text-violet-700 hover:bg-violet-50"
+                      : isDarkMode
+                        ? "text-slate-300 hover:text-white hover:bg-white/10"
+                        : "text-slate-600 hover:text-brand-600 hover:bg-brand-50"
                   }`}
                 >
                   <span className="relative">
@@ -87,7 +100,11 @@ export function Navigation() {
                     }`} />
                   </span>
                   {link.isNew && (
-                    <span className="ml-1.5 text-[10px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full font-semibold uppercase badge-bounce">
+                    <span className={`ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase badge-bounce ${
+                      isDarkMode 
+                        ? "bg-violet-500/30 text-violet-300"
+                        : "bg-violet-100 text-violet-600"
+                    }`}>
                       New
                     </span>
                   )}
@@ -99,7 +116,11 @@ export function Navigation() {
             <div className="hidden lg:flex items-center gap-3">
               <Link
                 href="/register"
-                className="px-4 py-2 font-medium text-slate-600 hover:text-brand-600 transition-colors"
+                className={`px-4 py-2 font-medium transition-colors ${
+                  isDarkMode 
+                    ? "text-slate-300 hover:text-white"
+                    : "text-slate-600 hover:text-brand-600"
+                }`}
               >
                 Apply
               </Link>
@@ -114,15 +135,19 @@ export function Navigation() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-brand-100 active:scale-95 transition-all duration-200 z-10"
+              className={`lg:hidden w-10 h-10 flex items-center justify-center rounded-lg active:scale-95 transition-all duration-200 z-10 ${
+                isDarkMode 
+                  ? "bg-white/10 hover:bg-white/20"
+                  : "bg-slate-100 hover:bg-brand-100"
+              }`}
               aria-label="Toggle menu"
               aria-expanded={isMobileMenuOpen}
             >
               <span className={`transition-transform duration-200 ${isMobileMenuOpen ? 'rotate-90' : 'rotate-0'}`}>
                 {isMobileMenuOpen ? (
-                  <X className="w-5 h-5 text-slate-700" />
+                  <X className={`w-5 h-5 ${isDarkMode ? "text-white" : "text-slate-700"}`} />
                 ) : (
-                  <Menu className="w-5 h-5 text-slate-700" />
+                  <Menu className={`w-5 h-5 ${isDarkMode ? "text-white" : "text-slate-700"}`} />
                 )}
               </span>
             </button>

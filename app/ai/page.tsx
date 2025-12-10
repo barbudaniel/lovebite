@@ -5,8 +5,8 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Navigation, Footer } from "@/components/sections";
 import {
-  ArrowLeft,
   Zap,
   Brain,
   MessageCircle,
@@ -16,7 +16,6 @@ import {
   Sparkles,
   CheckCircle2,
   ArrowRight,
-  Heart,
 } from "lucide-react";
 
 const features = [
@@ -85,26 +84,7 @@ export default function LovebiteAIPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Back to Lovebite</span>
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-product-500 to-brand-500 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-lg">Lovebite AI</span>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation variant="dark" />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-28 overflow-hidden">
@@ -486,22 +466,7 @@ export default function LovebiteAIPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 border-t border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
-                <Heart className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-slate-400">Lovebite</span>
-            </Link>
-            <p className="text-slate-500 text-sm">
-              &copy; 2025 Lovebite Entertainment. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer variant="dark" />
     </div>
   );
 }
