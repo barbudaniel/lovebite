@@ -6,6 +6,7 @@ import {
   About,
   Earnings,
   LovebiteAI,
+  LovebiteBio,
   Testimonials,
   FAQ,
   Contact,
@@ -25,6 +26,7 @@ export default function Home() {
         <About />
         <Earnings />
         <LovebiteAI />
+        <LovebiteBio />
         <Testimonials />
         <FAQ />
         <Contact />

@@ -7,11 +7,11 @@ import { Heart, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navLinks: { href: string; label: string; isNew?: boolean }[] = [
-  { href: "#about", label: "Who we are" },
-  { href: "#models", label: "Models" },
-  { href: "/ai", label: "Lovebite AI", isNew: true },
+  { href: "#about", label: "About" },
+  { href: "#earnings", label: "Earnings" },
+  { href: "/ai", label: "AI" },
+  { href: "/bio", label: "BIO", isNew: true },
   { href: "#faq", label: "FAQ" },
-  { href: "/register", label: "Become a Model" },
 ];
 
 export function Navigation() {
@@ -96,7 +96,13 @@ export function Navigation() {
             </nav>
 
             {/* Desktop CTA */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:flex items-center gap-3">
+              <Link
+                href="/register"
+                className="px-4 py-2 font-medium text-slate-600 hover:text-brand-600 transition-colors"
+              >
+                Apply
+              </Link>
               <Button
                 asChild
                 className="bg-brand-600 hover:bg-brand-700 text-white px-5 rounded-full"
@@ -183,6 +189,15 @@ export function Navigation() {
                   transition={{ delay: 0.25 }}
                   className="pt-4 border-t border-slate-100 space-y-3"
                 >
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="w-full rounded-lg h-12"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Link href="/register">Apply as Model</Link>
+                  </Button>
                   <Button
                     asChild
                     size="lg"

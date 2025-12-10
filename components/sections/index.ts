@@ -1,12 +1,13 @@
 export { Navigation } from "./navigation";
 export { Hero } from "./hero";
 export { Marquee } from "./marquee";
+export { PlatformMarquee } from "./platform-marquee";
 export { Process } from "./process";
 export { About } from "./about";
 export { Earnings } from "./earnings";
 export { LovebiteAI } from "./lovebite-ai";
+export { LovebiteBio } from "./lovebite-bio";
 export { Testimonials } from "./testimonials";
 export { FAQ } from "./faq";
 export { Contact } from "./contact";
 export { Footer } from "./footer";
-

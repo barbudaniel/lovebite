@@ -97,7 +97,7 @@ export default function LovebiteAIPage() {
               <span className="text-sm font-medium">Back to Lovebite</span>
             </Link>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-product-500 to-brand-500 rounded-lg flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <span className="font-bold text-lg">Lovebite AI</span>
@@ -110,8 +110,8 @@ export default function LovebiteAIPage() {
       <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-28 overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/20 rounded-full blur-[128px]" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-fuchsia-500/20 rounded-full blur-[128px]" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-product-500/20 rounded-full blur-[128px]" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-brand-500/20 rounded-full blur-[128px]" />
         </div>
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -119,13 +119,13 @@ export default function LovebiteAIPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-4 py-2 mb-8"
+            className="inline-flex items-center gap-2 bg-product-500/10 border border-product-500/20 rounded-full px-4 py-2 mb-8"
           >
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-product-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-product-500"></span>
             </span>
-            <span className="text-sm text-violet-300 font-medium">
+            <span className="text-sm text-product-300 font-medium">
               Coming Soon — Join the Waitlist
             </span>
           </motion.div>
@@ -139,7 +139,7 @@ export default function LovebiteAIPage() {
           >
             <span className="text-white">Your Fans Never Sleep.</span>
             <br />
-            <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-product-400 via-brand-400 to-pink-400 bg-clip-text text-transparent">
               Now, Neither Do You.
             </span>
           </motion.h1>
@@ -188,12 +188,12 @@ export default function LovebiteAIPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoComplete="off"
-                    className="h-12 bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 rounded-xl flex-1"
+                    className="h-12 bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-product-500 focus:ring-product-500/20 rounded-xl flex-1"
                   />
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="h-12 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white px-6 rounded-xl font-semibold transition-all"
+                    className="h-12 bg-gradient-to-r from-product-600 to-brand-600 hover:from-product-500 hover:to-brand-500 text-white px-6 rounded-xl font-semibold transition-all"
                   >
                     {isLoading ? (
                       <span className="flex items-center gap-2">
@@ -263,7 +263,7 @@ export default function LovebiteAIPage() {
             transition={{ delay: 0.1 }}
             className="bg-slate-900 rounded-2xl border border-slate-800 p-6 sm:p-8"
           >
-            <p className="text-violet-400 font-semibold mb-4 text-sm uppercase tracking-wider">
+            <p className="text-product-400 font-semibold mb-4 text-sm uppercase tracking-wider">
               The Lovebite Difference
             </p>
             <p className="text-lg sm:text-xl text-slate-300 leading-relaxed">
@@ -284,7 +284,7 @@ export default function LovebiteAIPage() {
             viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16"
           >
-            <span className="text-violet-400 font-semibold text-sm uppercase tracking-wider">
+            <span className="text-product-400 font-semibold text-sm uppercase tracking-wider">
               Features
             </span>
             <h2 className="mt-3 text-3xl sm:text-4xl md:text-5xl font-bold text-white">
@@ -300,10 +300,10 @@ export default function LovebiteAIPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 sm:p-6 hover:border-violet-500/30 transition-colors group"
+                className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 sm:p-6 hover:border-product-500/30 transition-colors group"
               >
-                <div className="w-10 h-10 bg-violet-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-violet-500/20 transition-colors">
-                  <feature.icon className="w-5 h-5 text-violet-400" />
+                <div className="w-10 h-10 bg-product-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-product-500/20 transition-colors">
+                  <feature.icon className="w-5 h-5 text-product-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">
                   {feature.title}
@@ -326,7 +326,7 @@ export default function LovebiteAIPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <span className="text-violet-400 font-semibold text-sm uppercase tracking-wider">
+            <span className="text-product-400 font-semibold text-sm uppercase tracking-wider">
               Comparison
             </span>
             <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-white">
@@ -342,7 +342,7 @@ export default function LovebiteAIPage() {
           >
             <div className="grid grid-cols-3 gap-4 p-4 sm:p-6 border-b border-slate-800 text-sm font-semibold">
               <div className="text-slate-500">Feature</div>
-              <div className="text-center text-violet-400">Lovebite AI</div>
+              <div className="text-center text-product-400">Lovebite AI</div>
               <div className="text-center text-slate-500">Others</div>
             </div>
             {comparisons.map((row, i) => (
@@ -357,7 +357,7 @@ export default function LovebiteAIPage() {
                   {row.lovebite === true ? (
                     <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
                   ) : (
-                    <span className="text-violet-400 font-medium">{row.lovebite}</span>
+                    <span className="text-product-400 font-medium">{row.lovebite}</span>
                   )}
                 </div>
                 <div className="text-center">
@@ -395,7 +395,7 @@ export default function LovebiteAIPage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 border border-violet-500/20 rounded-2xl p-6 sm:p-8"
+              className="bg-gradient-to-br from-product-500/10 to-brand-500/10 border border-product-500/20 rounded-2xl p-6 sm:p-8"
             >
               <div className="text-4xl mb-4">👩‍💻</div>
               <h3 className="text-xl font-bold text-white mb-3">Solo Creators</h3>
@@ -406,7 +406,7 @@ export default function LovebiteAIPage() {
               <ul className="space-y-2">
                 {["Handle thousands of DMs daily", "Never miss a big spender", "Work-life balance restored"].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-slate-300">
-                    <CheckCircle2 className="w-4 h-4 text-violet-400 flex-shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-product-400 flex-shrink-0" />
                     {item}
                   </li>
                 ))}
@@ -418,7 +418,7 @@ export default function LovebiteAIPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="bg-gradient-to-br from-fuchsia-500/10 to-pink-500/10 border border-fuchsia-500/20 rounded-2xl p-6 sm:p-8"
+              className="bg-gradient-to-br from-brand-500/10 to-pink-500/10 border border-brand-500/20 rounded-2xl p-6 sm:p-8"
             >
               <div className="text-4xl mb-4">🏢</div>
               <h3 className="text-xl font-bold text-white mb-3">Agencies</h3>
@@ -429,7 +429,7 @@ export default function LovebiteAIPage() {
               <ul className="space-y-2">
                 {["Manage multiple creators", "Full reports & insights", "Custom branding available"].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-slate-300">
-                    <CheckCircle2 className="w-4 h-4 text-fuchsia-400 flex-shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-brand-400 flex-shrink-0" />
                     {item}
                   </li>
                 ))}
@@ -470,12 +470,12 @@ export default function LovebiteAIPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoComplete="off"
-                    className="h-12 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 rounded-xl flex-1"
+                    className="h-12 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-product-500 focus:ring-product-500/20 rounded-xl flex-1"
                   />
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="h-12 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white px-6 rounded-xl font-semibold"
+                    className="h-12 bg-gradient-to-r from-product-600 to-brand-600 hover:from-product-500 hover:to-brand-500 text-white px-6 rounded-xl font-semibold"
                   >
                     {isLoading ? "Joining..." : "Join Waitlist"}
                   </Button>

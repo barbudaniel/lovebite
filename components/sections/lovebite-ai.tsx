@@ -43,15 +43,15 @@ export function LovebiteAI() {
           {/* Left Content */}
           <div>
             <AnimatedSection>
-              <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1.5 mb-4">
-                <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-                <span className="text-xs sm:text-sm font-medium text-violet-300">
+              <div className="inline-flex items-center gap-2 bg-product-500/10 border border-product-500/20 rounded-full px-3 py-1.5 mb-4">
+                <Sparkles className="w-3.5 h-3.5 text-product-400" />
+                <span className="text-xs sm:text-sm font-medium text-product-300">
                   Coming Soon
                 </span>
               </div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
                 Introducing{" "}
-                <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-product-400 to-brand-400 bg-clip-text text-transparent">
                   Lovebite AI
                 </span>
               </h2>
@@ -75,8 +75,8 @@ export function LovebiteAI() {
                   whileHover={{ scale: 1.05, y: -2 }}
                   className="flex items-center gap-2 text-slate-300 text-sm cursor-default group"
                 >
-                  <div className="w-6 h-6 bg-violet-500/20 rounded-md flex items-center justify-center transition-all duration-200 group-hover:bg-violet-500/30">
-                    <item.icon className="w-3.5 h-3.5 text-violet-400 transition-transform duration-200 group-hover:scale-110" />
+                  <div className="w-6 h-6 bg-product-500/20 rounded-md flex items-center justify-center transition-all duration-200 group-hover:bg-product-500/30">
+                    <item.icon className="w-3.5 h-3.5 text-product-400 transition-transform duration-200 group-hover:scale-110" />
                   </div>
                   <span className="transition-colors duration-200 group-hover:text-white">{item.text}</span>
                 </motion.div>
@@ -93,7 +93,7 @@ export function LovebiteAI() {
             >
               <Link
                 href="/ai"
-                className="inline-flex items-center gap-2 text-violet-400 hover:text-violet-300 font-medium transition-colors group"
+                className="inline-flex items-center gap-2 text-product-400 hover:text-product-300 font-medium transition-colors group"
               >
                 Learn more about Lovebite AI
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -110,7 +110,7 @@ export function LovebiteAI() {
           >
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 sm:p-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-product-500 to-brand-500 rounded-xl flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -145,13 +145,13 @@ export function LovebiteAI() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       autoComplete="off"
-                      className="h-12 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 rounded-xl"
+                      className="h-12 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-product-500 focus:ring-product-500/20 rounded-xl"
                     />
                   </div>
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-12 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white rounded-xl font-semibold"
+                    className="w-full h-12 bg-gradient-to-r from-product-600 to-brand-600 hover:from-product-500 hover:to-brand-500 text-white rounded-xl font-semibold"
                   >
                     {isLoading ? (
                       <span className="flex items-center gap-2">
@@ -192,7 +192,7 @@ export function LovebiteAI() {
                       whileHover={{ x: 4 }}
                       className="flex items-start gap-2 text-sm text-slate-300 cursor-default group"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-violet-400 mt-0.5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                      <CheckCircle2 className="w-4 h-4 text-product-400 mt-0.5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
                       <span className="transition-colors duration-200 group-hover:text-white">{item}</span>
                     </motion.li>
                   ))}
