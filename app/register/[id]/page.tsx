@@ -1574,8 +1574,8 @@ export default function RegisterPage({
 
         const rows = [
           ["Months 1 – 3", "60%", "40%"],
-          ["Month 4", "55%", "45%"],
-          ["Month 5 onwards", "50%", "50%"],
+          ["Month 4", "60%", "40%"],
+          ["Month 5 onwards", "60%", "40%"],
         ];
 
         pdf.setTextColor(51, 65, 85);
@@ -2143,11 +2143,11 @@ export default function RegisterPage({
                                               Month 4
                                             </td>
                                             <td className="px-4 py-3 text-center text-slate-600">
-                                              55%
+                                              60%
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                                                45%
+                                                40%
                                               </span>
                                             </td>
                                           </tr>
@@ -2156,11 +2156,11 @@ export default function RegisterPage({
                                               Month 5 onwards
                                             </td>
                                             <td className="px-4 py-3 text-center text-slate-600">
-                                              50%
+                                              60%
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                                50%
+                                                40%
                                               </span>
                                             </td>
                                           </tr>
