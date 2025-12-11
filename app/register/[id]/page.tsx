@@ -159,7 +159,7 @@ const getContractSections = (formData: FormData, signatureDataUrl: string | null
       content: `THIS AGREEMENT is made on ${today}.
 
 BETWEEN:
-(1) TRUST CHARGE SOLUTIONS LTD, a private limited company incorporated in England and Wales, with its registered office at 20 Wenlock Road, London, England, N1 7GU, represented by Gabriel Cosoi ("The Agency" or "Partner A");
+(1) TRUST CHARGE SOLUTIONS LTD, a private limited company incorporated in England and Wales, with its registered office at 20 Wenlock Road, London, England, N1 7GU, represented by Gabriel marius Cosoi ("The Agency" or "Partner A");
 
 AND
 
@@ -322,7 +322,7 @@ AND
 
 SIGNED by Partner A (The Agency)
 TRUST CHARGE SOLUTIONS LTD
-Name: Gabriel Cosoi
+Name: Gabriel Marius Cosoi
 Date: ${today}
 
 SIGNED by Partner B (The Talent)
@@ -1573,9 +1573,7 @@ export default function RegisterPage({
         yPosition += 6;
 
         const rows = [
-          ["Months 1 – 3", "60%", "40%"],
-          ["Month 4", "60%", "40%"],
-          ["Month 5 onwards", "60%", "40%"],
+          ["Recuuring Commission", "70%", "30%"],
         ];
 
         pdf.setTextColor(51, 65, 85);
@@ -1584,9 +1582,7 @@ export default function RegisterPage({
             pdf.setFillColor(248, 250, 252);
             pdf.rect(margin, yPosition, contentWidth, 5, "F");
           }
-          pdf.text(row[0], margin + 4, yPosition + 3.5);
-          pdf.text(row[1], margin + 55, yPosition + 3.5);
-          pdf.text(row[2], margin + 100, yPosition + 3.5);
+          pdf.text(row[0], margin + 4, yPosition + 3.5);;
           yPosition += 5;
         });
         yPosition += 4;
@@ -2127,43 +2123,18 @@ export default function RegisterPage({
                                         <tbody className="divide-y divide-slate-100">
                                           <tr className="bg-white hover:bg-slate-50">
                                             <td className="px-4 py-3 font-medium text-slate-700">
-                                              Months 1 – 3
+                                              Recuuring Commission
                                             </td>
                                             <td className="px-4 py-3 text-center text-slate-600">
-                                              60%
+                                              70%
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                                                40%
+                                                30%
                                               </span>
                                             </td>
-                                          </tr>
-                                          <tr className="bg-slate-50 hover:bg-slate-100">
-                                            <td className="px-4 py-3 font-medium text-slate-700">
-                                              Month 4
-                                            </td>
-                                            <td className="px-4 py-3 text-center text-slate-600">
-                                              60%
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                                                40%
-                                              </span>
-                                            </td>
-                                          </tr>
-                                          <tr className="bg-white hover:bg-slate-50">
-                                            <td className="px-4 py-3 font-medium text-slate-700">
-                                              Month 5 onwards
-                                            </td>
-                                            <td className="px-4 py-3 text-center text-slate-600">
-                                              60%
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                                40%
-                                              </span>
-                                            </td>
-                                          </tr>
+                                          </tr >
+                                          
                                         </tbody>
                                       </table>
                                     </div>

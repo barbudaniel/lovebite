@@ -12,7 +12,7 @@ const plans = [
     name: "% percentage",
     tagline: "Grow together with us",
     description: "Get paid % cut from all sales. Revenues depend on content quality, marketing, and can vary each month.",
-    highlight: "Up to 20% NET",
+    highlight: "Up to 30% NET",
     features: [
       "Uncapped earning potential",
       "Revenue grows with audience",
