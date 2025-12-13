@@ -326,6 +326,56 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     primaryLink: "https://onlyfans.com/bohobabelexy",
   },
 
+  // ===== ALEXXISRAE =====
+  "alexxisrae": {
+    id: "alexxisrae",
+    name: "Alexxis Rae",
+    tagline: "Creator • Model • Live",
+    subtitle: "Where your fantasy becomes my reality",
+    profileImage: "https://i.imgur.com/7mO0Ct7.jpeg",
+    galleryImage: "https://i.imgur.com/7qUoviG.jpeg",
+    welcomeTitle: "Welcome to my world",
+    welcomeText: "Alexxis Rae — Where your fantasy becomes my reality.❤️‍🔥 A blend of passion, seduction, and irresistible desire. Step into my world and let's explore what pleasure truly feels like.",
+    socialLinks: {
+      x: "https://x.com/alexxisrae19",
+    },
+    links: [
+      {
+        id: "xlovecam",
+        label: "XLoveCam",
+        sub: "Watch me live & exclusive shows",
+        href: "https://www.xlovecam.com/en/model/alexxisrae/",
+        iconType: "video",
+        iconColor: "text-pink-500",
+      },
+      {
+        id: "stripchat",
+        label: "Stripchat",
+        sub: "Live shows & private sessions",
+        href: "https://stripchat.com/alexxisrae",
+        iconType: "video",
+        iconColor: "text-purple-500",
+      },
+      {
+        id: "chaturbate",
+        label: "Chaturbate",
+        sub: "Watch me live",
+        href: "https://chaturbate.com/alexxisrae/",
+        iconType: "video",
+        iconColor: "text-orange-500",
+      },
+      {
+        id: "myfreecams",
+        label: "MyFreeCams",
+        sub: "Live streaming & shows",
+        href: "https://profiles.myfreecams.com/AlexxisRae",
+        iconType: "video",
+        iconColor: "text-blue-500",
+      },
+    ],
+    primaryLink: "https://www.xlovecam.com/en/model/alexxisrae/",
+  },
+
   // ===== ADD MORE CREATORS HERE =====
   // Copy the structure above and modify for each new creator
 };
