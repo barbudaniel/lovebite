@@ -423,7 +423,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     galleryImage: "https://i.imgur.com/7qUoviG.jpeg",
     welcomeTitle: "",
     welcomeText:
-      "Alexxis Rae — Where your fantasy becomes my reality.❤️‍🔥 A blend of passion, seduction, and irresistible desire. Step into my world and let's explore what pleasure truly feels like.",
+      "Where your fantasy becomes my reality.❤️‍🔥 A blend of passion, seduction, and irresistible desire. Step into my world and let's explore what pleasure truly feels like.",
     socialLinks: {
       x: "https://x.com/alexxisrae19",
     },
