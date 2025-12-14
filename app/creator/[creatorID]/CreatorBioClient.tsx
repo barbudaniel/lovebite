@@ -316,7 +316,7 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
               <motion.img 
                 src={PROFILE_IMG}
                 alt={`${creator.name} Profile`}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-top"
                 initial={{ scale: 1.1 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}

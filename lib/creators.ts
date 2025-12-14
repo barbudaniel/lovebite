@@ -12,7 +12,7 @@ export interface CreatorLink {
   img?: string;
   pill?: string;
   pillColor?: string;
-  iconType: 'crown' | 'video' | 'heart' | 'footprints';
+  iconType: "crown" | "video" | "heart" | "footprints";
   iconColor: string;
 }
 
@@ -38,15 +38,18 @@ export interface CreatorProfile {
 
 export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
   // ===== MIRRABELLE13 =====
-  "mirrabelle13": {
+  mirrabelle13: {
     id: "mirrabelle13",
     name: "Mirrabelle13",
     tagline: "Model • Creator • Dreamer",
     subtitle: "Elegance and exclusive live experiences",
-    profileImage: "https://cdn.beacons.ai/user_content/T9B1Qi8wa4VpOBt78oxpdzvjqz03/profile_mirrabelle13.png?t=1760482587828",
-    galleryImage: "https://cdn.beacons.ai/user_content/T9B1Qi8wa4VpOBt78oxpdzvjqz03/referenced_images/generated-images__link-in-bio__image-block__home__4f658e27-a4b1-442c-bd41-cda4ed6354a3__56c55766-9548-4aba-82cf-921289c27593.jpg?t=1761453961066",
+    profileImage:
+      "https://cdn.beacons.ai/user_content/T9B1Qi8wa4VpOBt78oxpdzvjqz03/profile_mirrabelle13.png?t=1760482587828",
+    galleryImage:
+      "https://cdn.beacons.ai/user_content/T9B1Qi8wa4VpOBt78oxpdzvjqz03/referenced_images/generated-images__link-in-bio__image-block__home__4f658e27-a4b1-442c-bd41-cda4ed6354a3__56c55766-9548-4aba-82cf-921289c27593.jpg?t=1761453961066",
     welcomeTitle: "Welcome to my official site!",
-    welcomeText: "As a live model and digital creator, I love turning fantasy into experience. My content is all about confidence, charm, and authentic energy that makes every moment special.",
+    welcomeText:
+      "As a live model and digital creator, I love turning fantasy into experience. My content is all about confidence, charm, and authentic energy that makes every moment special.",
     customDomains: ["mirrabelle13.online"],
     socialLinks: {
       x: "https://x.com/mirrabelle_",
@@ -99,8 +102,88 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     primaryLink: "https://onlyfans.com/mirrabellee",
   },
 
+  natashaivacenko: {
+    id: "natashaivacenko",
+    name: "Natasha Ivacenko",
+    tagline: "Natasha Ivacenko",
+    subtitle: "",
+    profileImage: "https://i.imgur.com/osAVAeA.png",
+    galleryImage: "https://i.imgur.com/xeolOpH.png",
+    welcomeTitle: "Welcome to my official site!",
+    welcomeText:
+      "Blonde, blue eyes, and full of surprises. I've got that classic, timeless look and a wild side that shows when the modd is right.",
+    socialLinks: {
+      x: "https://x.com/natashaivacenko",
+    },
+    links: [
+      {
+        id: "onlyfans",
+        label: "OnlyFans",
+        sub: "Exclusive content just for you ✨",
+        href: "https://onlyfans.com/natashaivacenko",
+        pill: "FREE",
+        pillColor: "bg-sky-100 text-sky-600",
+        iconType: "crown",
+        iconColor: "text-sky-500",
+      },
+      {
+        id: "chaturbate",
+        label: "Chaturbate",
+        sub: "Live streaming & exclusive content",
+        href: "https://chaturbate.com/natashaivacenko",
+        iconType: "video",
+        iconColor: "text-sky-500",
+      },
+      {
+        id: "fansly",
+        label: "Fansly",
+        sub: "Exclusive content just for you ✨",
+        href: "https://fans.ly/NatashaIvacenko",
+        pill: "FREE",
+        pillColor: "bg-sky-100 text-sky-600",
+        iconType: "crown",
+        iconColor: "text-sky-500",
+      },
+      {
+        id: "loyalfans",
+        label: "Loyalfans",
+        sub: "Exclusive content just for you ✨",
+        href: "https://www.loyalfans.com/natashaivacenko",
+        pill: "FREE",
+        iconType: "heart",
+        iconColor: "text-rose-500",
+      },
+
+      {
+        id: "skyprivate",
+        label: "Skyprivate",
+        sub: "Private video calls & exclusive content",
+        href: "https://profiles.skyprivate.com/models/2kvh5-natasha-ivacenko.html",
+        iconType: "video",
+        iconColor: "text-blue-500",
+      },
+      {
+        id: "stripchat",
+        label: "Stripchat",
+        sub: "Live streaming & exclusive content",
+        href: "https://stripchat.com/natashaivacenko",
+        iconType: "video",
+        iconColor: "text-sky-500",
+      },
+
+      {
+        id: "myfreecams",
+        label: "MyFreeCams",
+        sub: "Live streaming & exclusive content",
+        href: "https://profiles.myfreecams.com/NatashaIvy",
+        iconType: "video",
+        iconColor: "text-blue-500",
+      },
+    ],
+    primaryLink: "https://onlyfans.com/natashaivacenko",
+  },
   // ===== ANTONIASNOW =====
-  "antoniasnow": {
+  antoniasnow: {
     id: "antoniasnow",
     name: "AntoniaSnow",
     tagline: "Creator • Model • Exclusive",
@@ -108,7 +191,8 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     profileImage: "https://i.imgur.com/X2AIRD8.png",
     galleryImage: "https://i.imgur.com/0g90fXC.jpeg",
     welcomeTitle: "Welcome to my world",
-    welcomeText: "I create private moments. The motive is simple, hidden pleasure. Step into my exclusive space and discover what makes every moment unforgettable.",
+    welcomeText:
+      "I create private moments. The motive is simple, hidden pleasure. Step into my exclusive space and discover what makes every moment unforgettable.",
     socialLinks: {
       x: "https://x.com/RealAntoniaSnow",
       reddit: "https://www.reddit.com/user/AntoniaSnow/",
@@ -162,7 +246,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
   },
 
   // ===== TINYBLAIR =====
-  "tinyblair": {
+  tinyblair: {
     id: "tinyblair",
     name: "TinyBlair",
     tagline: "Model • Creator • Live",
@@ -170,7 +254,8 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     profileImage: "https://i.imgur.com/g2mb91G.png",
     galleryImage: "https://i.imgur.com/UdgPFJ0.jpeg",
     welcomeTitle: "Hey there! 💕",
-    welcomeText: "Welcome to my exclusive space. I'm all about creating memorable moments and connecting with amazing people like you.",
+    welcomeText:
+      "Welcome to my exclusive space. I'm all about creating memorable moments and connecting with amazing people like you.",
     socialLinks: {
       x: "https://x.com/realtinyblair",
     },
@@ -222,7 +307,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
   },
 
   // ===== ENERGYELIZA =====
-  "energyeliza": {
+  energyeliza: {
     id: "energyeliza",
     name: "EnergyEliza",
     tagline: "Creator • Model • Exclusive",
@@ -230,7 +315,8 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     profileImage: "https://i.imgur.com/tZnQPjW.png",
     galleryImage: "https://i.imgur.com/r5LNUDE.jpeg",
     welcomeTitle: "Welcome to my world",
-    welcomeText: "I create private moments. The motive is simple, hidden pleasure. Step into my exclusive space and discover what makes every moment unforgettable.",
+    welcomeText:
+      "I create private moments. The motive is simple, hidden pleasure. Step into my exclusive space and discover what makes every moment unforgettable.",
     socialLinks: {
       x: "https://x.com/EnergyEliza",
     },
@@ -274,7 +360,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
   },
 
   // ===== BOHOBABELEXY =====
-  "bohobabelexy": {
+  bohobabelexy: {
     id: "bohobabelexy",
     name: "bohobabelexy",
     tagline: "Creator • Model • Exclusive",
@@ -282,7 +368,8 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     profileImage: "https://i.imgur.com/JyjGyiE.png",
     galleryImage: "https://i.imgur.com/j3ah9BA.png",
     welcomeTitle: "Welcome to my world",
-    welcomeText: "I create private moments. The motive is simple, hidden pleasure. Step into my exclusive space and discover what makes every moment unforgettable.",
+    welcomeText:
+      "I create private moments. The motive is simple, hidden pleasure. Step into my exclusive space and discover what makes every moment unforgettable.",
     customDomains: ["bohobabelexy.online"],
     socialLinks: {
       x: "https://x.com/bohobabelexy",
@@ -327,7 +414,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
   },
 
   // ===== ALEXXISRAE =====
-  "alexxisrae": {
+  alexxisrae: {
     id: "alexxisrae",
     name: "Alexxis Rae",
     tagline: "Creator • Model • Live",
@@ -335,7 +422,8 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     profileImage: "https://i.imgur.com/7mO0Ct7.jpeg",
     galleryImage: "https://i.imgur.com/7qUoviG.jpeg",
     welcomeTitle: "Welcome to my world",
-    welcomeText: "Alexxis Rae — Where your fantasy becomes my reality.❤️‍🔥 A blend of passion, seduction, and irresistible desire. Step into my world and let's explore what pleasure truly feels like.",
+    welcomeText:
+      "Alexxis Rae — Where your fantasy becomes my reality.❤️‍🔥 A blend of passion, seduction, and irresistible desire. Step into my world and let's explore what pleasure truly feels like.",
     socialLinks: {
       x: "https://x.com/alexxisrae19",
     },
@@ -388,13 +476,12 @@ export function getCreator(creatorID: string): CreatorProfile | null {
 // Helper function to get creator by custom domain
 export function getCreatorByDomain(hostname: string): CreatorProfile | null {
   // Remove www. prefix if present
-  const domain = hostname.replace(/^www\./, '').toLowerCase();
-  
+  const domain = hostname.replace(/^www\./, "").toLowerCase();
+
   for (const creator of Object.values(CREATORS_DATABASE)) {
-    if (creator.customDomains?.some(d => d.toLowerCase() === domain)) {
+    if (creator.customDomains?.some((d) => d.toLowerCase() === domain)) {
       return creator;
     }
   }
   return null;
 }
-
