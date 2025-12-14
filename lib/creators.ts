@@ -662,8 +662,8 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     name: "Rina The Queen",
     tagline: "Rina The Queen",
     subtitle: "Where your fantasy becomes my reality",
-    profileImage: "https://i.imgur.com/zmhbSvS.png",
-    galleryImage: "https://i.imgur.com/WeTfbrH.png",
+    profileImage: "https://i.imgur.com/TA5MXP1.png",
+    galleryImage: "https://i.imgur.com/z3vG5lA.png",
     welcomeTitle: "",
     welcomeText:
       "Step into my world of irresistible charm. I am a woman of elegance, mystery, and refined sensuality. My gaze will draw you in, my voice will ignite your fantasies, and my presence will leave you wanting more. ",
