@@ -497,9 +497,9 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     id: "sasha_lorenz",
     name: "Sasha Lorenz",
     tagline: "Sasha Lorenz",
-    subtitle: "Model • Creator • Live",
-    profileImage: "https://i.imgur.com/7mO0Ct7.jpeg",
-    galleryImage: "https://i.imgur.com/7qUoviG.jpeg",
+    subtitle: "",
+    profileImage: "https://i.imgur.com/FDDDVzV.png ",
+    galleryImage: "https://i.imgur.com/WYQkzhE.png",
     welcomeTitle: "",
     welcomeText:
       "I’m pretty easy-going and down for whatever mood you’re in, whether that’s a casual conversation or something more playful. I like to keep things relaxed and fun, no pressure at all. Just be yourself, and I’ll do the same! 😊",
