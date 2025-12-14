@@ -417,11 +417,11 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
   alexxisrae: {
     id: "alexxisrae",
     name: "Alexxis Rae",
-    tagline: "Creator • Model • Live",
+    tagline: "Alexxis Rae",
     subtitle: "Where your fantasy becomes my reality",
     profileImage: "https://i.imgur.com/7mO0Ct7.jpeg",
     galleryImage: "https://i.imgur.com/7qUoviG.jpeg",
-    welcomeTitle: "Welcome to my world",
+    welcomeTitle: "",
     welcomeText:
       "Alexxis Rae — Where your fantasy becomes my reality.❤️‍🔥 A blend of passion, seduction, and irresistible desire. Step into my world and let's explore what pleasure truly feels like.",
     socialLinks: {
@@ -429,12 +429,42 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     },
     links: [
       {
+        id: "onlyfans",
+        label: "OnlyFans",
+        sub: "Exclusive content just for you ✨",
+        href: "https://onlyfans.com/realalexxisrae",
+        pill: "FREE",
+        pillColor: "bg-sky-100 text-sky-600",
+        iconType: "crown",
+        iconColor: "text-sky-500",
+      },
+   
+      {
         id: "xlovecam",
         label: "XLoveCam",
         sub: "Watch me live & exclusive shows",
         href: "https://www.xlovecam.com/en/model/alexxisrae/",
         iconType: "video",
         iconColor: "text-pink-500",
+      },
+      {
+        id: "fansly",
+        label: "Fansly",
+        sub: "Exclusive content just for you ✨",
+        href: "https://fans.ly/AlexxisRae",
+        pill: "FREE",
+        pillColor: "bg-sky-100 text-sky-600",
+        iconType: "crown",
+        iconColor: "text-sky-500",
+      },
+      {
+        id: "loyalfans",
+        label: "Loyalfans",
+        sub: "Exclusive content just for you ✨",
+        href: "https://www.loyalfans.com/alexxisrae",
+        pill: "FREE",
+        iconType: "heart",
+        iconColor: "text-rose-500",
       },
       {
         id: "stripchat",
@@ -461,7 +491,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
         iconColor: "text-blue-500",
       },
     ],
-    primaryLink: "https://www.xlovecam.com/en/model/alexxisrae/",
+    primaryLink: "https://onlyfans.com/realalexxisrae",
   },
 
   // ===== ADD MORE CREATORS HERE =====
