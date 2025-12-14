@@ -493,8 +493,8 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     ],
     primaryLink: "https://onlyfans.com/realalexxisrae",
   },
-  sasha_lorenz: {
-    id: "sasha_lorenz",
+  sashalorenz: {
+    id: "sashalorenz",
     name: "Sasha Lorenz",
     tagline: "Sasha Lorenz",
     subtitle: "",
