@@ -340,6 +340,14 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
         iconColor: "text-orange-500",
       },
       {
+        id: "loyalfans",
+        label: "Loyalfans",
+        sub: "Exclusive content & direct messages",
+        href: "https://www.loyalfans.com/energyeliza",
+        iconType: "heart",
+        iconColor: "text-rose-500",
+      },
+      {
         id: "bongacams",
         label: "BongaCams",
         sub: "Live streaming & shows",
