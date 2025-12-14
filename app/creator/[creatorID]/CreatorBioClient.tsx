@@ -159,9 +159,9 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
     window.location.href = 'https://google.com';
   };
 
-  // Handle "Join me" click - redirect to primary link
+  // Handle "Join me" click - open primary link in new tab
   const handleJoinMe = () => {
-    window.location.href = creator.primaryLink;
+    window.open(creator.primaryLink, '_blank', 'noopener,noreferrer');
   };
   
   const handleShare = async () => {
@@ -197,7 +197,7 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
   };
 
   const handleLinkClick = (href: string) => {
-    window.location.href = href;
+    window.open(href, '_blank', 'noopener,noreferrer');
   };
 
   return (
