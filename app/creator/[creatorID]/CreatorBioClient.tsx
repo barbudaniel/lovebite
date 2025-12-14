@@ -548,7 +548,7 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
               <img 
                 src={PROFILE_IMG} 
                 alt="Chat with me"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-top"
               />
             </div>
           </motion.button>
