@@ -326,10 +326,10 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
         label: "OnlyFans",
         sub: "Exclusive content just for you ✨",
         href: "https://onlyfans.com/energyeliza",
-        pill: "VIP",
-        pillColor: "bg-sky-100 text-sky-600",
+        pill: "FREE",
+        pillColor: "bg-green-100 text-green-600",
         iconType: "crown",
-        iconColor: "text-sky-500",
+        iconColor: "text-green-500",
       },
       {
         id: "chaturbate",
