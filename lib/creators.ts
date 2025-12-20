@@ -37,7 +37,6 @@ export interface CreatorProfile {
 }
 
 export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
-  // ===== MIRRABELLE13 =====
   mirrabelle13: {
     id: "mirrabelle13",
     name: "Mirrabelle13",
@@ -101,8 +100,6 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     ],
     primaryLink: "https://onlyfans.com/mirrabellee",
   },
-
-  // ===== ANTONIASNOW =====
   antoniasnow: {
     id: "antoniasnow",
     name: "AntoniaSnow",
@@ -164,8 +161,6 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     ],
     primaryLink: "https://onlyfans.com/antoniasnow",
   },
-
-  // ===== TINYBLAIR =====
   tinyblair: {
     id: "tinyblair",
     name: "TinyBlair",
@@ -225,8 +220,6 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     ],
     primaryLink: "https://onlyfans.com/tinyblair",
   },
-
-  // ===== ENERGYELIZA =====
   energyeliza: {
     id: "energyeliza",
     name: "EnergyEliza",
@@ -286,8 +279,6 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     ],
     primaryLink: "https://onlyfans.com/energyeliza",
   },
-
-  // ===== BOHOBABELEXY =====
   bohobabelexy: {
     id: "bohobabelexy",
     name: "bohobabelexy",
@@ -340,8 +331,6 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     ],
     primaryLink: "https://onlyfans.com/bohobabelexy",
   },
-
-  // ===== ALEXXISRAE =====
   alexxisrae: {
     id: "alexxisrae",
     name: "Alexxis Rae",
@@ -349,6 +338,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     subtitle: "Where your fantasy becomes my reality",
     profileImage: "https://i.imgur.com/7mO0Ct7.jpeg",
     galleryImage: "https://i.imgur.com/7qUoviG.jpeg",
+    customDomains: ["alexxisrae.online"],
     welcomeTitle: "",
     welcomeText:
       "Where your fantasy becomes my reality.❤️‍🔥 A blend of passion, seduction, and irresistible desire. Step into my world and let's explore what pleasure truly feels like.",
@@ -428,6 +418,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     subtitle: "Where your fantasy becomes my reality",
     profileImage: "https://i.imgur.com/FDDDVzV.png ",
     galleryImage: "https://i.imgur.com/WYQkzhE.png",
+    customDomains: ["sashalorenz.online"],
     welcomeTitle: "",
     welcomeText:
       "I’m pretty easy-going and down for whatever mood you’re in, whether that’s a casual conversation or something more playful. I like to keep things relaxed and fun, no pressure at all. Just be yourself, and I’ll do the same! 😊",
@@ -522,6 +513,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     subtitle: "Where your fantasy becomes my reality",
     profileImage: "https://i.imgur.com/zmhbSvS.png",
     galleryImage: "https://i.imgur.com/WeTfbrH.png",
+    customDomains: ["lustyfantasy.online"],
     welcomeTitle: "",
     welcomeText:
       "I’m Victoria, 33 yo, curvy, confident, and full of playful energy. I love creating a cozy, flirty space where we can laugh, connect, and let the good vibes flow.",
@@ -592,6 +584,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     subtitle: "Where your fantasy becomes my reality",
     profileImage: "https://i.imgur.com/TA5MXP1.png",
     galleryImage: "https://i.imgur.com/z3vG5lA.png",
+    customDomains: ["rinathequeen.online"],
     welcomeTitle: "",
     welcomeText:
       "Step into my world of irresistible charm. I am a woman of elegance, mystery, and refined sensuality. My gaze will draw you in, my voice will ignite your fantasies, and my presence will leave you wanting more. ",
@@ -663,7 +656,6 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     ],
     primaryLink: "https://onlyfans.com/rinathequeen",
   },
-
   natashaivacenko: {
     id: "natashaivacenko",
     name: "Natasha Ivacenko",
@@ -672,6 +664,7 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     profileImage: "https://i.imgur.com/osAVAeA.png",
     galleryImage: "https://i.imgur.com/xeolOpH.png",
     welcomeTitle: "Welcome to my official site!",
+    customDomains: ["natashaivacenko.online"],
     welcomeText:
       "Blonde, blue eyes, and full of surprises. I've got that classic, timeless look and a wild side that shows when the modd is right.",
     socialLinks: {
@@ -744,8 +737,6 @@ export const CREATORS_DATABASE: Record<string, CreatorProfile> = {
     ],
     primaryLink: "https://onlyfans.com/natashaivacenko",
   },
-  // ===== ADD MORE CREATORS HERE =====
-  // Copy the structure above and modify for each new creator
 };
 
 // Helper function to get creator by ID
