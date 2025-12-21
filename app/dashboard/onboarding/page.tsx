@@ -1290,7 +1290,7 @@ function CreateOnboardingModal({
                         <User className={`w-6 h-6 mx-auto mb-2 ${
                           accountType === "model" ? "text-brand-600" : "text-slate-400"
                         }`} />
-                        <p className="text-sm font-medium">Model</p>
+                        <p className="text-sm font-medium">Independent</p>
                       </button>
                       <button
                         onClick={() => setAccountType("studio")}
@@ -1303,7 +1303,7 @@ function CreateOnboardingModal({
                         <Building2 className={`w-6 h-6 mx-auto mb-2 ${
                           accountType === "studio" ? "text-brand-600" : "text-slate-400"
                         }`} />
-                        <p className="text-sm font-medium">Studio</p>
+                        <p className="text-sm font-medium">Business</p>
                       </button>
                     </div>
                   </div>
@@ -1326,7 +1326,7 @@ function CreateOnboardingModal({
                       id="stageName"
                       value={stageName}
                       onChange={(e) => setStageName(e.target.value)}
-                      placeholder={accountType === "model" ? "CreatorName" : "My Studio"}
+                      placeholder={accountType === "model" ? "CreatorName" : "My Business"}
                     />
                   </div>
                 </>

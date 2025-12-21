@@ -17,7 +17,7 @@ import {
   Check,
 } from "lucide-react";
 
-type AccountType = "model" | "studio";
+type AccountType = "model" | "studio"; // internal: model = independent, studio = business
 
 function SetupContent() {
   const router = useRouter();
@@ -249,7 +249,7 @@ function SetupContent() {
                         : "text-slate-400"
                     }`}
                   />
-                  <p className="font-semibold text-slate-900">Creator</p>
+                  <p className="font-semibold text-slate-900">Independent</p>
                   <p className="text-sm text-slate-500 mt-1">
                     Individual content creator
                   </p>
@@ -271,7 +271,7 @@ function SetupContent() {
                         : "text-slate-400"
                     }`}
                   />
-                  <p className="font-semibold text-slate-900">Studio</p>
+                  <p className="font-semibold text-slate-900">Business</p>
                   <p className="text-sm text-slate-500 mt-1">
                     Manage multiple creators
                   </p>
@@ -297,7 +297,7 @@ function SetupContent() {
               <div className="space-y-4 mb-6">
                 <div className="space-y-2">
                   <Label htmlFor="displayName">
-                    {formData.accountType === "studio" ? "Studio Name" : "Display Name"} *
+                    {formData.accountType === "studio" ? "Business Name" : "Display Name"} *
                   </Label>
                   <Input
                     id="displayName"
@@ -307,7 +307,7 @@ function SetupContent() {
                     }
                     placeholder={
                       formData.accountType === "studio"
-                        ? "Your Studio Name"
+                        ? "Your Business Name"
                         : "Your Name"
                     }
                   />

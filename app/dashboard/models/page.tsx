@@ -515,8 +515,8 @@ function ModelModal({
           <DialogTitle>{mode === "add" ? "Add New Model" : "Edit Model"}</DialogTitle>
           <DialogDescription>
             {mode === "add"
-              ? "Create a new model profile for your studio"
-              : "Update model information"}
+              ? "Create a new creator profile for your team"
+              : "Update creator information"}
           </DialogDescription>
         </DialogHeader>
 
@@ -752,7 +752,7 @@ function InviteModelModal({
         <DialogHeader>
           <DialogTitle>Invite Existing Model</DialogTitle>
           <DialogDescription>
-            Search for models who are not part of any studio and invite them to join yours
+            Search for independent creators and invite them to join your team
           </DialogDescription>
         </DialogHeader>
 
@@ -817,7 +817,7 @@ function InviteModelModal({
             </div>
           ) : searchQuery.length >= 2 ? (
             <div className="py-4 text-center text-sm text-slate-500">
-              No independent models found matching "{searchQuery}"
+              No independent creators found matching "{searchQuery}"
             </div>
           ) : null}
 
@@ -1145,7 +1145,7 @@ function RemoveModal({
         toast.success("Model deleted completely");
       } else if (removeFromStudio) {
         await supabase.from("creators").update({ studio_id: null }).eq("id", creator.id);
-        toast.success("Model removed from studio");
+        toast.success("Creator removed from team");
       }
 
       onRemoved();
@@ -1188,7 +1188,7 @@ function RemoveModal({
             />
             <div>
               <span className="text-sm font-medium text-slate-900">
-                Remove from studio only
+                Remove from team only
               </span>
               <p className="text-xs text-slate-500">
                 Model profile and data will be preserved
@@ -1399,7 +1399,7 @@ export default function ModelsPage() {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-3">
         <AlertCircle className="w-5 h-5 text-amber-500" />
-        <p className="text-amber-700">Only studios and administrators can manage models.</p>
+        <p className="text-amber-700">Only businesses and administrators can manage creators.</p>
       </div>
     );
   }
@@ -1413,7 +1413,7 @@ export default function ModelsPage() {
           <p className="text-slate-500">
             {user?.role === "admin"
               ? "Manage all models in the platform"
-              : "Manage your studio's models"}
+              : "Manage your team's creators"}
           </p>
         </div>
         <div className="flex items-center gap-2">

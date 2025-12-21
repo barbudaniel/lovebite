@@ -202,7 +202,7 @@ const teamNavItems: NavItem[] = [
     roles: ["admin", "studio"],
   },
   {
-    label: "Studios",
+    label: "Businesses",
     href: "/dashboard/studios",
     icon: Building2,
     roles: ["admin"],
@@ -263,11 +263,17 @@ function AppSidebar({ user, onLogout }: { user: DashboardUser | null; onLogout: 
       studio: Building2,
       model: User,
     };
+    // Display names for roles (internal role names stay the same)
+    const displayNames = {
+      admin: "Admin",
+      studio: "Business",
+      model: "Independent",
+    };
     const Icon = icons[user.role];
     return (
       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${colors[user.role]}`}>
         <Icon className="w-3 h-3" />
-        {!isCollapsed && (user.role.charAt(0).toUpperCase() + user.role.slice(1))}
+        {!isCollapsed && displayNames[user.role]}
       </span>
     );
   };
