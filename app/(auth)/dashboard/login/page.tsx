@@ -22,8 +22,6 @@ import {
   UserPlus,
 } from "lucide-react";
 
-const BOT_API_URL = process.env.NEXT_PUBLIC_BOT_API_URL || "http://143.110.128.83:3001";
-
 function LoginContent() {
   const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
   const [isSignUp, setIsSignUp] = useState(false);
@@ -155,39 +153,27 @@ function LoginContent() {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedCode(code);
 
-      // Check if bot is connected before trying to send
-      let botConnected = false;
-      try {
-        const statusRes = await fetch(`${BOT_API_URL}/health`);
-        if (statusRes.ok) {
-          const statusData = await statusRes.json();
-          botConnected = statusData.whatsapp?.connected === true;
-        }
-      } catch {
-        console.log("Could not check bot status");
-      }
-
-      if (!botConnected) {
-        // Bot not connected - show code in dev mode
-        toast.info(`WhatsApp bot offline. Dev code: ${code}`);
-        setShowVerification(true);
-        return;
-      }
-
-      // Try to send via WhatsApp API
+      // Try to send via WhatsApp API (server-side will check bot status)
       const response = await fetch("/api/send-whatsapp-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, code }),
       });
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to send code");
+        // If bot is offline, show dev code
+        if (data.error?.includes("offline") || data.error?.includes("Failed")) {
+          toast.info(`WhatsApp unavailable. Dev code: ${code}`);
+        } else {
+          throw new Error(data.error || "Failed to send code");
+        }
+      } else {
+        toast.success("Verification code sent via WhatsApp!");
       }
 
       setShowVerification(true);
-      toast.success("Verification code sent via WhatsApp!");
     } catch (err: unknown) {
       const error = err as Error;
       console.error("Phone login error:", error);

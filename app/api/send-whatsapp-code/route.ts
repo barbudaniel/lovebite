@@ -13,6 +13,30 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if bot is connected first
+    try {
+      const healthRes = await fetch(`${BOT_API_URL}/health`, {
+        signal: AbortSignal.timeout(5000), // 5 second timeout
+      });
+      
+      if (healthRes.ok) {
+        const healthData = await healthRes.json();
+        if (!healthData.whatsapp?.connected) {
+          console.log("WhatsApp bot not connected");
+          return NextResponse.json(
+            { error: "WhatsApp bot offline - use dev code", offline: true },
+            { status: 503 }
+          );
+        }
+      }
+    } catch (healthError) {
+      console.log("Could not reach bot health endpoint:", healthError);
+      return NextResponse.json(
+        { error: "WhatsApp bot offline - use dev code", offline: true },
+        { status: 503 }
+      );
+    }
+
     // Clean up phone number
     const cleanPhone = phone.replace(/\D/g, "");
 
