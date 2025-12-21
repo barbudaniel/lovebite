@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,41 +17,59 @@ import {
   Sparkles,
   CheckCircle,
   XCircle,
+  KeyRound,
 } from "lucide-react";
 
 function ResetPasswordContent() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Check if we have a valid recovery session
+  const email = searchParams.get("email");
+  const code = searchParams.get("code");
+
+  // Validate the code on mount
   useEffect(() => {
-    const checkSession = async () => {
-      const supabase = getSupabaseBrowserClient();
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      // If there's no session and no access_token in URL, show error
-      const accessToken = searchParams.get("access_token");
-      const type = searchParams.get("type");
-      
-      if (!session && !accessToken && type !== "recovery") {
+    const validateCode = async () => {
+      if (!email || !code) {
         setIsError(true);
-        setErrorMessage("Invalid or expired password reset link. Please request a new one.");
+        setErrorMessage("Invalid password reset link. Please request a new one.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/auth/reset-password?email=${encodeURIComponent(email)}&code=${code}`
+        );
+        const data = await response.json();
+
+        if (!data.valid) {
+          setIsError(true);
+          setErrorMessage("This reset code has expired or is invalid. Please request a new one.");
+        }
+      } catch (err) {
+        console.error("Validation error:", err);
+        setIsError(true);
+        setErrorMessage("Failed to validate reset code. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
     };
-    
-    checkSession();
-  }, [searchParams]);
+
+    validateCode();
+  }, [email, code]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!password) {
       toast.error("Please enter a new password");
       return;
@@ -68,32 +85,54 @@ function ResetPasswordContent() {
       return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase.auth.updateUser({
-        password: password,
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          code,
+          newPassword: password,
+        }),
       });
 
-      if (error) {
-        throw error;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to reset password");
       }
 
       setIsSuccess(true);
       toast.success("Password updated successfully!");
-      
-      // Redirect to dashboard after a delay
+
+      // Redirect to login after a delay
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/dashboard/login");
       }, 2000);
     } catch (err: unknown) {
       const error = err as Error;
       console.error("Reset password error:", error);
       toast.error(error.message || "Failed to update password");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center"
+        >
+          <Loader2 className="w-8 h-8 text-brand-500 animate-spin mx-auto mb-4" />
+          <p className="text-slate-400">Validating reset code...</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (isError) {
     return (
@@ -111,13 +150,13 @@ function ResetPasswordContent() {
             <div className="w-16 h-16 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <XCircle className="w-8 h-8 text-red-400" />
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">Link Expired</h2>
+            <h2 className="text-xl font-bold text-white mb-2">Invalid or Expired Code</h2>
             <p className="text-slate-400 text-sm mb-6">{errorMessage}</p>
             <Link
               href="/dashboard/login/forgot-password"
               className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 transition-colors"
             >
-              Request a new reset link
+              Request a new reset code
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -144,7 +183,8 @@ function ResetPasswordContent() {
             </div>
             <h2 className="text-xl font-bold text-white mb-2">Password Updated!</h2>
             <p className="text-slate-400 text-sm mb-6">
-              Your password has been reset successfully. Redirecting to dashboard...
+              Your password has been reset successfully.<br />
+              Redirecting to login...
             </p>
             <Loader2 className="w-6 h-6 animate-spin mx-auto text-brand-400" />
           </div>
@@ -182,6 +222,9 @@ function ResetPasswordContent() {
         {/* Card */}
         <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/10 p-8 shadow-xl">
           <div className="text-center mb-6">
+            <div className="w-14 h-14 bg-brand-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <KeyRound className="w-7 h-7 text-brand-400" />
+            </div>
             <h2 className="text-xl font-bold text-white">Create new password</h2>
             <p className="text-slate-400 text-sm mt-1">
               Enter your new password below
@@ -215,6 +258,9 @@ function ResetPasswordContent() {
                   )}
                 </button>
               </div>
+              <p className="text-xs text-slate-500">
+                At least 6 characters
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -234,12 +280,18 @@ function ResetPasswordContent() {
               </div>
             </div>
 
+            {password && confirmPassword && password !== confirmPassword && (
+              <p className="text-sm text-red-400">
+                Passwords do not match
+              </p>
+            )}
+
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting || !password || password !== confirmPassword}
               className="w-full bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white shadow-lg shadow-brand-600/25"
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
@@ -248,6 +300,13 @@ function ResetPasswordContent() {
                 </>
               )}
             </Button>
+
+            <Link
+              href="/dashboard/login"
+              className="block w-full text-center text-sm text-slate-400 hover:text-white transition-colors"
+            >
+              Back to login
+            </Link>
           </form>
         </div>
       </motion.div>
@@ -257,13 +316,14 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+        </div>
+      }
+    >
       <ResetPasswordContent />
     </Suspense>
   );
 }
-

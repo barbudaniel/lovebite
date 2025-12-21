@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 import { createServerClient } from "@/lib/supabase";
+import { getAccountCreatedHtml } from "@/lib/email-templates";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, fullName } = await request.json();
+    const { email, password, fullName, sendWelcomeEmail = false } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -30,6 +34,23 @@ export async function POST(request: NextRequest) {
         { error: error.message },
         { status: 400 }
       );
+    }
+
+    // Send welcome email with credentials if requested
+    if (sendWelcomeEmail && data.user) {
+      const name = fullName || email.split("@")[0];
+      const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://lovebite.fans"}/dashboard`;
+      
+      const htmlContent = getAccountCreatedHtml(name, email, password, dashboardUrl);
+      await resend.emails.send({
+        from: "Lovebite <welcome@lovebite.fans>",
+        to: email,
+        subject: "Your Lovebite account is ready!",
+        html: htmlContent,
+      }).catch(err => {
+        console.error("Failed to send welcome email:", err);
+        // Don't fail the request for email failure
+      });
     }
 
     return NextResponse.json({ user: data.user });

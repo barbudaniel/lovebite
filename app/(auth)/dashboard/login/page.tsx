@@ -113,6 +113,8 @@ function LoginContent() {
     setIsLoading(true);
     try {
       const supabase = getSupabaseBrowserClient();
+      
+      // Create the auth user (email confirmation disabled in Supabase)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -123,12 +125,20 @@ function LoginContent() {
 
       if (error) throw error;
 
-      if (data.user && !data.session) {
-        // Email confirmation required
-        toast.success("Check your email to confirm your account!");
-      } else if (data.user && data.session) {
-        // Auto-confirmed (happens in dev or if email confirmation is disabled)
-        toast.success("Account created! Setting up your profile...");
+      if (data.user) {
+        // Send our custom verification email
+        const verifyResponse = await fetch("/api/auth/send-verification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        if (!verifyResponse.ok) {
+          console.error("Failed to send verification email");
+        }
+
+        // Redirect to setup regardless - they can verify later
+        toast.success("Account created! Check your email for verification code.");
         window.location.href = "/dashboard/setup";
       }
     } catch (err: unknown) {

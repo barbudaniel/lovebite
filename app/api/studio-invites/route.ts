@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { Resend } from "resend";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getStudioInviteHtml } from "@/lib/email-templates";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -140,26 +144,53 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
-    // Get the model's dashboard user to send notification
+    // Get the model's dashboard user to send notification and email
     const { data: modelUser } = await supabaseAdmin
       .from("dashboard_users")
-      .select("id")
+      .select("id, email, display_name")
       .eq("creator_id", creatorId)
       .single();
 
     if (modelUser) {
-      // Create notification for the model
+      // Create in-app notification for the model
       await supabaseAdmin.from("notifications").insert({
         user_id: modelUser.id,
         type: "studio_invite",
-        title: "Studio Invitation",
-        message: `${studio?.name || "A studio"} has invited you to join their team!`,
+        title: "Business Invitation",
+        message: `${studio?.name || "A business"} has invited you to join their team!`,
         data: {
           invite_id: invite.id,
           studio_id: dashboardUser.studio_id,
           studio_name: studio?.name,
         },
       });
+
+      // Get inviter's name
+      const { data: inviter } = await supabaseAdmin
+        .from("dashboard_users")
+        .select("display_name")
+        .eq("id", dashboardUser.id)
+        .single();
+
+      // Send email notification
+      if (modelUser.email) {
+        const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://lovebite.fans"}/dashboard`;
+        const htmlContent = getStudioInviteHtml(
+          studio?.name || "A business",
+          inviter?.display_name || "Someone",
+          dashboardUrl
+        );
+        
+        await resend.emails.send({
+          from: "Lovebite <notifications@lovebite.fans>",
+          to: modelUser.email,
+          subject: `You've been invited to join ${studio?.name || "a business"} on Lovebite!`,
+          html: htmlContent,
+        }).catch(err => {
+          console.error("Failed to send invite email:", err);
+          // Don't fail the request for email failure
+        });
+      }
     }
 
     return NextResponse.json({ data: invite });
