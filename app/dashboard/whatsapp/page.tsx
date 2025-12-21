@@ -94,8 +94,9 @@ interface AnalyticsData {
   activeCreators: number;
 }
 
-// WhatsApp Bot API URL (port 3001)
-const BOT_API_URL = process.env.NEXT_PUBLIC_BOT_API_URL || "http://143.110.128.83:3001";
+// WhatsApp Bot API URL - use local proxy to avoid mixed content (HTTPS -> HTTP) issues
+// The proxy forwards requests to the actual bot API on port 3001
+const BOT_API_URL = "/api/whatsapp-bot";
 
 // ============================================
 // STATUS CARD

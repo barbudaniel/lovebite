@@ -2,8 +2,11 @@
 // LOVEBITE MEDIA API CLIENT
 // ============================================
 // This client interfaces with the external media management microservice
+// Uses a local proxy to avoid mixed content (HTTPS -> HTTP) issues
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'http://143.110.128.83:3002';
+// Use our internal proxy to avoid mixed content errors
+// The proxy forwards requests to the actual Media API on port 3002
+const API_BASE_URL = '/api/media-proxy';
 
 interface ApiResponse<T> {
   success: boolean;
