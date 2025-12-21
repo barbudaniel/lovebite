@@ -679,6 +679,34 @@ function SettingsModal({
 }
 
 // ============================================
+// OFFLINE BANNER
+// ============================================
+
+function OfflineBanner({ message }: { message: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6"
+    >
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-amber-100 rounded-lg">
+          <WifiOff className="w-5 h-5 text-amber-600" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-amber-800">Limited Functionality</h3>
+          <p className="text-sm text-amber-600">{message}</p>
+        </div>
+      </div>
+      <div className="mt-3 text-xs text-amber-500">
+        Some features like sending messages, creating groups, and viewing real-time data are unavailable. 
+        Database information is still accessible.
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
 // MAIN PAGE
 // ============================================
 
@@ -687,6 +715,7 @@ export default function WhatsAppBotPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [botStatus, setBotStatus] = useState<BotStatus | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const [queueStats, setQueueStats] = useState<any>(null);
   const [commands, setCommands] = useState<BotCommand[]>([
     { command: "/stats", description: "Show model statistics", enabled: true },
@@ -718,6 +747,7 @@ export default function WhatsAppBotPage() {
           rabbitmq: data.rabbitmq || null,
         });
         setIsConnected(data.whatsapp?.connected || false);
+        setIsMaintenanceMode(data.maintenanceMode || false);
         setIsLoading(false);
         return;
       }
@@ -778,8 +808,20 @@ export default function WhatsAppBotPage() {
     );
   }
 
+  // Determine offline message
+  const offlineMessage = !botStatus 
+    ? "WhatsApp bot is offline. The server may be down or unreachable."
+    : isMaintenanceMode 
+      ? "WhatsApp bot is in maintenance mode. Message processing is paused."
+      : !isConnected 
+        ? "WhatsApp is not connected. Please scan the QR code to authenticate."
+        : null;
+
   return (
     <div className="space-y-6">
+      {/* Offline Banner */}
+      {offlineMessage && <OfflineBanner message={offlineMessage} />}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">

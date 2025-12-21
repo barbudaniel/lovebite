@@ -395,6 +395,16 @@ function LoginContent() {
                 )}
               </Button>
 
+              {/* Forgot Password Link */}
+              {!isSignUp && (
+                <Link
+                  href="/dashboard/login/forgot-password"
+                  className="block w-full text-center text-sm text-brand-400 hover:text-brand-300 transition-colors"
+                >
+                  Forgot your password?
+                </Link>
+              )}
+
               {/* Toggle Sign Up / Sign In */}
               <button
                 type="button"
