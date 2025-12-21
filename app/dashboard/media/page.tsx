@@ -1454,6 +1454,11 @@ export default function MediaPage() {
     };
   }, [handleGlobalDragEnter, handleGlobalDragLeave, handleGlobalDragOver, handleGlobalDrop]);
 
+  // Store studio creator IDs for filtering and track loading state
+  // NOTE: These must be defined before fetchCreators which uses them
+  const [studioCreatorIds, setStudioCreatorIds] = useState<Set<string>>(new Set());
+  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
+
   // Fetch creators and their media counts for folder view
   const fetchCreators = useCallback(async () => {
     if (!apiKey || !isAdminOrStudio || !permissionsLoaded) return;
@@ -1522,10 +1527,6 @@ export default function MediaPage() {
       console.error("Error fetching creators:", err);
     }
   }, [apiKey, isAdminOrStudio, user, creatorMediaCounts, permissionsLoaded]);
-
-  // Store studio creator IDs for filtering and track loading state
-  const [studioCreatorIds, setStudioCreatorIds] = useState<Set<string>>(new Set());
-  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
 
   // Fetch studio creators for permission filtering
   useEffect(() => {
