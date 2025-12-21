@@ -554,11 +554,112 @@ function AppSidebar({ user, onLogout }: { user: DashboardUser | null; onLogout: 
 }
 
 // ============================================
+// NOTIFICATION TYPE
+// ============================================
+
+interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message: string | null;
+  data: Record<string, any>;
+  is_read: boolean;
+  created_at: string;
+}
+
+// ============================================
 // HEADER COMPONENT
 // ============================================
 
-function Header({ user }: { user: DashboardUser | null }) {
+function Header({ user, dashboardUserId }: { user: DashboardUser | null; dashboardUserId?: string }) {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [isRespondingToInvite, setIsRespondingToInvite] = useState<string | null>(null);
+  const router = useRouter();
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  const fetchNotifications = async () => {
+    if (!dashboardUserId) return;
+    setIsLoadingNotifications(true);
+    try {
+      const response = await fetch(`/api/notifications?userId=${dashboardUserId}`);
+      const { data } = await response.json();
+      setNotifications(data || []);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  };
+
+  useEffect(() => {
+    if (dashboardUserId && showNotifications) {
+      fetchNotifications();
+    }
+  }, [dashboardUserId, showNotifications]);
+
+  const markAsRead = async (notificationIds: string[]) => {
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationIds }),
+      });
+      setNotifications(prev => prev.map(n => 
+        notificationIds.includes(n.id) ? { ...n, is_read: true } : n
+      ));
+    } catch (err) {
+      console.error("Error marking as read:", err);
+    }
+  };
+
+  const handleInviteResponse = async (inviteId: string, action: "accept" | "decline") => {
+    setIsRespondingToInvite(inviteId);
+    try {
+      const response = await fetch(`/api/studio-invites/${inviteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        // Mark related notification as read
+        const relatedNotification = notifications.find(
+          n => n.type === "studio_invite" && n.data?.invite_id === inviteId
+        );
+        if (relatedNotification) {
+          await markAsRead([relatedNotification.id]);
+        }
+        // Refresh the page to reflect changes
+        router.refresh();
+        window.location.reload();
+      } else {
+        console.error("Error responding to invite:", data.error);
+      }
+    } catch (err) {
+      console.error("Error responding to invite:", err);
+    } finally {
+      setIsRespondingToInvite(null);
+    }
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:px-6">
@@ -572,16 +673,108 @@ function Header({ user }: { user: DashboardUser | null }) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="size-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 size-5 bg-pink-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-96">
+            <DropdownMenuLabel className="flex items-center justify-between">
+              <span>Notifications</span>
+              {unreadCount > 0 && (
+                <button
+                  onClick={() => markAsRead(notifications.filter(n => !n.is_read).map(n => n.id))}
+                  className="text-xs text-pink-600 hover:text-pink-700"
+                >
+                  Mark all read
+                </button>
+              )}
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              <Bell className="size-8 mx-auto mb-2 opacity-30" />
-              <p>No notifications</p>
-              <p className="text-xs mt-1">You're all caught up!</p>
-            </div>
+            {isLoadingNotifications ? (
+              <div className="py-8 text-center">
+                <Loader2 className="size-6 mx-auto animate-spin text-muted-foreground" />
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                <Bell className="size-8 mx-auto mb-2 opacity-30" />
+                <p>No notifications</p>
+                <p className="text-xs mt-1">You&apos;re all caught up!</p>
+              </div>
+            ) : (
+              <div className="max-h-[400px] overflow-y-auto">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`p-3 border-b last:border-0 ${
+                      notification.is_read ? "opacity-60" : "bg-pink-50/50"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`size-8 rounded-full flex items-center justify-center shrink-0 ${
+                        notification.type === "studio_invite" 
+                          ? "bg-blue-100 text-blue-600"
+                          : notification.type === "invite_accepted"
+                          ? "bg-green-100 text-green-600"
+                          : notification.type === "model_left"
+                          ? "bg-amber-100 text-amber-600"
+                          : "bg-slate-100 text-slate-600"
+                      }`}>
+                        {notification.type === "studio_invite" ? (
+                          <Building2 className="size-4" />
+                        ) : notification.type === "invite_accepted" ? (
+                          <User className="size-4" />
+                        ) : (
+                          <Bell className="size-4" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900">{notification.title}</p>
+                        {notification.message && (
+                          <p className="text-xs text-slate-500 mt-0.5">{notification.message}</p>
+                        )}
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          {formatTimeAgo(notification.created_at)}
+                        </p>
+                        
+                        {/* Studio invite actions */}
+                        {notification.type === "studio_invite" && notification.data?.invite_id && !notification.is_read && (
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => handleInviteResponse(notification.data.invite_id, "accept")}
+                              disabled={isRespondingToInvite === notification.data.invite_id}
+                              className="px-3 py-1 text-xs font-medium bg-pink-600 text-white rounded-full hover:bg-pink-700 disabled:opacity-50"
+                            >
+                              {isRespondingToInvite === notification.data.invite_id ? (
+                                <Loader2 className="size-3 animate-spin" />
+                              ) : (
+                                "Accept"
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleInviteResponse(notification.data.invite_id, "decline")}
+                              disabled={isRespondingToInvite === notification.data.invite_id}
+                              className="px-3 py-1 text-xs font-medium bg-slate-200 text-slate-700 rounded-full hover:bg-slate-300 disabled:opacity-50"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      {!notification.is_read && (
+                        <button
+                          onClick={() => markAsRead([notification.id])}
+                          className="size-2 bg-pink-600 rounded-full shrink-0"
+                          title="Mark as read"
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -824,7 +1017,7 @@ export default function DashboardLayout({
           <div className="flex min-h-screen w-full">
             <AppSidebar user={user} onLogout={handleLogout} />
             <div className="flex-1 flex flex-col">
-              <Header user={user} />
+              <Header user={user} dashboardUserId={user?.id} />
               <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
             </div>
           </div>

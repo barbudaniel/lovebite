@@ -35,6 +35,10 @@ import {
   ChevronRight,
   Palette,
   Globe,
+  Send,
+  Clock,
+  XCircle,
+  UserCheck,
 } from "lucide-react";
 import {
   Dialog,
@@ -85,6 +89,20 @@ interface BioLink {
   tagline: string | null;
   is_published: boolean;
   custom_domain: string | null;
+}
+
+interface StudioInvite {
+  id: string;
+  studio_id: string;
+  creator_id: string;
+  status: "pending" | "accepted" | "declined" | "cancelled";
+  message: string | null;
+  created_at: string;
+  responded_at: string | null;
+  creator?: {
+    id: string;
+    username: string;
+  };
 }
 
 // ============================================
@@ -643,6 +661,284 @@ function ModelModal({
 }
 
 // ============================================
+// INVITE MODEL MODAL
+// ============================================
+
+function InviteModelModal({
+  studioId,
+  onClose,
+  onSent,
+}: {
+  studioId: string;
+  onClose: () => void;
+  onSent: () => void;
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Creator[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
+  const [inviteMessage, setInviteMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  const searchCreators = async () => {
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      
+      // Search for creators without a studio (independent models)
+      const { data, error } = await supabase
+        .from("creators")
+        .select("*")
+        .is("studio_id", null)
+        .or(`username.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .limit(10);
+
+      if (error) throw error;
+      setSearchResults(data || []);
+    } catch (err) {
+      console.error("Error searching creators:", err);
+      toast.error("Failed to search creators");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(searchCreators, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleSendInvite = async () => {
+    if (!selectedCreator) {
+      toast.error("Please select a model to invite");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const response = await fetch("/api/studio-invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          creatorId: selectedCreator.id,
+          message: inviteMessage || null,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send invite");
+      }
+
+      toast.success(`Invite sent to ${selectedCreator.display_name || selectedCreator.username}!`);
+      onSent();
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Error sending invite:", error);
+      toast.error(error.message || "Failed to send invite");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>Invite Existing Model</DialogTitle>
+          <DialogDescription>
+            Search for models who are not part of any studio and invite them to join yours
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogBody className="space-y-4">
+          {/* Search */}
+          <div className="space-y-2">
+            <Label>Search by username or email</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Type to search..."
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {/* Search Results */}
+          {isSearching ? (
+            <div className="py-4 text-center">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto text-slate-400" />
+            </div>
+          ) : searchResults.length > 0 ? (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {searchResults.map((creator) => (
+                <button
+                  key={creator.id}
+                  onClick={() => setSelectedCreator(creator)}
+                  className={`w-full p-3 rounded-lg border text-left transition-colors ${
+                    selectedCreator?.id === creator.id
+                      ? "border-brand-500 bg-brand-50"
+                      : "border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center">
+                      {creator.avatar_url ? (
+                        <img
+                          src={creator.avatar_url}
+                          alt=""
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm font-bold text-brand-600">
+                          {(creator.display_name || creator.username).charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900">
+                        {creator.display_name || creator.username}
+                      </p>
+                      <p className="text-sm text-slate-500">@{creator.username}</p>
+                    </div>
+                    {selectedCreator?.id === creator.id && (
+                      <CheckCircle className="w-5 h-5 text-brand-600 ml-auto" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : searchQuery.length >= 2 ? (
+            <div className="py-4 text-center text-sm text-slate-500">
+              No independent models found matching "{searchQuery}"
+            </div>
+          ) : null}
+
+          {/* Selected Creator */}
+          {selectedCreator && (
+            <div className="bg-brand-50 rounded-xl p-4 border border-brand-200">
+              <p className="text-sm font-medium text-brand-700 mb-2">Selected Model</p>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-200 to-brand-300 flex items-center justify-center">
+                  {selectedCreator.avatar_url ? (
+                    <img
+                      src={selectedCreator.avatar_url}
+                      alt=""
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-lg font-bold text-brand-700">
+                      {(selectedCreator.display_name || selectedCreator.username).charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    {selectedCreator.display_name || selectedCreator.username}
+                  </p>
+                  <p className="text-sm text-slate-500">@{selectedCreator.username}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedCreator(null)}
+                  className="ml-auto p-1 hover:bg-brand-100 rounded"
+                >
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Invite Message */}
+          <div className="space-y-2">
+            <Label>Message (optional)</Label>
+            <textarea
+              value={inviteMessage}
+              onChange={(e) => setInviteMessage(e.target.value)}
+              placeholder="Add a personal message to your invite..."
+              rows={3}
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900"
+            />
+          </div>
+        </DialogBody>
+
+        <DialogFooter className="gap-3">
+          <Button variant="outline" onClick={onClose} className="flex-1">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSendInvite}
+            disabled={isSending || !selectedCreator}
+            className="flex-1 bg-brand-600 hover:bg-brand-700"
+          >
+            {isSending ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Send className="w-4 h-4 mr-2" />
+            )}
+            Send Invite
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
+// PENDING INVITES SECTION
+// ============================================
+
+function PendingInvitesSection({
+  invites,
+  onCancelInvite,
+}: {
+  invites: StudioInvite[];
+  onCancelInvite: (inviteId: string) => void;
+}) {
+  const pendingInvites = invites.filter(i => i.status === "pending");
+  
+  if (pendingInvites.length === 0) return null;
+
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Clock className="w-4 h-4 text-amber-600" />
+        <span className="font-medium text-amber-800">Pending Invites ({pendingInvites.length})</span>
+      </div>
+      <div className="space-y-2">
+        {pendingInvites.map((invite) => (
+          <div
+            key={invite.id}
+            className="flex items-center justify-between bg-white rounded-lg p-3 border border-amber-100"
+          >
+            <div>
+              <p className="font-medium text-slate-900">
+                @{invite.creator?.username || "Unknown"}
+              </p>
+              <p className="text-xs text-slate-500">
+                Sent {new Date(invite.created_at).toLocaleDateString()}
+              </p>
+            </div>
+            <button
+              onClick={() => onCancelInvite(invite.id)}
+              className="text-sm text-red-600 hover:text-red-700 font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
 // BIO LINK EDITOR MODAL
 // ============================================
 
@@ -955,10 +1251,12 @@ export default function ModelsPage() {
   const [models, setModels] = useState<Creator[]>([]);
   const [dashboardUsers, setDashboardUsers] = useState<DashboardUser[]>([]);
   const [bioLinks, setBioLinks] = useState<BioLink[]>([]);
+  const [invites, setInvites] = useState<StudioInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedModel, setSelectedModel] = useState<Creator | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
@@ -1012,11 +1310,40 @@ export default function ModelsPage() {
           .in("creator_id", creatorIds);
         setBioLinks(bioLinksData || []);
       }
+
+      // Fetch studio invites (for studios)
+      if (user?.role === "studio" && studioId) {
+        try {
+          const response = await fetch("/api/studio-invites");
+          const { data: invitesData } = await response.json();
+          setInvites(invitesData || []);
+        } catch (e) {
+          console.error("Error fetching invites:", e);
+        }
+      }
     } catch (err) {
       console.error("Error fetching models:", err);
       toast.error("Failed to load models");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCancelInvite = async (inviteId: string) => {
+    try {
+      const response = await fetch(`/api/studio-invites/${inviteId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to cancel invite");
+      }
+      toast.success("Invite cancelled");
+      fetchModels();
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Error cancelling invite:", error);
+      toast.error(error.message || "Failed to cancel invite");
     }
   };
 
@@ -1089,14 +1416,30 @@ export default function ModelsPage() {
               : "Manage your studio's models"}
           </p>
         </div>
-        <Button
-          onClick={() => setShowAddModal(true)}
-          className="bg-brand-600 hover:bg-brand-700"
-        >
-          <UserPlus className="w-4 h-4 mr-2" />
-          Add Model
-        </Button>
+        <div className="flex items-center gap-2">
+          {user?.role === "studio" && (
+            <Button
+              variant="outline"
+              onClick={() => setShowInviteModal(true)}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Invite Model
+            </Button>
+          )}
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="bg-brand-600 hover:bg-brand-700"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Add Model
+          </Button>
+        </div>
       </div>
+
+      {/* Pending Invites */}
+      {user?.role === "studio" && (
+        <PendingInvitesSection invites={invites} onCancelInvite={handleCancelInvite} />
+      )}
 
       {/* Search & Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
@@ -1228,6 +1571,17 @@ export default function ModelsPage() {
             onClose={() => setShowAddModal(false)}
             onSaved={() => {
               setShowAddModal(false);
+              fetchModels();
+            }}
+          />
+        )}
+
+        {showInviteModal && studioId && (
+          <InviteModelModal
+            studioId={studioId}
+            onClose={() => setShowInviteModal(false)}
+            onSent={() => {
+              setShowInviteModal(false);
               fetchModels();
             }}
           />
