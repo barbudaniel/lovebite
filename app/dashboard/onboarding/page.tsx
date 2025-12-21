@@ -109,7 +109,7 @@ const statusConfig: Record<
 };
 
 // Storage base URL for your old Supabase project
-const OLD_STORAGE_URL = "https://rsdfmvfpopwilizrywfx.supabase.co/storage/v1/object/public/onboarding";
+const OLD_STORAGE_URL = "https://rsdfmvfpopwilizrywfx.supaba  se.co/storage/v1/object/public/onboarding";
 
 // ============================================
 // ONBOARDING CARD
