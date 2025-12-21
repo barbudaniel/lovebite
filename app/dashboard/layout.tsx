@@ -25,6 +25,13 @@ import {
   MessageCircle,
   MessageSquare,
   PanelLeft,
+  Calendar,
+  Zap,
+  Share2,
+  Bot,
+  Activity,
+  Globe,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,12 +107,31 @@ interface NavItem {
   roles?: string[];
 }
 
-const mainNavItems: NavItem[] = [
+// Home section - Primary navigation
+const homeNavItems: NavItem[] = [
   {
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
   },
+  {
+    label: "Activity",
+    href: "/dashboard/activity",
+    icon: Activity,
+  },
+];
+
+// Analytics section
+const analyticsNavItems: NavItem[] = [
+  {
+    label: "Statistics",
+    href: "/dashboard/statistics",
+    icon: BarChart3,
+  },
+];
+
+// Content section - Media Management
+const contentNavItems: NavItem[] = [
   {
     label: "Media Library",
     href: "/dashboard/media",
@@ -114,50 +140,66 @@ const mainNavItems: NavItem[] = [
   {
     label: "Scenarios",
     href: "/dashboard/albums",
-    icon: MessageSquare,
+    icon: Layers,
   },
+];
+
+// Bio Links section - Grouped
+const bioLinksNavItems: NavItem[] = [
   {
-    label: "Bio Links",
+    label: "Manage",
     href: "/dashboard/bio-links",
     icon: Link2,
   },
   {
-    label: "Accounts",
-    href: "/dashboard/accounts",
-    icon: Key,
+    label: "Analytics",
+    href: "/dashboard/bio-links/analytics",
+    icon: BarChart3,
   },
   {
-    label: "Statistics",
-    href: "/dashboard/statistics",
-    icon: BarChart3,
+    label: "Domains",
+    href: "/dashboard/bio-links/domains",
+    icon: Globe,
   },
 ];
 
-const managementNavItems: NavItem[] = [
+// Accounts section
+const accountsNavItems: NavItem[] = [
   {
-    label: "Models",
-    href: "/dashboard/models",
-    icon: Users,
-    roles: ["admin", "studio"],
+    label: "Platform Accounts",
+    href: "/dashboard/accounts",
+    icon: Key,
   },
   {
     label: "Contracts",
     href: "/dashboard/contracts",
     icon: FileText,
   },
+];
+
+// Social Management section (dev-only)
+const isDevelopment = process.env.NODE_ENV === "development";
+
+const socialNavItems: NavItem[] = [
   {
-    label: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
+    label: "Calendar",
+    href: "/dashboard/social/calendar",
+    icon: Calendar,
+  },
+  {
+    label: "Automations",
+    href: "/dashboard/social/automations",
+    icon: Zap,
   },
 ];
 
-const adminNavItems: NavItem[] = [
+// Team Management section - For admin/studio
+const teamNavItems: NavItem[] = [
   {
-    label: "Onboarding",
-    href: "/dashboard/onboarding",
+    label: "Models",
+    href: "/dashboard/models",
     icon: Users,
-    roles: ["admin"],
+    roles: ["admin", "studio"],
   },
   {
     label: "Studios",
@@ -166,10 +208,34 @@ const adminNavItems: NavItem[] = [
     roles: ["admin"],
   },
   {
+    label: "Onboarding",
+    href: "/dashboard/onboarding",
+    icon: Users,
+    roles: ["admin"],
+  },
+];
+
+// Tools section
+const toolsNavItems: NavItem[] = [
+  {
+    label: "WhatsApp Assistant",
+    href: "/dashboard/whatsapp-assistant",
+    icon: MessageCircle,
+  },
+  {
     label: "WhatsApp Bot",
     href: "/dashboard/whatsapp",
-    icon: MessageCircle,
+    icon: Bot,
     roles: ["admin"],
+  },
+];
+
+// Settings section
+const settingsNavItems: NavItem[] = [
+  {
+    label: "Settings",
+    href: "/dashboard/settings",
+    icon: Settings,
   },
 ];
 
@@ -227,14 +293,14 @@ function AppSidebar({ user, onLogout }: { user: DashboardUser | null; onLogout: 
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Main Navigation */}
+        {/* Home - Primary Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel>Home</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => {
+              {homeNavItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                const isActive = pathname === item.href;
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
@@ -250,12 +316,35 @@ function AppSidebar({ user, onLogout }: { user: DashboardUser | null; onLogout: 
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Management */}
+        {/* Analytics */}
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel>Analytics</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filterByRole(managementNavItems).map((item) => {
+              {analyticsNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Content - Media Management */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Content</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {contentNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                 return (
@@ -273,13 +362,62 @@ function AppSidebar({ user, onLogout }: { user: DashboardUser | null; onLogout: 
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Admin Section */}
-        {filterByRole(adminNavItems).length > 0 && (
+        {/* Bio Links */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Bio Links</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {bioLinksNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Accounts */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Accounts</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {accountsNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Social Management (Dev Only) */}
+        {isDevelopment && (
           <SidebarGroup>
-            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupLabel className="flex items-center gap-2">
+              Social
+              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-500/20 text-amber-600 rounded">DEV</span>
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {filterByRole(adminNavItems).map((item) => {
+                {socialNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                   return (
@@ -297,6 +435,76 @@ function AppSidebar({ user, onLogout }: { user: DashboardUser | null; onLogout: 
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        {/* Team Management - Admin/Studio */}
+        {filterByRole(teamNavItems).length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Team</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {filterByRole(teamNavItems).map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                        <Link href={item.href}>
+                          <Icon className="size-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Tools */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Tools</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {filterByRole(toolsNavItems).map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Settings */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {settingsNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
@@ -350,6 +558,8 @@ function AppSidebar({ user, onLogout }: { user: DashboardUser | null; onLogout: 
 // ============================================
 
 function Header({ user }: { user: DashboardUser | null }) {
+  const [showNotifications, setShowNotifications] = useState(false);
+
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:px-6">
       <SidebarTrigger className="-ml-1" />
@@ -357,19 +567,23 @@ function Header({ user }: { user: DashboardUser | null }) {
       <div className="flex-1" />
 
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="size-4" />
-          <span className="absolute -top-0.5 -right-0.5 size-2 bg-pink-500 rounded-full" />
-        </Button>
-
-        <div className="hidden sm:flex items-center gap-3 pl-3 border-l">
-          <div className="text-right">
-            <p className="text-sm font-medium">
-              {user?.display_name || user?.email || "User"}
-            </p>
-            <p className="text-xs text-muted-foreground">{user?.role}</p>
-          </div>
-        </div>
+        {/* Notifications */}
+        <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              <Bell className="size-8 mx-auto mb-2 opacity-30" />
+              <p>No notifications</p>
+              <p className="text-xs mt-1">You're all caught up!</p>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
@@ -458,16 +672,21 @@ export default function DashboardLayout({
 
       // Get API key based on role
       try {
-        let apiKeyQuery;
+        let foundApiKey: string | null = null;
         
         if (dashboardUser.role === "admin") {
           // Admin gets the admin API key
-          apiKeyQuery = supabase
+          const { data: apiUser } = await supabase
             .from("api_users")
             .select("api_key")
             .eq("role", "admin")
             .eq("enabled", true)
-            .single();
+            .limit(1)
+            .maybeSingle();
+          
+          if (apiUser?.api_key) {
+            foundApiKey = apiUser.api_key;
+          }
         } else if (dashboardUser.creator_id || dashboardUser.studio_id) {
           // Models/Studios get their specific API key
           const filters = [];
@@ -478,23 +697,45 @@ export default function DashboardLayout({
             filters.push(`studio_id.eq.${dashboardUser.studio_id}`);
           }
           
-          apiKeyQuery = supabase
+          const { data: apiUser } = await supabase
             .from("api_users")
             .select("api_key")
             .or(filters.join(","))
             .eq("enabled", true)
-            .single();
-        }
-
-        if (apiKeyQuery) {
-          const { data: apiUser } = await apiKeyQuery;
+            .limit(1)
+            .maybeSingle();
+          
           if (apiUser?.api_key) {
-            console.log("Layout - API key found");
-            setApiKey(apiUser.api_key);
+            foundApiKey = apiUser.api_key;
           }
         }
+
+        if (foundApiKey) {
+          console.log("Layout - API key found for user");
+          setApiKey(foundApiKey);
+        } else if (dashboardUser.role === "admin") {
+          // Only admins get fallback to admin API key
+          const { data: defaultApiUser } = await supabase
+            .from("api_users")
+            .select("api_key")
+            .eq("role", "admin")
+            .eq("enabled", true)
+            .limit(1)
+            .maybeSingle();
+          
+          if (defaultApiUser?.api_key) {
+            console.log("Layout - Admin using default admin API key");
+            setApiKey(defaultApiUser.api_key);
+          } else {
+            console.log("Layout - No admin API key available");
+          }
+        } else {
+          // Non-admin users without their own API key cannot access media
+          console.log("Layout - No API key for non-admin user");
+          setApiKey(null);
+        }
       } catch (e) {
-        console.log("API key not found:", e);
+        console.log("API key fetch error:", e);
       }
 
       setIsLoading(false);

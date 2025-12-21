@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, Reorder } from "motion/react";
 import { useDashboard } from "../layout";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import Link from "next/link";
 import {
   Link2,
   Plus,
@@ -31,6 +32,11 @@ import {
   Check,
   Settings,
   Palette,
+  BarChart3,
+  Upload,
+  FolderOpen,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import {
   Dialog,
@@ -75,6 +81,7 @@ interface BioLinkItem {
   pill_text: string | null;
   pill_color: string | null;
   media_id: string | null;
+  media_url: string | null;
   sort_order: number;
   enabled: boolean;
   created_at: string;
@@ -90,22 +97,39 @@ interface BioSocialLink {
   sort_order: number;
 }
 
+interface MediaItem {
+  id: string;
+  storage_url: string;
+  thumbnail_url: string | null;
+  media_type: string;
+  file_name: string;
+}
+
 const ICON_TYPES = [
-  { id: "crown", icon: Crown, label: "Crown" },
-  { id: "heart", icon: Heart, label: "Heart" },
-  { id: "video", icon: Video, label: "Video" },
-  { id: "footprints", icon: Footprints, label: "Footprints" },
-  { id: "link", icon: Link2, label: "Link" },
-  { id: "globe", icon: Globe, label: "Globe" },
+  { id: "crown", icon: Crown, label: "Crown", color: "text-amber-500" },
+  { id: "heart", icon: Heart, label: "Heart", color: "text-pink-500" },
+  { id: "video", icon: Video, label: "Video", color: "text-purple-500" },
+  { id: "footprints", icon: Footprints, label: "Footprints", color: "text-rose-500" },
+  { id: "link", icon: Link2, label: "Link", color: "text-blue-500" },
+  { id: "globe", icon: Globe, label: "Globe", color: "text-cyan-500" },
+  { id: "zap", icon: Zap, label: "Zap", color: "text-yellow-500" },
+  { id: "sparkles", icon: Sparkles, label: "Sparkles", color: "text-violet-500" },
 ];
 
-const SOCIAL_PLATFORMS = ["x", "instagram", "reddit", "tiktok", "youtube"];
+const SOCIAL_PLATFORMS = [
+  { id: "x", name: "X", icon: "𝕏" },
+  { id: "instagram", name: "Instagram", icon: "📷" },
+  { id: "reddit", name: "Reddit", icon: "🔴" },
+  { id: "tiktok", name: "TikTok", icon: "🎵" },
+  { id: "youtube", name: "YouTube", icon: "📺" },
+  { id: "twitch", name: "Twitch", icon: "🎮" },
+];
 
 // ============================================
-// LINK ITEM COMPONENT
+// LINK CARD COMPONENT
 // ============================================
 
-function LinkItem({
+function LinkCard({
   item,
   onEdit,
   onDelete,
@@ -116,65 +140,58 @@ function LinkItem({
   onDelete: () => void;
   onToggle: () => void;
 }) {
-  const iconDef = ICON_TYPES.find((i) => i.id === item.icon_type) || ICON_TYPES[4];
-  const Icon = iconDef.icon;
+  const iconConfig = ICON_TYPES.find((i) => i.id === item.icon_type) || ICON_TYPES[0];
+  const IconComponent = iconConfig.icon;
 
   return (
     <Reorder.Item
       value={item}
-      className={`bg-white rounded-xl border ${
-        item.enabled ? "border-slate-200" : "border-slate-100 opacity-60"
-      } p-4 cursor-grab active:cursor-grabbing hover:shadow-md transition-all`}
+      className={`bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-all ${
+        !item.enabled && "opacity-50"
+      }`}
     >
       <div className="flex items-center gap-4">
-        <GripVertical className="w-5 h-5 text-slate-300 shrink-0" />
-        <div
-          className={`w-10 h-10 rounded-lg ${item.icon_color || "bg-slate-100"} flex items-center justify-center shrink-0`}
-        >
-          <Icon className="w-5 h-5 text-white" />
-        </div>
+        <GripVertical className="w-5 h-5 text-slate-300 cursor-grab shrink-0" />
+        
+        {item.media_url ? (
+          <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+            <img src={item.media_url} alt="" className="w-full h-full object-cover" />
+          </div>
+        ) : (
+          <div className={`w-12 h-12 rounded-lg bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center shrink-0`}>
+            <IconComponent className={`w-6 h-6 ${iconConfig.color}`} />
+          </div>
+        )}
+
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-slate-900 truncate">{item.label}</p>
-          {item.sub_text && (
-            <p className="text-sm text-slate-500 truncate">{item.sub_text}</p>
+          <p className="font-semibold text-slate-900 truncate">{item.label}</p>
+          <p className="text-sm text-slate-500 truncate">{item.href}</p>
+          {item.pill_text && (
+            <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-pink-100 text-pink-700">
+              {item.pill_text}
+            </span>
           )}
         </div>
-        {item.pill_text && (
-          <span
-            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-              item.pill_color || "bg-slate-100 text-slate-600"
-            }`}
-          >
-            {item.pill_text}
-          </span>
-        )}
-        <div className="flex items-center gap-1 shrink-0">
+
+        <div className="flex items-center gap-2">
           <button
             onClick={onToggle}
-            className={`p-2 rounded-lg ${
-              item.enabled
-                ? "text-green-500 hover:bg-green-50"
-                : "text-slate-400 hover:bg-slate-50"
+            className={`w-10 h-5 rounded-full transition-colors relative ${
+              item.enabled ? "bg-green-500" : "bg-slate-300"
             }`}
           >
-            {item.enabled ? (
-              <Eye className="w-4 h-4" />
-            ) : (
-              <Eye className="w-4 h-4 opacity-50" />
-            )}
+            <div
+              className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                item.enabled ? "translate-x-5" : "translate-x-0.5"
+              }`}
+            />
           </button>
-          <button
-            onClick={onEdit}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg"
-          >
+          <Button variant="ghost" size="sm" onClick={onEdit}>
             <Edit2 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-          >
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50">
             <Trash2 className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
     </Reorder.Item>
@@ -187,181 +204,441 @@ function LinkItem({
 
 function LinkEditor({
   item,
+  bioLinkId,
   onSave,
   onClose,
+  creatorId,
 }: {
   item: BioLinkItem | null;
-  onSave: (data: Partial<BioLinkItem>) => void;
+  bioLinkId: string;
+  onSave: () => void;
   onClose: () => void;
+  creatorId: string;
 }) {
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     label: item?.label || "",
-    sub_text: item?.sub_text || "",
     href: item?.href || "",
+    sub_text: item?.sub_text || "",
     icon_type: item?.icon_type || "link",
-    icon_color: item?.icon_color || "bg-slate-500",
     pill_text: item?.pill_text || "",
-    pill_color: item?.pill_color || "",
+    media_id: item?.media_id || null as string | null,
+    media_url: item?.media_url || null as string | null,
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [mediaLibrary, setMediaLibrary] = useState<MediaItem[]>([]);
+  const [isLoadingMedia, setIsLoadingMedia] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.label || !formData.href) {
+  const fetchMedia = async () => {
+    setIsLoadingMedia(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data } = await supabase
+        .from("media")
+        .select("id, storage_url, thumbnail_url, media_type, file_name")
+        .eq("creator_id", creatorId)
+        .eq("media_type", "image")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      setMediaLibrary(data || []);
+    } catch (err) {
+      console.error("Error fetching media:", err);
+    } finally {
+      setIsLoadingMedia(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!form.label.trim() || !form.href.trim()) {
       toast.error("Label and URL are required");
       return;
     }
-    onSave({
-      label: formData.label,
-      sub_text: formData.sub_text || null,
-      href: formData.href,
-      icon_type: formData.icon_type,
-      icon_color: formData.icon_color || null,
-      pill_text: formData.pill_text || null,
-      pill_color: formData.pill_color || null,
-    });
+
+    setIsSaving(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      
+      if (item) {
+        await supabase
+          .from("bio_link_items")
+          .update({
+            label: form.label,
+            href: form.href,
+            sub_text: form.sub_text || null,
+            icon_type: form.icon_type,
+            pill_text: form.pill_text || null,
+            media_id: form.media_id,
+            media_url: form.media_url,
+          })
+          .eq("id", item.id);
+      } else {
+        const { data: lastItem } = await supabase
+          .from("bio_link_items")
+          .select("sort_order")
+          .eq("bio_link_id", bioLinkId)
+          .order("sort_order", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        await supabase.from("bio_link_items").insert({
+          bio_link_id: bioLinkId,
+          label: form.label,
+          href: form.href,
+          sub_text: form.sub_text || null,
+          icon_type: form.icon_type,
+          pill_text: form.pill_text || null,
+          media_id: form.media_id,
+          media_url: form.media_url,
+          sort_order: (lastItem?.sort_order || 0) + 1,
+          enabled: true,
+        });
+      }
+
+      toast.success(item ? "Link updated" : "Link added");
+      onSave();
+      onClose();
+    } catch (err) {
+      console.error("Error saving link:", err);
+      toast.error("Failed to save link");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const colorOptions = [
-    "bg-slate-500",
-    "bg-red-500",
-    "bg-orange-500",
-    "bg-amber-500",
-    "bg-green-500",
-    "bg-blue-500",
-    "bg-purple-500",
-    "bg-pink-500",
-    "bg-rose-500",
-    "bg-sky-500",
-  ];
-
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent size="md">
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle>{item ? "Edit Link" : "Add Link"}</DialogTitle>
+          <DialogTitle>{item ? "Edit Link" : "Add New Link"}</DialogTitle>
           <DialogDescription>
-            {item ? "Update your link settings" : "Add a new link to your bio page"}
+            {item ? "Update your link details" : "Add a new link to your bio page"}
           </DialogDescription>
         </DialogHeader>
+        <DialogBody className="space-y-5">
+          {/* Media Preview/Selector */}
+          <div>
+            <Label className="mb-2 block">Link Image (optional)</Label>
+            <div className="flex items-start gap-4">
+              {form.media_url ? (
+                <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-slate-100">
+                  <img src={form.media_url} alt="" className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => setForm({ ...form, media_id: null, media_url: null })}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { fetchMedia(); setShowMediaPicker(true); }}
+                  className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center hover:border-violet-400 hover:bg-violet-50 transition-colors"
+                >
+                  <ImageIcon className="w-6 h-6 text-slate-400" />
+                  <span className="text-xs text-slate-500 mt-1">Add</span>
+                </button>
+              )}
+              <div className="flex-1">
+                <p className="text-sm text-slate-600">Add an image to make your link stand out</p>
+                <p className="text-xs text-slate-400 mt-1">Recommended: 400x400px or square</p>
+              </div>
+            </div>
+          </div>
 
-        <form onSubmit={handleSubmit}>
-          <DialogBody className="space-y-4">
+          {/* Label & URL */}
+          <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="label">Label *</Label>
+              <Label>Link Label *</Label>
               <Input
-                id="label"
-                value={formData.label}
-                onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-                placeholder="OnlyFans VIP"
+                value={form.label}
+                onChange={(e) => setForm({ ...form, label: e.target.value })}
+                placeholder="My OnlyFans"
               />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="sub_text">Subtitle</Label>
+              <Label>URL *</Label>
               <Input
-                id="sub_text"
-                value={formData.sub_text}
-                onChange={(e) => setFormData({ ...formData, sub_text: e.target.value })}
-                placeholder="Exclusive content just for you"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="href">URL *</Label>
-              <Input
-                id="href"
-                type="url"
-                value={formData.href}
-                onChange={(e) => setFormData({ ...formData, href: e.target.value })}
+                value={form.href}
+                onChange={(e) => setForm({ ...form, href: e.target.value })}
                 placeholder="https://onlyfans.com/username"
               />
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Icon</Label>
-                <div className="flex flex-wrap gap-2">
-                  {ICON_TYPES.map((iconDef) => {
-                    const Icon = iconDef.icon;
-                    return (
-                      <button
-                        key={iconDef.id}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, icon_type: iconDef.id })}
-                        className={`p-2 rounded-lg border transition-all ${
-                          formData.icon_type === iconDef.id
-                            ? "border-brand-500 bg-brand-50"
-                            : "border-slate-200 hover:border-slate-300"
-                        }`}
-                      >
-                        <Icon className="w-5 h-5" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+          {/* Subtitle */}
+          <div className="space-y-2">
+            <Label>Subtitle (optional)</Label>
+            <Input
+              value={form.sub_text}
+              onChange={(e) => setForm({ ...form, sub_text: e.target.value })}
+              placeholder="Free subscription available"
+            />
+          </div>
 
-              <div className="space-y-2">
-                <Label>Icon Color</Label>
-                <div className="flex flex-wrap gap-2">
-                  {colorOptions.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, icon_color: color })}
-                      className={`w-8 h-8 rounded-lg ${color} transition-all ${
-                        formData.icon_color === color
-                          ? "ring-2 ring-offset-2 ring-brand-500"
-                          : ""
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
+          {/* Icon Selection */}
+          <div className="space-y-2">
+            <Label>Icon Style</Label>
+            <div className="flex flex-wrap gap-2">
+              {ICON_TYPES.map((iconType) => {
+                const Icon = iconType.icon;
+                return (
+                  <button
+                    key={iconType.id}
+                    onClick={() => setForm({ ...form, icon_type: iconType.id })}
+                    className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all ${
+                      form.icon_type === iconType.id
+                        ? "border-violet-500 bg-violet-50"
+                        : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <Icon className={`w-5 h-5 ${iconType.color}`} />
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="pill_text">Badge Text</Label>
+          {/* Badge/Pill */}
+          <div className="space-y-2">
+            <Label>Badge Text (optional)</Label>
+            <Input
+              value={form.pill_text}
+              onChange={(e) => setForm({ ...form, pill_text: e.target.value })}
+              placeholder="NEW"
+            />
+            <p className="text-xs text-slate-400">Add a badge like "NEW", "50% OFF", or "EXCLUSIVE"</p>
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave} disabled={isSaving} className="bg-violet-600 hover:bg-violet-700">
+            {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {item ? "Update Link" : "Add Link"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+
+      {/* Media Picker Modal */}
+      <AnimatePresence>
+        {showMediaPicker && (
+          <Dialog open onOpenChange={() => setShowMediaPicker(false)}>
+            <DialogContent size="xl">
+              <DialogHeader>
+                <DialogTitle>Select Image</DialogTitle>
+                <DialogDescription>Choose an image from your media library</DialogDescription>
+              </DialogHeader>
+              <DialogBody>
+                {isLoadingMedia ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
+                  </div>
+                ) : mediaLibrary.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FolderOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500">No images in your library</p>
+                    <Link href="/dashboard/media">
+                      <Button variant="outline" size="sm" className="mt-4">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Media
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-[400px] overflow-y-auto">
+                    {mediaLibrary.map((media) => (
+                      <button
+                        key={media.id}
+                        onClick={() => {
+                          setForm({ ...form, media_id: media.id, media_url: media.storage_url });
+                          setShowMediaPicker(false);
+                        }}
+                        className="aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-violet-500 transition-colors"
+                      >
+                        <img
+                          src={media.thumbnail_url || media.storage_url}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </DialogBody>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+    </Dialog>
+  );
+}
+
+// ============================================
+// SETTINGS MODAL
+// ============================================
+
+function SettingsModal({
+  bioLink,
+  onSave,
+  onClose,
+}: {
+  bioLink: BioLink;
+  onSave: (data: Partial<BioLink>) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [form, setForm] = useState({
+    name: bioLink.name || "",
+    slug: bioLink.slug || "",
+    tagline: bioLink.tagline || "",
+    subtitle: bioLink.subtitle || "",
+    welcome_title: bioLink.welcome_title || "",
+    welcome_text: bioLink.welcome_text || "",
+    profile_image_url: bioLink.profile_image_url || "",
+    is_published: bioLink.is_published,
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!form.name.trim() || !form.slug.trim()) {
+      toast.error("Name and slug are required");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onSave(form);
+      onClose();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent size="lg">
+        <DialogHeader>
+          <DialogTitle>Bio Link Settings</DialogTitle>
+          <DialogDescription>Customize your bio link page appearance</DialogDescription>
+        </DialogHeader>
+        <DialogBody className="space-y-5">
+          {/* Profile Image */}
+          <div className="space-y-2">
+            <Label>Profile Image URL</Label>
+            <Input
+              value={form.profile_image_url}
+              onChange={(e) => setForm({ ...form, profile_image_url: e.target.value })}
+              placeholder="https://..."
+            />
+          </div>
+
+          {/* Name & Slug */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Display Name *</Label>
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Your Name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>URL Slug *</Label>
+              <div className="flex">
+                <span className="inline-flex items-center px-3 text-sm text-slate-500 bg-slate-100 border border-r-0 border-slate-200 rounded-l-lg">
+                  bites.bio/
+                </span>
                 <Input
-                  id="pill_text"
-                  value={formData.pill_text}
-                  onChange={(e) => setFormData({ ...formData, pill_text: e.target.value })}
-                  placeholder="FREE"
+                  value={form.slug}
+                  onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
+                  className="rounded-l-none"
+                  placeholder="username"
                 />
               </div>
+            </div>
+          </div>
 
+          {/* Tagline & Subtitle */}
+          <div className="space-y-2">
+            <Label>Tagline</Label>
+            <Input
+              value={form.tagline}
+              onChange={(e) => setForm({ ...form, tagline: e.target.value })}
+              placeholder="Content Creator"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Subtitle</Label>
+            <Textarea
+              value={form.subtitle}
+              onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+              placeholder="A short description about you..."
+              rows={2}
+            />
+          </div>
+
+          {/* Welcome Section */}
+          <div className="pt-4 border-t border-slate-200">
+            <h4 className="font-medium text-slate-900 mb-4">Welcome Section</h4>
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Badge Color</Label>
-                <select
-                  value={formData.pill_color}
-                  onChange={(e) => setFormData({ ...formData, pill_color: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-900"
-                >
-                  <option value="">Default</option>
-                  <option value="bg-green-100 text-green-700">Green</option>
-                  <option value="bg-blue-100 text-blue-700">Blue</option>
-                  <option value="bg-purple-100 text-purple-700">Purple</option>
-                  <option value="bg-amber-100 text-amber-700">Amber</option>
-                  <option value="bg-rose-100 text-rose-700">Rose</option>
-                </select>
+                <Label>Welcome Title</Label>
+                <Input
+                  value={form.welcome_title}
+                  onChange={(e) => setForm({ ...form, welcome_title: e.target.value })}
+                  placeholder="Welcome!"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Welcome Text</Label>
+                <Textarea
+                  value={form.welcome_text}
+                  onChange={(e) => setForm({ ...form, welcome_text: e.target.value })}
+                  placeholder="Thanks for visiting my page..."
+                  rows={3}
+                />
               </div>
             </div>
-          </DialogBody>
+          </div>
 
-          <DialogFooter className="gap-3">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1 bg-brand-600 hover:bg-brand-700">
-              <Save className="w-4 h-4 mr-2" />
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
+          {/* Publish Toggle */}
+          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+            <div>
+              <p className="font-medium text-slate-900">Published</p>
+              <p className="text-sm text-slate-500">Make your bio link visible to everyone</p>
+            </div>
+            <button
+              onClick={() => setForm({ ...form, is_published: !form.is_published })}
+              className={`w-12 h-6 rounded-full transition-colors relative ${
+                form.is_published ? "bg-green-500" : "bg-slate-300"
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  form.is_published ? "translate-x-7" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave} disabled={isSaving} className="bg-violet-600 hover:bg-violet-700">
+            {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Save Settings
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
+}
+
+// ============================================
+// CREATOR OPTION TYPE
+// ============================================
+
+interface CreatorOption {
+  id: string;
+  username: string;
+  display_name?: string;
 }
 
 // ============================================
@@ -374,249 +651,206 @@ export default function BioLinksPage() {
   const [linkItems, setLinkItems] = useState<BioLinkItem[]>([]);
   const [socialLinks, setSocialLinks] = useState<BioSocialLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [editingItem, setEditingItem] = useState<BioLinkItem | null>(null);
-  const [showEditor, setShowEditor] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [editingItem, setEditingItem] = useState<BioLinkItem | null>(null);
+  const [showLinkEditor, setShowLinkEditor] = useState(false);
+  const [copied, setCopied] = useState(false);
+  
+  // Admin/Studio can select which creator to edit
+  const [creators, setCreators] = useState<CreatorOption[]>([]);
+  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
+  
+  const isAdminOrStudio = user?.role === "admin" || user?.role === "studio";
+  const effectiveCreatorId = isAdminOrStudio ? selectedCreatorId : user?.creator_id;
 
-  // Bio link settings form
-  const [bioSettings, setBioSettings] = useState({
-    name: "",
-    slug: "",
-    tagline: "",
-    subtitle: "",
-    welcome_title: "",
-    welcome_text: "",
-    profile_image_url: "",
-    is_published: false,
-  });
+  // Fetch creators list for admin/studio
+  useEffect(() => {
+    if (!isAdminOrStudio) return;
+    
+    const fetchCreators = async () => {
+      const supabase = getSupabaseBrowserClient();
+      let query = supabase
+        .from("creators")
+        .select("id, username")
+        .eq("enabled", true)
+        .order("username");
+      
+      if (user?.role === "studio" && user?.studio_id) {
+        query = query.eq("studio_id", user.studio_id);
+      }
+      
+      const { data } = await query;
+      setCreators(data || []);
+      
+      // Auto-select first creator if available
+      if (data && data.length > 0 && !selectedCreatorId) {
+        setSelectedCreatorId(data[0].id);
+      }
+    };
+    
+    fetchCreators();
+  }, [isAdminOrStudio, user?.studio_id, user?.role]);
 
   useEffect(() => {
-    fetchBioLink();
-  }, [user]);
+    if (effectiveCreatorId) {
+      fetchBioLink();
+    } else if (!isAdminOrStudio && !user?.creator_id) {
+      setIsLoading(false);
+    }
+  }, [effectiveCreatorId, user]);
 
   const fetchBioLink = async () => {
-    if (!user?.creator_id) {
-      setIsLoading(false);
-      return;
-    }
+    if (!effectiveCreatorId) return;
 
+    setIsLoading(true);
     try {
       const supabase = getSupabaseBrowserClient();
-
-      // Get or create bio link
-      let { data: bio, error: bioError } = await supabase
+      
+      // Fetch bio link
+      let { data: bioData, error } = await supabase
         .from("bio_links")
         .select("*")
-        .eq("creator_id", user.creator_id)
-        .single();
+        .eq("creator_id", effectiveCreatorId)
+        .maybeSingle();
 
-      if (bioError && bioError.code === "PGRST116") {
-        // No bio link exists, create one
+      if (error && error.code !== "PGRST116") throw error;
+
+      // Create if doesn't exist
+      if (!bioData) {
+        // Get creator username for slug
         const { data: creator } = await supabase
           .from("creators")
           .select("username")
-          .eq("id", user.creator_id)
+          .eq("id", effectiveCreatorId)
           .single();
-
+        
+        const username = creator?.username || `creator${Date.now()}`;
         const { data: newBio, error: createError } = await supabase
           .from("bio_links")
           .insert({
-            creator_id: user.creator_id,
-            slug: creator?.username || `creator-${user.creator_id.slice(0, 8)}`,
-            name: user.display_name || creator?.username || "My Bio",
+            creator_id: effectiveCreatorId,
+            slug: username,
+            name: username,
+            is_published: false,
           })
           .select()
           .single();
 
         if (createError) throw createError;
-        bio = newBio;
-      } else if (bioError) {
-        throw bioError;
+        bioData = newBio;
       }
 
-      setBioLink(bio);
-      setBioSettings({
-        name: bio.name || "",
-        slug: bio.slug || "",
-        tagline: bio.tagline || "",
-        subtitle: bio.subtitle || "",
-        welcome_title: bio.welcome_title || "",
-        welcome_text: bio.welcome_text || "",
-        profile_image_url: bio.profile_image_url || "",
-        is_published: bio.is_published || false,
-      });
+      setBioLink(bioData);
 
-      // Get link items
-      const { data: items, error: itemsError } = await supabase
+      // Fetch link items
+      const { data: items } = await supabase
         .from("bio_link_items")
         .select("*")
-        .eq("bio_link_id", bio.id)
+        .eq("bio_link_id", bioData.id)
         .order("sort_order");
-
-      if (itemsError) throw itemsError;
       setLinkItems(items || []);
 
-      // Get social links
-      const { data: socials, error: socialsError } = await supabase
+      // Fetch social links
+      const { data: socials } = await supabase
         .from("bio_social_links")
         .select("*")
-        .eq("bio_link_id", bio.id)
+        .eq("bio_link_id", bioData.id)
         .order("sort_order");
-
-      if (socialsError) throw socialsError;
       setSocialLinks(socials || []);
-    } catch (err: any) {
-      console.error("Error fetching bio link:", err?.message || err?.code || JSON.stringify(err));
-      setError(err?.message || "Failed to load bio link");
+    } catch (err) {
+      console.error("Error fetching bio link:", err);
+      toast.error("Failed to load bio link");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleReorder = async (newItems: BioLinkItem[]) => {
-    setLinkItems(newItems);
-
+  const handleReorder = async (newOrder: BioLinkItem[]) => {
+    setLinkItems(newOrder);
+    
     try {
       const supabase = getSupabaseBrowserClient();
-
-      // Update sort orders
-      for (let i = 0; i < newItems.length; i++) {
-        await supabase
-          .from("bio_link_items")
-          .update({ sort_order: i })
-          .eq("id", newItems[i].id);
-      }
+      await Promise.all(
+        newOrder.map((item, index) =>
+          supabase
+            .from("bio_link_items")
+            .update({ sort_order: index })
+            .eq("id", item.id)
+        )
+      );
     } catch (err) {
       console.error("Error reordering:", err);
-      toast.error("Failed to save order");
     }
   };
 
-  const handleSaveItem = async (data: Partial<BioLinkItem>) => {
-    if (!bioLink) return;
-
-    setIsSaving(true);
+  const handleToggleItem = async (item: BioLinkItem) => {
     try {
       const supabase = getSupabaseBrowserClient();
-
-      if (editingItem) {
-        // Update existing
-        const { error: updateError } = await supabase
-          .from("bio_link_items")
-          .update(data)
-          .eq("id", editingItem.id);
-
-        if (updateError) throw updateError;
-        toast.success("Link updated");
-      } else {
-        // Create new
-        const { error: insertError } = await supabase.from("bio_link_items").insert({
-          bio_link_id: bioLink.id,
-          ...data,
-          sort_order: linkItems.length,
-        });
-
-        if (insertError) throw insertError;
-        toast.success("Link added");
-      }
-
-      fetchBioLink();
-      setShowEditor(false);
-      setEditingItem(null);
+      await supabase
+        .from("bio_link_items")
+        .update({ enabled: !item.enabled })
+        .eq("id", item.id);
+      
+      setLinkItems((prev) =>
+        prev.map((i) => (i.id === item.id ? { ...i, enabled: !i.enabled } : i))
+      );
     } catch (err) {
-      console.error("Error saving item:", err);
-      toast.error("Failed to save link");
-    } finally {
-      setIsSaving(false);
+      toast.error("Failed to update");
     }
   };
 
-  const handleDeleteItem = async (id: string) => {
+  const handleDeleteItem = async (itemId: string) => {
     if (!confirm("Delete this link?")) return;
 
     try {
       const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase.from("bio_link_items").delete().eq("id", id);
-
-      if (error) throw error;
-      setLinkItems((prev) => prev.filter((item) => item.id !== id));
+      await supabase.from("bio_link_items").delete().eq("id", itemId);
+      setLinkItems((prev) => prev.filter((i) => i.id !== itemId));
       toast.success("Link deleted");
     } catch (err) {
-      console.error("Error deleting:", err);
-      toast.error("Failed to delete link");
+      toast.error("Failed to delete");
     }
   };
 
-  const handleToggleItem = async (id: string) => {
-    const item = linkItems.find((i) => i.id === id);
-    if (!item) return;
-
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase
-        .from("bio_link_items")
-        .update({ enabled: !item.enabled })
-        .eq("id", id);
-
-      if (error) throw error;
-      setLinkItems((prev) =>
-        prev.map((i) => (i.id === id ? { ...i, enabled: !i.enabled } : i))
-      );
-    } catch (err) {
-      console.error("Error toggling:", err);
-      toast.error("Failed to update link");
-    }
-  };
-
-  const handleSaveSettings = async () => {
+  const handleSaveSettings = async (data: Partial<BioLink>) => {
     if (!bioLink) return;
 
-    setIsSaving(true);
     try {
       const supabase = getSupabaseBrowserClient();
       const { error } = await supabase
         .from("bio_links")
-        .update({
-          name: bioSettings.name,
-          slug: bioSettings.slug,
-          tagline: bioSettings.tagline || null,
-          subtitle: bioSettings.subtitle || null,
-          welcome_title: bioSettings.welcome_title || null,
-          welcome_text: bioSettings.welcome_text || null,
-          profile_image_url: bioSettings.profile_image_url || null,
-          is_published: bioSettings.is_published,
-        })
+        .update(data)
         .eq("id", bioLink.id);
 
       if (error) throw error;
       toast.success("Settings saved");
-      setShowSettings(false);
       fetchBioLink();
     } catch (err) {
       console.error("Error saving settings:", err);
       toast.error("Failed to save settings");
-    } finally {
-      setIsSaving(false);
     }
   };
 
   const copyLink = () => {
-    const url = `${window.location.origin}/creator/${bioLink?.slug}`;
+    const url = bioLink?.custom_domain 
+      ? `https://${bioLink.custom_domain}`
+      : `${window.location.origin}/creator/${bioLink?.slug}`;
     navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
     toast.success("Link copied!");
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+        <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
       </div>
     );
   }
 
-  if (!user?.creator_id) {
+  // Show message only for non-admin/studio users without creator profile
+  if (!isAdminOrStudio && !user?.creator_id) {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-3">
         <AlertCircle className="w-5 h-5 text-amber-500" />
@@ -626,34 +860,103 @@ export default function BioLinksPage() {
       </div>
     );
   }
+  
+  // Admin/Studio with no creators
+  if (isAdminOrStudio && creators.length === 0) {
+    return (
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-center">
+        <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-3" />
+        <p className="text-slate-600 font-medium">No creators found</p>
+        <p className="text-slate-500 text-sm">Add creators to manage their bio links</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl">
+      {/* Admin/Studio Creator Selector */}
+      {isAdminOrStudio && creators.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <Label className="text-sm font-medium text-slate-700 mb-2 block">
+            Select Creator to Edit
+          </Label>
+          <select
+            value={selectedCreatorId || ""}
+            onChange={(e) => setSelectedCreatorId(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          >
+            {creators.map((c) => (
+              <option key={c.id} value={c.id}>
+                @{c.username}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Bio Links</h1>
-          <p className="text-slate-500">Customize your bio link page</p>
+          <p className="text-slate-500">
+            {isAdminOrStudio && selectedCreatorId 
+              ? `Managing @${creators.find(c => c.id === selectedCreatorId)?.username}'s bio link`
+              : "Manage your bio link page"
+            }
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={copyLink}>
-            <Copy className="w-4 h-4 mr-2" />
-            Copy Link
+            {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+            {copied ? "Copied!" : "Copy Link"}
           </Button>
-          <a
-            href={`/creator/${bioLink?.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href={bioLink?.custom_domain ? `https://${bioLink.custom_domain}` : `https://bites.bio/${bioLink?.slug}`} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="sm">
               <ExternalLink className="w-4 h-4 mr-2" />
               Preview
             </Button>
           </a>
+        </div>
+      </div>
+
+      {/* Status Card */}
+      <div className={`rounded-2xl p-5 ${
+        bioLink?.is_published
+          ? "bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200"
+          : "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200"
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+              bioLink?.is_published ? "bg-green-100" : "bg-amber-100"
+            }`}>
+              {bioLink?.is_published ? (
+                <Check className="w-6 h-6 text-green-600" />
+              ) : (
+                <AlertCircle className="w-6 h-6 text-amber-600" />
+              )}
+            </div>
+            <div>
+              <p className={`font-semibold text-lg ${
+                bioLink?.is_published ? "text-green-800" : "text-amber-800"
+              }`}>
+                {bioLink?.is_published ? "Published" : "Draft"}
+              </p>
+              <p className={`text-sm ${
+                bioLink?.is_published ? "text-green-600" : "text-amber-600"
+              }`}>
+                {bioLink?.is_published
+                  ? "Your bio link is live and visible"
+                  : "Complete setup and publish to go live"}
+              </p>
+            </div>
+          </div>
           <Button
             size="sm"
             onClick={() => setShowSettings(true)}
-            className="bg-brand-600 hover:bg-brand-700"
+            className={bioLink?.is_published 
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-amber-600 hover:bg-amber-700"}
           >
             <Settings className="w-4 h-4 mr-2" />
             Settings
@@ -661,378 +964,92 @@ export default function BioLinksPage() {
         </div>
       </div>
 
-      {/* Status */}
-      <div
-        className={`rounded-xl p-4 flex items-center justify-between ${
-          bioLink?.is_published
-            ? "bg-green-50 border border-green-200"
-            : "bg-amber-50 border border-amber-200"
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          {bioLink?.is_published ? (
-            <Check className="w-5 h-5 text-green-600" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-amber-600" />
-          )}
-          <div>
-            <p
-              className={`font-medium ${
-                bioLink?.is_published ? "text-green-800" : "text-amber-800"
-              }`}
-            >
-              {bioLink?.is_published ? "Published" : "Draft"}
-            </p>
-            <p
-              className={`text-sm ${
-                bioLink?.is_published ? "text-green-600" : "text-amber-600"
-              }`}
-            >
-              {bioLink?.is_published
-                ? "Your bio link is live and visible"
-                : "Publish to make your bio link visible"}
-            </p>
+      {/* Quick Links */}
+      <div className="grid grid-cols-2 gap-4">
+        <Link href="/dashboard/bio-links/analytics">
+          <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-5 text-white hover:opacity-90 transition-opacity cursor-pointer">
+            <BarChart3 className="w-8 h-8 mb-3 opacity-80" />
+            <p className="font-semibold text-lg">Analytics</p>
+            <p className="text-sm text-white/70">View performance stats</p>
           </div>
-        </div>
-        {!bioLink?.is_published && (
-          <Button
-            size="sm"
-            onClick={async () => {
-              const supabase = getSupabaseBrowserClient();
-              await supabase
-                .from("bio_links")
-                .update({ is_published: true })
-                .eq("id", bioLink?.id);
-              fetchBioLink();
-              toast.success("Bio link published!");
-            }}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            Publish
-          </Button>
-        )}
-      </div>
-
-      {/* Domain Management Section */}
-      <div className="bg-gradient-to-r from-violet-50 to-pink-50 rounded-2xl border border-violet-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
-            <Globe className="w-5 h-5 text-white" />
+        </Link>
+        <Link href="/dashboard/bio-links/domains">
+          <div className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl p-5 text-white hover:opacity-90 transition-opacity cursor-pointer">
+            <Globe className="w-8 h-8 mb-3 opacity-80" />
+            <p className="font-semibold text-lg">Domains</p>
+            <p className="text-sm text-white/70">Custom domain settings</p>
           </div>
-          <div>
-            <h2 className="font-semibold text-slate-900">Your Bio Links</h2>
-            <p className="text-sm text-slate-500">Share your profile anywhere</p>
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          {/* Main bites.bio link */}
-          <div className="bg-white rounded-xl p-4 flex items-center justify-between border border-violet-100">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
-                <Link2 className="w-4 h-4 text-violet-600" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Primary Link</p>
-                <a
-                  href={`https://bites.bio/${bioLink?.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-violet-600 font-medium hover:text-violet-800 flex items-center gap-1"
-                >
-                  bites.bio/{bioLink?.slug}
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                navigator.clipboard.writeText(`https://bites.bio/${bioLink?.slug}`);
-                toast.success("Link copied!");
-              }}
-            >
-              <Copy className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {/* Custom Domain */}
-          {bioLink?.custom_domain ? (
-            <div className="bg-white rounded-xl p-4 flex items-center justify-between border border-pink-100">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center">
-                  <Globe className="w-4 h-4 text-pink-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Custom Domain</p>
-                  <a
-                    href={`https://${bioLink.custom_domain}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-pink-600 font-medium hover:text-pink-800 flex items-center gap-1"
-                  >
-                    {bioLink.custom_domain}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Active</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`https://${bioLink.custom_domain}`);
-                    toast.success("Link copied!");
-                  }}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <a
-              href="/dashboard/bio-links/domains"
-              className="block bg-white/50 rounded-xl p-4 border-2 border-dashed border-pink-200 hover:border-pink-300 hover:bg-white transition-all group"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center group-hover:bg-pink-100">
-                    <Plus className="w-4 h-4 text-pink-400 group-hover:text-pink-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-slate-700 group-hover:text-pink-700">Add Custom Domain</p>
-                    <p className="text-xs text-slate-500">Use your own domain like yourname.com</p>
-                  </div>
-                </div>
-                <span className="text-pink-500 group-hover:text-pink-600">→</span>
-              </div>
-            </a>
-          )}
-        </div>
+        </Link>
       </div>
 
       {/* Links Section */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-slate-900">Links</h2>
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditingItem(null);
-              setShowEditor(true);
-            }}
-            className="bg-brand-600 hover:bg-brand-700"
-          >
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Your Links</h2>
+            <p className="text-sm text-slate-500">Drag to reorder, click to edit</p>
+          </div>
+          <Button onClick={() => { setEditingItem(null); setShowLinkEditor(true); }} className="bg-violet-600 hover:bg-violet-700">
             <Plus className="w-4 h-4 mr-2" />
             Add Link
           </Button>
         </div>
 
         {linkItems.length === 0 ? (
-          <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+          <div className="bg-slate-50 border border-dashed border-slate-300 rounded-xl p-8 text-center">
             <Link2 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 mb-4">No links yet</p>
+            <h3 className="font-semibold text-slate-700 mb-2">No links yet</h3>
+            <p className="text-slate-500 text-sm mb-4">Add your first link to get started</p>
             <Button
-              onClick={() => {
-                setEditingItem(null);
-                setShowEditor(true);
-              }}
+              variant="outline"
+              onClick={() => { setEditingItem(null); setShowLinkEditor(true); }}
             >
               <Plus className="w-4 h-4 mr-2" />
-              Add your first link
+              Add Your First Link
             </Button>
           </div>
         ) : (
           <Reorder.Group
+            axis="y"
             values={linkItems}
             onReorder={handleReorder}
             className="space-y-3"
           >
             {linkItems.map((item) => (
-              <LinkItem
+              <LinkCard
                 key={item.id}
                 item={item}
-                onEdit={() => {
-                  setEditingItem(item);
-                  setShowEditor(true);
-                }}
+                onEdit={() => { setEditingItem(item); setShowLinkEditor(true); }}
                 onDelete={() => handleDeleteItem(item.id)}
-                onToggle={() => handleToggleItem(item.id)}
+                onToggle={() => handleToggleItem(item)}
               />
             ))}
           </Reorder.Group>
         )}
       </div>
 
-      {/* Link Editor Modal */}
+      {/* Modals */}
       <AnimatePresence>
-        {showEditor && (
-          <LinkEditor
-            item={editingItem}
-            onSave={handleSaveItem}
-            onClose={() => {
-              setShowEditor(false);
-              setEditingItem(null);
-            }}
+        {showSettings && bioLink && (
+          <SettingsModal
+            bioLink={bioLink}
+            onSave={handleSaveSettings}
+            onClose={() => setShowSettings(false)}
           />
         )}
       </AnimatePresence>
 
-      {/* Settings Modal */}
       <AnimatePresence>
-        {showSettings && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-50"
-              onClick={() => setShowSettings(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, x: "100%" }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: "100%" }}
-              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl z-50 overflow-y-auto"
-            >
-              <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-slate-900">Bio Settings</h3>
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="p-2 hover:bg-slate-100 rounded-lg"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="p-6 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Display Name</Label>
-                  <Input
-                    id="name"
-                    value={bioSettings.name}
-                    onChange={(e) =>
-                      setBioSettings({ ...bioSettings, name: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="slug">URL Slug</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-400">
-                      {window.location.origin}/creator/
-                    </span>
-                    <Input
-                      id="slug"
-                      value={bioSettings.slug}
-                      onChange={(e) =>
-                        setBioSettings({ ...bioSettings, slug: e.target.value })
-                      }
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tagline">Tagline</Label>
-                  <Input
-                    id="tagline"
-                    value={bioSettings.tagline}
-                    onChange={(e) =>
-                      setBioSettings({ ...bioSettings, tagline: e.target.value })
-                    }
-                    placeholder="Model • Creator • Dreamer"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="subtitle">Subtitle</Label>
-                  <Input
-                    id="subtitle"
-                    value={bioSettings.subtitle}
-                    onChange={(e) =>
-                      setBioSettings({ ...bioSettings, subtitle: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="welcome_title">Welcome Title</Label>
-                  <Input
-                    id="welcome_title"
-                    value={bioSettings.welcome_title}
-                    onChange={(e) =>
-                      setBioSettings({ ...bioSettings, welcome_title: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="welcome_text">Welcome Text</Label>
-                  <Textarea
-                    id="welcome_text"
-                    value={bioSettings.welcome_text}
-                    onChange={(e) =>
-                      setBioSettings({ ...bioSettings, welcome_text: e.target.value })
-                    }
-                    rows={4}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="profile_image_url">Profile Image URL</Label>
-                  <Input
-                    id="profile_image_url"
-                    value={bioSettings.profile_image_url}
-                    onChange={(e) =>
-                      setBioSettings({ ...bioSettings, profile_image_url: e.target.value })
-                    }
-                    placeholder="https://..."
-                  />
-                </div>
-
-                <label className="flex items-center gap-3 cursor-pointer pt-4 border-t">
-                  <div
-                    className={`w-10 h-6 rounded-full transition-colors ${
-                      bioSettings.is_published ? "bg-green-500" : "bg-slate-300"
-                    } relative`}
-                    onClick={() =>
-                      setBioSettings({
-                        ...bioSettings,
-                        is_published: !bioSettings.is_published,
-                      })
-                    }
-                  >
-                    <div
-                      className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${
-                        bioSettings.is_published ? "left-5" : "left-1"
-                      }`}
-                    />
-                  </div>
-                  <span className="text-sm text-slate-700">Published</span>
-                </label>
-
-                <Button
-                  onClick={handleSaveSettings}
-                  disabled={isSaving}
-                  className="w-full bg-brand-600 hover:bg-brand-700 mt-6"
-                >
-                  {isSaving ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
-                  Save Settings
-                </Button>
-              </div>
-            </motion.div>
-          </>
+        {showLinkEditor && bioLink && (
+          <LinkEditor
+            item={editingItem}
+            bioLinkId={bioLink.id}
+            onSave={fetchBioLink}
+            onClose={() => { setShowLinkEditor(false); setEditingItem(null); }}
+            creatorId={effectiveCreatorId!}
+          />
         )}
       </AnimatePresence>
     </div>
   );
 }
-

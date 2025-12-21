@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { trackBioLinkClick, trackBioPageView } from '@/components/analytics/google-analytics';
 import { 
   Share2, 
   ArrowRight, 
@@ -119,10 +120,60 @@ interface CreatorBioClientProps {
 // MAIN CLIENT COMPONENT
 // ============================================
 
+// Get or create visitor ID for tracking
+function getVisitorId(): string {
+  if (typeof window === 'undefined') return '';
+  let visitorId = localStorage.getItem('lb_visitor_id');
+  if (!visitorId) {
+    visitorId = crypto.randomUUID();
+    localStorage.setItem('lb_visitor_id', visitorId);
+  }
+  return visitorId;
+}
+
+// Track analytics to our backend
+async function trackAnalytics(data: {
+  type: 'page_view' | 'link_click';
+  bioLinkId?: string;
+  linkItemId?: string;
+  linkLabel?: string;
+  linkUrl?: string;
+  creatorSlug: string;
+}) {
+  try {
+    await fetch('/api/analytics/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...data,
+        visitorId: getVisitorId(),
+        referrer: document.referrer || null,
+      }),
+    });
+  } catch (e) {
+    // Silent fail for analytics
+  }
+}
+
 export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
   const [copied, setCopied] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(false);
   const [ageVerified, setAgeVerified] = useState(false);
+
+  // Track page view on mount
+  useEffect(() => {
+    // Track to Google Analytics
+    trackBioPageView(creator.id);
+    
+    // Track to our backend if we have a bioLinkId
+    if ((creator as any).bioLinkId) {
+      trackAnalytics({
+        type: 'page_view',
+        bioLinkId: (creator as any).bioLinkId,
+        creatorSlug: creator.id,
+      });
+    }
+  }, [creator.id]);
 
   // 3D Card Effect
   const cardRef = useRef<HTMLDivElement>(null);
@@ -196,8 +247,23 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
     }
   };
 
-  const handleLinkClick = (href: string) => {
-    window.open(href, '_blank', 'noopener,noreferrer');
+  const handleLinkClick = (link: { id?: string; label: string; href: string }) => {
+    // Track to Google Analytics
+    trackBioLinkClick(creator.id, link.label, link.href);
+    
+    // Track to our backend if we have a bioLinkId
+    if ((creator as any).bioLinkId) {
+      trackAnalytics({
+        type: 'link_click',
+        bioLinkId: (creator as any).bioLinkId,
+        linkItemId: link.id,
+        linkLabel: link.label,
+        linkUrl: link.href,
+        creatorSlug: creator.id,
+      });
+    }
+    
+    window.open(link.href, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -409,7 +475,7 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
             {creator.links.map((link, index) => (
               <motion.button
                 key={link.id}
-                onClick={() => handleLinkClick(link.href)}
+                onClick={() => handleLinkClick({ id: link.id, label: link.label, href: link.href })}
                 className="group block w-full text-left cursor-pointer"
                 variants={itemVariants}
                 custom={index}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useDashboard } from "../layout";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   Eye,
@@ -24,69 +25,109 @@ import {
   ExternalLink,
   Copy,
   Users,
+  Key,
+  Clock,
+  RefreshCw,
+  MoreVertical,
+  Tag,
+  Settings,
+  ChevronRight,
+  ArrowLeft,
+  QrCode,
+  Smartphone,
+  Shield,
+  Lock,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog-centered";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// ============================================
+// TOTP IMPLEMENTATION
+// ============================================
+
+// Simple TOTP implementation using Web Crypto API
+async function generateTOTP(secret: string): Promise<string> {
+  const counter = Math.floor(Date.now() / 30000); // 30 second periods
+  const counterBuffer = new ArrayBuffer(8);
+  const view = new DataView(counterBuffer);
+  view.setBigUint64(0, BigInt(counter), false);
+
+  // Decode base32 secret
+  const base32Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = "";
+  const cleanSecret = secret.toUpperCase().replace(/\s/g, "");
+  for (const char of cleanSecret) {
+    const val = base32Chars.indexOf(char);
+    if (val === -1) continue;
+    bits += val.toString(2).padStart(5, "0");
+  }
+  const secretBytes = new Uint8Array(bits.length / 8);
+  for (let i = 0; i < secretBytes.length; i++) {
+    secretBytes[i] = parseInt(bits.slice(i * 8, (i + 1) * 8), 2);
+  }
+
+  // HMAC-SHA1
+  const key = await crypto.subtle.importKey(
+    "raw",
+    secretBytes,
+    { name: "HMAC", hash: "SHA-1" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, counterBuffer);
+  const hash = new Uint8Array(signature);
+
+  // Dynamic truncation
+  const offset = hash[hash.length - 1] & 0x0f;
+  const code =
+    ((hash[offset] & 0x7f) << 24) |
+    ((hash[offset + 1] & 0xff) << 16) |
+    ((hash[offset + 2] & 0xff) << 8) |
+    (hash[offset + 3] & 0xff);
+
+  return (code % 1000000).toString().padStart(6, "0");
+}
+
+function getTimeRemaining(): number {
+  return 30 - (Math.floor(Date.now() / 1000) % 30);
+}
 
 // ============================================
 // PLATFORM DEFINITIONS
 // ============================================
 
 const PLATFORMS = [
-  {
-    id: "onlyfans",
-    name: "OnlyFans",
-    color: "bg-sky-500",
-    icon: "🔥",
-    url: "https://onlyfans.com",
-  },
-  {
-    id: "fansly",
-    name: "Fansly",
-    color: "bg-blue-600",
-    icon: "💙",
-    url: "https://fansly.com",
-  },
-  {
-    id: "loyalfans",
-    name: "LoyalFans",
-    color: "bg-rose-500",
-    icon: "❤️",
-    url: "https://loyalfans.com",
-  },
-  {
-    id: "feetfinder",
-    name: "FeetFinder",
-    color: "bg-pink-500",
-    icon: "👣",
-    url: "https://feetfinder.com",
-  },
-  {
-    id: "reddit",
-    name: "Reddit",
-    color: "bg-orange-500",
-    icon: "🔴",
-    url: "https://reddit.com",
-  },
-  {
-    id: "instagram",
-    name: "Instagram",
-    color: "bg-gradient-to-br from-purple-500 to-pink-500",
-    icon: "📸",
-    url: "https://instagram.com",
-  },
-  {
-    id: "x",
-    name: "X (Twitter)",
-    color: "bg-slate-900",
-    icon: "𝕏",
-    url: "https://x.com",
-  },
-  {
-    id: "redgifs",
-    name: "RedGifs",
-    color: "bg-red-600",
-    icon: "🎬",
-    url: "https://redgifs.com",
-  },
+  { id: "onlyfans", name: "OnlyFans", color: "bg-sky-500", icon: "🔥", url: "https://onlyfans.com" },
+  { id: "fansly", name: "Fansly", color: "bg-blue-600", icon: "💙", url: "https://fansly.com" },
+  { id: "loyalfans", name: "LoyalFans", color: "bg-rose-500", icon: "❤️", url: "https://loyalfans.com" },
+  { id: "feetfinder", name: "FeetFinder", color: "bg-pink-500", icon: "👣", url: "https://feetfinder.com" },
+  { id: "reddit", name: "Reddit", color: "bg-orange-500", icon: "🔴", url: "https://reddit.com" },
+  { id: "instagram", name: "Instagram", color: "bg-gradient-to-br from-purple-500 to-pink-500", icon: "📸", url: "https://instagram.com" },
+  { id: "x", name: "X (Twitter)", color: "bg-slate-900", icon: "𝕏", url: "https://x.com" },
+  { id: "redgifs", name: "RedGifs", color: "bg-red-600", icon: "🎬", url: "https://redgifs.com" },
+  { id: "chaturbate", name: "Chaturbate", color: "bg-orange-600", icon: "🎥", url: "https://chaturbate.com" },
+  { id: "stripchat", name: "Stripchat", color: "bg-purple-600", icon: "💜", url: "https://stripchat.com" },
 ] as const;
 
 type PlatformId = (typeof PLATFORMS)[number]["id"];
@@ -99,14 +140,114 @@ interface SocialAccount {
   id: string;
   creator_id: string;
   platform: PlatformId;
+  label: string | null;
   email: string | null;
   password: string | null;
   username: string | null;
   two_factor_enabled: boolean;
+  two_factor_secret: string | null;
   notes: string | null;
   enabled: boolean;
+  last_login: string | null;
   created_at: string;
   updated_at: string;
+}
+
+interface Creator {
+  id: string;
+  username: string;
+  display_name: string | null;
+}
+
+// ============================================
+// TOTP DISPLAY COMPONENT
+// ============================================
+
+function TOTPDisplay({ secret, onClose }: { secret: string; onClose: () => void }) {
+  const [code, setCode] = useState<string>("------");
+  const [timeRemaining, setTimeRemaining] = useState(30);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const updateCode = async () => {
+      try {
+        const newCode = await generateTOTP(secret);
+        setCode(newCode);
+      } catch (err) {
+        console.error("TOTP generation error:", err);
+        setCode("ERROR");
+      }
+    };
+
+    updateCode();
+    const interval = setInterval(() => {
+      const remaining = getTimeRemaining();
+      setTimeRemaining(remaining);
+      if (remaining === 30) {
+        updateCode();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [secret]);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    toast.success("Code copied!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent size="sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-green-600" />
+            Two-Factor Code
+          </DialogTitle>
+          <DialogDescription>
+            Use this code to complete your sign-in
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <div className="space-y-6">
+            {/* Code Display */}
+            <div className="bg-slate-900 rounded-2xl p-6 text-center">
+              <p className="text-4xl font-mono font-bold text-white tracking-[0.3em]">
+                {code.slice(0, 3)} {code.slice(3)}
+              </p>
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <Clock className="w-4 h-4 text-slate-400" />
+                <div className="w-24 h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 transition-all duration-1000 ease-linear"
+                    style={{ width: `${(timeRemaining / 30) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm text-slate-400 w-8">{timeRemaining}s</span>
+              </div>
+            </div>
+
+            {/* Copy Button */}
+            <Button onClick={handleCopy} className="w-full" variant="outline">
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 mr-2 text-green-600" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Code
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 // ============================================
@@ -118,289 +259,373 @@ function AccountCard({
   platform,
   onEdit,
   onDelete,
-  isEditing,
-  onSave,
-  onCancel,
+  onShowTOTP,
 }: {
-  account: SocialAccount | null;
+  account: SocialAccount;
   platform: (typeof PLATFORMS)[number];
   onEdit: () => void;
   onDelete: () => void;
-  isEditing: boolean;
-  onSave: (data: Partial<SocialAccount>) => void;
-  onCancel: () => void;
+  onShowTOTP: () => void;
 }) {
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: account?.email || "",
-    password: account?.password || "",
-    username: account?.username || "",
-    two_factor_enabled: account?.two_factor_enabled || false,
-    notes: account?.notes || "",
-  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({
-      email: formData.email || null,
-      password: formData.password || null,
-      username: formData.username || null,
-      two_factor_enabled: formData.two_factor_enabled,
-      notes: formData.notes || null,
-    });
-  };
-
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard");
+    toast.success(`${label} copied!`);
   };
-
-  if (isEditing) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-2xl border border-brand-200 p-6 shadow-lg"
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <div
-            className={`w-12 h-12 ${platform.color} rounded-xl flex items-center justify-center text-2xl`}
-          >
-            {platform.icon}
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-900">{platform.name}</h3>
-            <p className="text-sm text-slate-500">
-              {account ? "Edit account" : "Add new account"}
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor={`${platform.id}-email`}>Email</Label>
-              <Input
-                id={`${platform.id}-email`}
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="account@email.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={`${platform.id}-username`}>Username</Label>
-              <Input
-                id={`${platform.id}-username`}
-                type="text"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                placeholder="username"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor={`${platform.id}-password`}>Password</Label>
-            <div className="relative">
-              <Input
-                id={`${platform.id}-password`}
-                type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="••••••••"
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor={`${platform.id}-notes`}>Notes</Label>
-            <Input
-              id={`${platform.id}-notes`}
-              type="text"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Additional notes..."
-            />
-          </div>
-
-          <label className="flex items-center gap-3 cursor-pointer">
-            <div
-              className={`w-10 h-6 rounded-full transition-colors ${
-                formData.two_factor_enabled ? "bg-green-500" : "bg-slate-300"
-              } relative`}
-              onClick={() =>
-                setFormData({ ...formData, two_factor_enabled: !formData.two_factor_enabled })
-              }
-            >
-              <div
-                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${
-                  formData.two_factor_enabled ? "left-5" : "left-1"
-                }`}
-              />
-            </div>
-            <span className="text-sm text-slate-700">2FA Enabled</span>
-          </label>
-
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-              <X className="w-4 h-4 mr-2" />
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1 bg-brand-600 hover:bg-brand-700">
-              <Save className="w-4 h-4 mr-2" />
-              Save
-            </Button>
-          </div>
-        </form>
-      </motion.div>
-    );
-  }
-
-  if (!account) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-6 hover:border-brand-400 hover:bg-brand-50/50 transition-all cursor-pointer"
-        onClick={onEdit}
-      >
-        <div className="flex items-center gap-4">
-          <div
-            className={`w-12 h-12 ${platform.color} rounded-xl flex items-center justify-center text-2xl opacity-50`}
-          >
-            {platform.icon}
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-slate-600">{platform.name}</h3>
-            <p className="text-sm text-slate-400">Not configured</p>
-          </div>
-          <Plus className="w-5 h-5 text-slate-400" />
-        </div>
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-md transition-all"
+      className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-all group"
     >
       <div className="flex items-start gap-4">
-        <div
-          className={`w-12 h-12 ${platform.color} rounded-xl flex items-center justify-center text-2xl shrink-0`}
-        >
+        <div className={`w-12 h-12 ${platform.color} rounded-xl flex items-center justify-center text-xl shrink-0`}>
           {platform.icon}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-semibold text-slate-900">{platform.name}</h3>
-            {account.two_factor_enabled ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                <ShieldCheck className="w-3 h-3" />
-                2FA
+            {account.label && (
+              <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">
+                {account.label}
               </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+            )}
+          </div>
+          
+          {account.username && (
+            <button
+              onClick={() => copyToClipboard(account.username!, "Username")}
+              className="text-sm text-brand-600 hover:underline"
+            >
+              @{account.username}
+            </button>
+          )}
+
+          <div className="flex items-center gap-3 mt-2">
+            {account.two_factor_enabled && account.two_factor_secret && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onShowTOTP}
+                className="h-7 text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+              >
+                <ShieldCheck className="w-3 h-3 mr-1" />
+                Get 2FA Code
+              </Button>
+            )}
+            {account.two_factor_enabled && !account.two_factor_secret && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-amber-50 text-amber-600">
+                <ShieldCheck className="w-3 h-3" />
+                2FA (External)
+              </span>
+            )}
+            {!account.two_factor_enabled && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-red-50 text-red-600">
                 <ShieldOff className="w-3 h-3" />
                 No 2FA
               </span>
             )}
           </div>
+        </div>
 
-          <div className="space-y-1 text-sm">
-            {account.username && (
-              <p className="text-slate-600">
-                <span className="text-slate-400">Username:</span>{" "}
-                <button
-                  onClick={() => copyToClipboard(account.username!)}
-                  className="font-medium hover:text-brand-600"
-                >
-                  @{account.username}
-                </button>
-              </p>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100">
+              <MoreVertical className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {account.password && (
+              <DropdownMenuItem onClick={() => copyToClipboard(account.password!, "Password")}>
+                <Key className="w-4 h-4 mr-2" />
+                Copy Password
+              </DropdownMenuItem>
             )}
             {account.email && (
-              <p className="text-slate-600">
-                <span className="text-slate-400">Email:</span>{" "}
-                <button
-                  onClick={() => copyToClipboard(account.email!)}
-                  className="hover:text-brand-600"
-                >
-                  {account.email}
-                </button>
-              </p>
+              <DropdownMenuItem onClick={() => copyToClipboard(account.email!, "Email")}>
+                <Copy className="w-4 h-4 mr-2" />
+                Copy Email
+              </DropdownMenuItem>
             )}
-            {account.password && (
-              <div className="flex items-center gap-2 text-slate-600">
-                <span className="text-slate-400">Password:</span>
-                <span className="font-mono">
-                  {showPassword ? account.password : "••••••••"}
-                </span>
-                <button
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-slate-400 hover:text-slate-600"
-                >
-                  {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                </button>
-                <button
-                  onClick={() => copyToClipboard(account.password!)}
-                  className="text-slate-400 hover:text-slate-600"
-                >
-                  <Copy className="w-3 h-3" />
-                </button>
-              </div>
-            )}
-            {account.notes && <p className="text-slate-400 italic">{account.notes}</p>}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1 shrink-0">
-          <a
-            href={platform.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </a>
-          <button
-            onClick={onEdit}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
-          >
-            <Edit2 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onEdit}>
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit Account
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <a href={platform.url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open {platform.name}
+              </a>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onDelete} className="text-red-600">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </motion.div>
   );
 }
 
 // ============================================
-// CREATOR SELECTOR (for Admin/Studio)
+// ACCOUNT EDITOR MODAL
 // ============================================
 
-interface Creator {
-  id: string;
-  username: string;
-  enabled: boolean;
-  studio_id?: string;
+function AccountEditor({
+  account,
+  platform,
+  creatorId,
+  onSave,
+  onClose,
+}: {
+  account: SocialAccount | null;
+  platform: (typeof PLATFORMS)[number] | null;
+  creatorId: string;
+  onSave: () => void;
+  onClose: () => void;
+}) {
+  const [selectedPlatform, setSelectedPlatform] = useState<string>(account?.platform || platform?.id || "");
+  const [showPassword, setShowPassword] = useState(false);
+  const [show2FASecret, setShow2FASecret] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    label: account?.label || "",
+    email: account?.email || "",
+    password: account?.password || "",
+    username: account?.username || "",
+    two_factor_enabled: account?.two_factor_enabled || false,
+    two_factor_secret: account?.two_factor_secret || "",
+    notes: account?.notes || "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPlatform) {
+      toast.error("Please select a platform");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      
+      const data = {
+        creator_id: creatorId,
+        platform: selectedPlatform,
+        label: formData.label || null,
+        email: formData.email || null,
+        password: formData.password || null,
+        username: formData.username || null,
+        two_factor_enabled: formData.two_factor_enabled,
+        two_factor_secret: formData.two_factor_secret || null,
+        notes: formData.notes || null,
+        enabled: true,
+      };
+
+      if (account) {
+        const { error } = await supabase
+          .from("creator_social_accounts")
+          .update(data)
+          .eq("id", account.id);
+        if (error) throw error;
+        toast.success("Account updated");
+      } else {
+        const { error } = await supabase
+          .from("creator_social_accounts")
+          .insert(data);
+        if (error) throw error;
+        toast.success("Account added");
+      }
+
+      onSave();
+      onClose();
+    } catch (err: any) {
+      console.error("Save error:", err);
+      toast.error(err.message || "Failed to save account");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const currentPlatform = PLATFORMS.find((p) => p.id === selectedPlatform);
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent size="lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {currentPlatform && (
+              <span className={`w-8 h-8 ${currentPlatform.color} rounded-lg flex items-center justify-center text-lg`}>
+                {currentPlatform.icon}
+              </span>
+            )}
+            {account ? "Edit Account" : "Add Account"}
+          </DialogTitle>
+          <DialogDescription>
+            {account ? "Update your account credentials" : "Add a new platform account"}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <DialogBody className="space-y-4">
+            {/* Platform Selection */}
+            {!account && (
+              <div className="space-y-2">
+                <Label>Platform</Label>
+                <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a platform..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLATFORMS.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        <span className="flex items-center gap-2">
+                          <span>{p.icon}</span>
+                          <span>{p.name}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Label */}
+            <div className="space-y-2">
+              <Label htmlFor="label">Label (optional)</Label>
+              <Input
+                id="label"
+                value={formData.label}
+                onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+                placeholder="e.g., Main Account, Business, Personal"
+              />
+              <p className="text-xs text-slate-500">Use labels to organize multiple accounts for the same platform</p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="account@email.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  placeholder="username"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* 2FA Section */}
+            <div className="bg-slate-50 rounded-xl p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-slate-600" />
+                  <span className="font-medium text-slate-900">Two-Factor Authentication</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.two_factor_enabled}
+                    onChange={(e) => setFormData({ ...formData, two_factor_enabled: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-green-500 transition-colors">
+                    <div className={`w-4 h-4 bg-white rounded-full shadow absolute top-1 transition-all ${formData.two_factor_enabled ? "left-6" : "left-1"}`} />
+                  </div>
+                </label>
+              </div>
+
+              {formData.two_factor_enabled && (
+                <div className="space-y-2">
+                  <Label htmlFor="two_factor_secret">TOTP Secret (from authenticator setup)</Label>
+                  <div className="relative">
+                    <Input
+                      id="two_factor_secret"
+                      type={show2FASecret ? "text" : "password"}
+                      value={formData.two_factor_secret}
+                      onChange={(e) => setFormData({ ...formData, two_factor_secret: e.target.value.toUpperCase().replace(/\s/g, "") })}
+                      placeholder="JBSWY3DPEHPK3PXP"
+                      className="pr-10 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShow2FASecret(!show2FASecret)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {show2FASecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Enter the secret key from your 2FA setup (usually shown when scanning the QR code).
+                    This allows us to generate codes for you like 1Password.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Additional notes about this account..."
+                rows={2}
+              />
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSaving} className="bg-brand-600 hover:bg-brand-700">
+              {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {account ? "Save Changes" : "Add Account"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
+
+// ============================================
+// CREATOR SELECTOR
+// ============================================
 
 function CreatorSelector({
   creators,
@@ -411,43 +636,21 @@ function CreatorSelector({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
-  const [search, setSearch] = useState("");
-  
-  const filtered = creators.filter((c) =>
-    c.username.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center">
-            <Users className="w-5 h-5 text-brand-600" />
-          </div>
-          <div>
-            <p className="text-sm text-slate-500">Managing accounts for</p>
-            <p className="font-semibold text-slate-900">
-              {creators.find((c) => c.id === selectedId)?.username
-                ? `@${creators.find((c) => c.id === selectedId)?.username}`
-                : "Select a creator"}
-            </p>
-          </div>
-        </div>
-        <div className="flex-1 sm:max-w-xs">
-          <select
-            value={selectedId || ""}
-            onChange={(e) => onSelect(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-          >
-            <option value="">Select a creator...</option>
-            {filtered.map((creator) => (
-              <option key={creator.id} value={creator.id}>
-                @{creator.username} {!creator.enabled && "(Disabled)"}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <Label className="text-sm text-slate-500 mb-2 block">Select Creator</Label>
+      <Select value={selectedId || ""} onValueChange={onSelect}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select a creator..." />
+        </SelectTrigger>
+        <SelectContent>
+          {creators.map((creator) => (
+            <SelectItem key={creator.id} value={creator.id}>
+              {creator.display_name || creator.username}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -458,152 +661,111 @@ function CreatorSelector({
 
 export default function AccountsPage() {
   const { user } = useDashboard();
+  const isAdminOrStudio = user?.role === "admin" || user?.role === "studio";
+  
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [editingPlatform, setEditingPlatform] = useState<PlatformId | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<SocialAccount | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<(typeof PLATFORMS)[number] | null>(null);
+  const [showTOTP, setShowTOTP] = useState<SocialAccount | null>(null);
+  const [filter, setFilter] = useState<string>("all");
 
-  const isAdminOrStudio = user?.role === "admin" || user?.role === "studio";
   const activeCreatorId = isAdminOrStudio ? selectedCreatorId : user?.creator_id;
 
-  // Fetch creators for admin/studio
   useEffect(() => {
-    const fetchCreators = async () => {
-      if (!isAdminOrStudio) return;
-      
-      try {
-        const supabase = getSupabaseBrowserClient();
-        let query = supabase.from("creators").select("id, username, enabled, studio_id").order("username");
-        
-        // Studio can only see their own creators
-        if (user?.role === "studio" && user?.studio_id) {
-          query = query.eq("studio_id", user.studio_id);
-        }
-        
-        const { data, error: fetchError } = await query;
-        if (fetchError) throw fetchError;
-        setCreators(data || []);
-        
-        // Auto-select first creator
-        if (data && data.length > 0 && !selectedCreatorId) {
-          setSelectedCreatorId(data[0].id);
-        }
-      } catch (err) {
-        console.error("Error fetching creators:", err);
-      }
-    };
-
-    fetchCreators();
-  }, [isAdminOrStudio, user]);
-
-  // Model: auto-select self
-  useEffect(() => {
-    if (!isAdminOrStudio && user?.creator_id) {
+    if (isAdminOrStudio) {
+      fetchCreators();
+    } else if (user?.creator_id) {
       setSelectedCreatorId(user.creator_id);
+      fetchAccounts(user.creator_id);
+    } else {
+      setIsLoading(false);
     }
-  }, [isAdminOrStudio, user?.creator_id]);
+  }, [user, isAdminOrStudio]);
 
   useEffect(() => {
-    fetchAccounts();
-  }, [activeCreatorId]);
-
-  const fetchAccounts = async () => {
-    if (!activeCreatorId) {
-      setIsLoading(false);
-      return;
+    if (selectedCreatorId) {
+      fetchAccounts(selectedCreatorId);
     }
+  }, [selectedCreatorId]);
 
+  const fetchCreators = async () => {
+    try {
+      const supabase = getSupabaseBrowserClient();
+      let query = supabase.from("creators").select("id, username").eq("enabled", true);
+      
+      if (user?.role === "studio" && user.studio_id) {
+        query = query.eq("studio_id", user.studio_id);
+      }
+
+      const { data, error } = await query.order("username");
+      if (error) throw error;
+      setCreators(data || []);
+      
+      if (data && data.length > 0 && !selectedCreatorId) {
+        setSelectedCreatorId(data[0].id);
+      }
+    } catch (err) {
+      console.error("Error fetching creators:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchAccounts = async (creatorId: string) => {
     setIsLoading(true);
     try {
       const supabase = getSupabaseBrowserClient();
-      const { data, error: fetchError } = await supabase
+      const { data, error } = await supabase
         .from("creator_social_accounts")
         .select("*")
-        .eq("creator_id", activeCreatorId)
+        .eq("creator_id", creatorId)
         .order("platform");
 
-      if (fetchError) throw fetchError;
+      if (error) throw error;
       setAccounts(data || []);
     } catch (err) {
       console.error("Error fetching accounts:", err);
-      setError("Failed to load accounts");
+      toast.error("Failed to load accounts");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSave = async (platform: PlatformId, data: Partial<SocialAccount>) => {
-    if (!activeCreatorId) return;
-
-    setIsSaving(true);
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const existingAccount = accounts.find((a) => a.platform === platform);
-
-      if (existingAccount) {
-        // Update
-        const { error: updateError } = await supabase
-          .from("creator_social_accounts")
-          .update({
-            ...data,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existingAccount.id);
-
-        if (updateError) throw updateError;
-        toast.success("Account updated successfully");
-      } else {
-        // Create
-        const { error: insertError } = await supabase
-          .from("creator_social_accounts")
-          .insert({
-            creator_id: activeCreatorId,
-            platform,
-            ...data,
-          });
-
-        if (insertError) throw insertError;
-        toast.success("Account added successfully");
-      }
-
-      fetchAccounts();
-      setEditingPlatform(null);
-    } catch (err) {
-      console.error("Error saving account:", err);
-      toast.error("Failed to save account");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async (platform: PlatformId) => {
-    const account = accounts.find((a) => a.platform === platform);
-    if (!account) return;
-
-    if (!confirm(`Are you sure you want to remove your ${platform} account?`)) {
-      return;
-    }
+  const handleDelete = async (accountId: string) => {
+    if (!confirm("Are you sure you want to delete this account?")) return;
 
     try {
       const supabase = getSupabaseBrowserClient();
-      const { error: deleteError } = await supabase
+      const { error } = await supabase
         .from("creator_social_accounts")
         .delete()
-        .eq("id", account.id);
+        .eq("id", accountId);
 
-      if (deleteError) throw deleteError;
-      toast.success("Account removed");
-      fetchAccounts();
+      if (error) throw error;
+      setAccounts((prev) => prev.filter((a) => a.id !== accountId));
+      toast.success("Account deleted");
     } catch (err) {
-      console.error("Error deleting account:", err);
-      toast.error("Failed to remove account");
+      toast.error("Failed to delete account");
     }
   };
 
-  if (isLoading && !isAdminOrStudio) {
+  const filteredAccounts = filter === "all" 
+    ? accounts 
+    : accounts.filter((a) => a.platform === filter);
+
+  const groupedAccounts = PLATFORMS.reduce((acc, platform) => {
+    const platformAccounts = filteredAccounts.filter((a) => a.platform === platform.id);
+    if (platformAccounts.length > 0) {
+      acc[platform.id] = platformAccounts;
+    }
+    return acc;
+  }, {} as Record<string, SocialAccount[]>);
+
+  if (isLoading && !activeCreatorId) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
@@ -611,7 +773,6 @@ export default function AccountsPage() {
     );
   }
 
-  // Only show this for non-admin/studio users without a creator profile
   if (!isAdminOrStudio && !user?.creator_id) {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-3">
@@ -623,18 +784,25 @@ export default function AccountsPage() {
     );
   }
 
-  const selectedCreator = creators.find((c) => c.id === activeCreatorId);
-
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Platform Accounts</h1>
-        <p className="text-slate-500">
-          {isAdminOrStudio
-            ? "Manage platform login credentials for creators"
-            : "Manage your login credentials for each platform"}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Platform Accounts</h1>
+          <p className="text-slate-500">Manage your social media and content platform accounts</p>
+        </div>
+        <Button 
+          onClick={() => {
+            setEditingAccount(null);
+            setSelectedPlatform(null);
+            setShowEditor(true);
+          }}
+          className="bg-brand-600 hover:bg-brand-700"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Account
+        </Button>
       </div>
 
       {/* Creator Selector for Admin/Studio */}
@@ -646,86 +814,141 @@ export default function AccountsPage() {
         />
       )}
 
-      {/* No creator selected for admin/studio */}
-      {isAdminOrStudio && !activeCreatorId && (
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center">
-          <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-600 font-medium">Select a creator to manage their accounts</p>
-          <p className="text-sm text-slate-400 mt-1">
-            Choose from the dropdown above to view and edit platform credentials
+      {/* Platform Filter */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        <button
+          onClick={() => setFilter("all")}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+            filter === "all" 
+              ? "bg-slate-900 text-white" 
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          All ({accounts.length})
+        </button>
+        {PLATFORMS.map((platform) => {
+          const count = accounts.filter((a) => a.platform === platform.id).length;
+          if (count === 0) return null;
+          return (
+            <button
+              key={platform.id}
+              onClick={() => setFilter(platform.id)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
+                filter === platform.id 
+                  ? "bg-slate-900 text-white" 
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              <span>{platform.icon}</span>
+              {platform.name} ({count})
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+        </div>
+      ) : filteredAccounts.length === 0 ? (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-12 text-center">
+          <Key className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <h3 className="font-semibold text-slate-700 mb-2">
+            {accounts.length === 0 ? "No accounts yet" : "No accounts match filter"}
+          </h3>
+          <p className="text-slate-500 text-sm mb-6">
+            {accounts.length === 0 
+              ? "Add your first platform account to get started"
+              : "Try changing the filter to see more accounts"}
           </p>
+          {accounts.length === 0 && (
+            <Button 
+              onClick={() => {
+                setEditingAccount(null);
+                setSelectedPlatform(null);
+                setShowEditor(true);
+              }}
+              className="bg-brand-600 hover:bg-brand-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Account
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {Object.entries(groupedAccounts).map(([platformId, platformAccounts]) => {
+            const platform = PLATFORMS.find((p) => p.id === platformId)!;
+            return (
+              <div key={platformId}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-8 h-8 ${platform.color} rounded-lg flex items-center justify-center text-lg`}>
+                    {platform.icon}
+                  </div>
+                  <h2 className="font-semibold text-slate-900">{platform.name}</h2>
+                  <span className="text-sm text-slate-400">({platformAccounts.length})</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingAccount(null);
+                      setSelectedPlatform(platform);
+                      setShowEditor(true);
+                    }}
+                    className="ml-auto"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="grid gap-3">
+                  {platformAccounts.map((account) => (
+                    <AccountCard
+                      key={account.id}
+                      account={account}
+                      platform={platform}
+                      onEdit={() => {
+                        setEditingAccount(account);
+                        setSelectedPlatform(platform);
+                        setShowEditor(true);
+                      }}
+                      onDelete={() => handleDelete(account.id)}
+                      onShowTOTP={() => setShowTOTP(account)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Show content when creator is selected */}
-      {activeCreatorId && (
-        <>
-          {/* Security Notice */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-            <ShieldCheck className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-blue-800 font-medium">Credentials are encrypted</p>
-              <p className="text-sm text-blue-700">
-                All passwords are securely stored. Only authorized team members can access them.
-              </p>
-            </div>
-          </div>
+      {/* Account Editor Modal */}
+      <AnimatePresence>
+        {showEditor && activeCreatorId && (
+          <AccountEditor
+            account={editingAccount}
+            platform={selectedPlatform}
+            creatorId={activeCreatorId}
+            onSave={() => fetchAccounts(activeCreatorId)}
+            onClose={() => {
+              setShowEditor(false);
+              setEditingAccount(null);
+              setSelectedPlatform(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
-          {/* Loading state */}
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 text-brand-600 animate-spin" />
-            </div>
-          ) : (
-            <>
-              {/* Accounts Grid */}
-              <div className="grid gap-4 md:grid-cols-2">
-                {PLATFORMS.map((platform) => {
-                  const account = accounts.find((a) => a.platform === platform.id);
-                  return (
-                    <AccountCard
-                      key={platform.id}
-                      account={account || null}
-                      platform={platform}
-                      isEditing={editingPlatform === platform.id}
-                      onEdit={() => setEditingPlatform(platform.id)}
-                      onDelete={() => handleDelete(platform.id)}
-                      onSave={(data) => handleSave(platform.id, data)}
-                      onCancel={() => setEditingPlatform(null)}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Stats */}
-              <div className="bg-slate-50 rounded-xl p-6">
-                <h2 className="font-semibold text-slate-900 mb-4">
-                  Account Summary {selectedCreator && <span className="text-slate-400 font-normal">for @{selectedCreator.username}</span>}
-                </h2>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-2xl font-bold text-slate-900">{accounts.length}</p>
-                    <p className="text-sm text-slate-500">Connected</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-green-600">
-                      {accounts.filter((a) => a.two_factor_enabled).length}
-                    </p>
-                    <p className="text-sm text-slate-500">2FA Enabled</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-amber-600">
-                      {PLATFORMS.length - accounts.length}
-                    </p>
-                    <p className="text-sm text-slate-500">Not Configured</p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </>
-      )}
+      {/* TOTP Display Modal */}
+      <AnimatePresence>
+        {showTOTP && showTOTP.two_factor_secret && (
+          <TOTPDisplay
+            secret={showTOTP.two_factor_secret}
+            onClose={() => setShowTOTP(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-

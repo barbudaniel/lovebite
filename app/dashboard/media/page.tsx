@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { useDashboard } from "../layout";
 import { createApiClient, type Media, type MediaCategory, type Creator } from "@/lib/media-api";
+import MediaViewer from "@/components/media/MediaViewer";
+import { LabelManager, LabelBadge } from "@/components/media/LabelManager";
 import {
   Image as ImageIcon,
   Video,
@@ -42,17 +45,12 @@ import {
   XCircle,
   File,
   Info,
-  ZoomIn,
-  ZoomOut,
-  RotateCw,
-  Maximize,
-  Minimize,
-  Share2,
-  ExternalLink,
-  Link,
   Check,
   SlidersHorizontal,
   Sparkles,
+  Link2,
+  ExternalLink,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,33 +122,102 @@ const CATEGORY_ICONS: Record<string, { icon: React.ComponentType<{ className?: s
 };
 
 // ============================================
+// SKELETON COMPONENTS
+// ============================================
+
+function MediaSkeleton({ viewMode }: { viewMode: "grid" | "list" | "folders" }) {
+  if (viewMode === "list") {
+    return (
+      <div className="space-y-3">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4 animate-pulse">
+            <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-slate-200 to-slate-100" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-slate-200 rounded w-1/3" />
+              <div className="h-3 bg-slate-100 rounded w-1/2" />
+            </div>
+            <div className="h-3 bg-slate-100 rounded w-20" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      {[...Array(18)].map((_, i) => (
+        <div key={i} className="aspect-square bg-white rounded-xl border border-slate-200 overflow-hidden animate-pulse">
+          <div className="w-full h-full bg-gradient-to-br from-slate-200 via-slate-100 to-slate-200 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skeleton-shimmer" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FolderSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {[...Array(8)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-slate-200 rounded w-2/3" />
+              <div className="flex gap-4">
+                <div className="h-3 bg-slate-100 rounded w-16" />
+                <div className="h-3 bg-slate-100 rounded w-16" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================
 // INFINITE SCROLL TRIGGER
 // ============================================
 
 function InfiniteScrollTrigger({
   onTrigger,
   isLoading,
+  hasMore,
 }: {
   onTrigger: () => void;
   isLoading: boolean;
+  hasMore: boolean;
 }) {
   const triggerRef = useRef<HTMLDivElement>(null);
+  const hasTriggeredRef = useRef(false);
 
   useEffect(() => {
-    if (!triggerRef.current || isLoading) return;
+    // Reset trigger flag when loading completes
+    if (!isLoading) {
+      hasTriggeredRef.current = false;
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    if (!triggerRef.current || isLoading || !hasMore) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !hasTriggeredRef.current && !isLoading) {
+          hasTriggeredRef.current = true;
           onTrigger();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "400px", threshold: 0 }
     );
 
     observer.observe(triggerRef.current);
     return () => observer.disconnect();
-  }, [onTrigger, isLoading]);
+  }, [onTrigger, isLoading, hasMore]);
+
+  if (!hasMore) return null;
 
   return (
     <div ref={triggerRef} className="flex justify-center py-8">
@@ -300,10 +367,10 @@ function FolderCard({
 }
 
 // ============================================
-// CATEGORY FILTER COMPONENT (Multi-select icons)
+// LABEL SIDEBAR COMPONENT (Vertical scrollable with sorting)
 // ============================================
 
-function CategoryFilter({
+function LabelSidebar({
   categories,
   selectedCategories,
   onToggle,
@@ -314,39 +381,120 @@ function CategoryFilter({
 }) {
   if (categories.length === 0) return null;
 
-  return (
-    <div className="flex flex-wrap gap-2">
-      {categories.map((cat) => {
-        const isSelected = selectedCategories.has(cat.name);
-        const iconConfig = CATEGORY_ICONS[cat.name] || CATEGORY_ICONS["default"];
-        const IconComponent = iconConfig.icon;
+  // Sort by count descending
+  const sortedCategories = [...categories].sort((a, b) => b.count - a.count);
 
-        return (
-          <button
-            key={cat.name}
-            onClick={() => onToggle(cat.name)}
-            className={`group relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-              isSelected
-                ? "bg-brand-500 text-white shadow-md shadow-brand-500/25 scale-105"
-                : `${iconConfig.bg} ${iconConfig.color} hover:shadow-md hover:scale-105`
-            }`}
-          >
-            <span className={isSelected ? "grayscale-0" : ""}>
-              <IconComponent className="w-4 h-4" />
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="p-3 border-b border-slate-100 bg-slate-50">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4 text-slate-500" />
+          <span className="text-sm font-semibold text-slate-700">Labels</span>
+          {selectedCategories.size > 0 && (
+            <span className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full ml-auto">
+              {selectedCategories.size}
             </span>
-            <span>{cat.name}</span>
-            <span className={`text-xs ${isSelected ? "text-brand-200" : "opacity-60"}`}>
-              {cat.count}
-            </span>
-            {isSelected && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-sm">
-                <Check className="w-3 h-3 text-brand-500" />
+          )}
+        </div>
+      </div>
+      <div className="max-h-[400px] overflow-y-auto">
+        {sortedCategories.map((cat) => {
+          const isSelected = selectedCategories.has(cat.name);
+          const iconConfig = CATEGORY_ICONS[cat.name] || CATEGORY_ICONS["default"];
+          const IconComponent = iconConfig.icon;
+
+          return (
+            <button
+              key={cat.name}
+              onClick={() => onToggle(cat.name)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all border-l-2 ${
+                isSelected
+                  ? "bg-brand-50 border-l-brand-500 text-brand-700"
+                  : "border-l-transparent hover:bg-slate-50 text-slate-700"
+              }`}
+            >
+              <span className={`w-8 h-8 rounded-lg flex items-center justify-center ${isSelected ? "bg-brand-100" : iconConfig.bg}`}>
+                <IconComponent className="w-4 h-4" />
               </span>
-            )}
+              <span className="flex-1 text-sm font-medium truncate">{cat.name}</span>
+              <span className={`text-xs px-2 py-1 rounded-full ${
+                isSelected ? "bg-brand-200 text-brand-800" : "bg-slate-100 text-slate-600"
+              }`}>
+                {cat.count}
+              </span>
+              {isSelected && (
+                <Check className="w-4 h-4 text-brand-500 shrink-0" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+      {selectedCategories.size > 0 && (
+        <div className="p-2 border-t border-slate-100">
+          <button
+            onClick={() => {
+              // Clear all selected categories
+              selectedCategories.forEach(cat => onToggle(cat));
+            }}
+            className="w-full text-xs text-slate-500 hover:text-slate-700 py-1.5 rounded hover:bg-slate-50 transition-colors"
+          >
+            Clear all labels
           </button>
-        );
-      })}
+        </div>
+      )}
     </div>
+  );
+}
+
+// ============================================
+// CATEGORY BADGE COMPONENT (with Label Manager)
+// ============================================
+
+function CategoryBadge({
+  category,
+  mediaId,
+  storageUrl,
+  onUpdate,
+}: {
+  category: string | null;
+  mediaId: string;
+  storageUrl?: string;
+  onUpdate?: (newCategory: string) => void;
+}) {
+  const [showLabelManager, setShowLabelManager] = useState(false);
+  
+  const iconConfig = CATEGORY_ICONS[category || ""] || CATEGORY_ICONS["default"];
+  const IconComponent = iconConfig.icon;
+
+  const currentLabels = category ? [category] : [];
+
+  const handleLabelsChange = (labels: string[]) => {
+    const primaryLabel = labels[0] || "";
+    if (onUpdate && primaryLabel !== category) {
+      onUpdate(primaryLabel);
+    }
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setShowLabelManager(true)}
+        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-all hover:scale-105 hover:shadow-sm cursor-pointer ${iconConfig.bg} ${iconConfig.color}`}
+        title="Click to manage labels"
+      >
+        <IconComponent className="w-3 h-3" />
+        <span>{category || "Add label"}</span>
+      </button>
+
+      <LabelManager
+        open={showLabelManager}
+        onOpenChange={setShowLabelManager}
+        mediaId={mediaId}
+        currentLabels={currentLabels}
+        storageUrl={storageUrl}
+        onLabelsChange={handleLabelsChange}
+      />
+    </>
   );
 }
 
@@ -449,7 +597,10 @@ function MediaCard({
   onView,
   onDelete,
   onCopy,
+  onCopyPermalink,
+  onCategoryUpdate,
   viewMode,
+  apiKey,
 }: {
   media: Media;
   isSelected: boolean;
@@ -457,7 +608,10 @@ function MediaCard({
   onView: (media: Media) => void;
   onDelete: (id: string) => void;
   onCopy: (media: Media) => void;
+  onCopyPermalink: (id: string) => void;
+  onCategoryUpdate: (mediaId: string, newCategory: string) => void;
   viewMode: ViewMode;
+  apiKey: string;
 }) {
   const getTypeIcon = () => {
     switch (media.media_type) {
@@ -516,9 +670,9 @@ function MediaCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-slate-900 truncate">{media.file_name}</p>
+          <p className="font-medium text-slate-900 truncate">{media.category || "Uncategorized"}</p>
           <p className="text-sm text-slate-500">
-            {media.category || "Uncategorized"} • {formatFileSize(media.file_size_bytes)}
+            {formatFileSize(media.file_size_bytes)} • {format(new Date(media.created_at), "MMM d")}
           </p>
           {media.creator && (
             <p className="text-xs text-slate-400">by @{media.creator.username}</p>
@@ -530,11 +684,14 @@ function MediaCard({
         </p>
 
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => onView(media)}>
+          <Button variant="ghost" size="sm" onClick={() => onView(media)} title="View">
             <Eye className="w-4 h-4" />
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => onCopyPermalink(media.id)} title="Copy permalink">
+            <Link2 className="w-4 h-4" />
+          </Button>
           {media.media_type === "image" && (
-            <Button variant="ghost" size="sm" onClick={() => onCopy(media)}>
+            <Button variant="ghost" size="sm" onClick={() => onCopy(media)} title="Copy image">
               <Copy className="w-4 h-4" />
             </Button>
           )}
@@ -542,6 +699,7 @@ function MediaCard({
             variant="ghost"
             size="sm"
             onClick={() => window.open(media.storage_url, "_blank")}
+            title="Download"
           >
             <Download className="w-4 h-4" />
           </Button>
@@ -550,6 +708,7 @@ function MediaCard({
             size="sm"
             onClick={() => onDelete(media.id)}
             className="text-red-500 hover:text-red-700 hover:bg-red-50"
+            title="Delete"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -608,8 +767,19 @@ function MediaCard({
                 onView(media);
               }}
               className="p-2 bg-white rounded-full shadow-lg hover:bg-slate-100 transition-colors"
+              title="View"
             >
               <Eye className="w-4 h-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onCopyPermalink(media.id);
+              }}
+              className="p-2 bg-white rounded-full shadow-lg hover:bg-slate-100 transition-colors"
+              title="Copy permalink"
+            >
+              <Link2 className="w-4 h-4" />
             </button>
             {media.media_type === "image" && (
               <button
@@ -618,6 +788,7 @@ function MediaCard({
                   onCopy(media);
                 }}
                 className="p-2 bg-white rounded-full shadow-lg hover:bg-slate-100 transition-colors"
+                title="Copy image"
               >
                 <Copy className="w-4 h-4" />
               </button>
@@ -628,6 +799,7 @@ function MediaCard({
                 window.open(media.storage_url, "_blank");
               }}
               className="p-2 bg-white rounded-full shadow-lg hover:bg-slate-100 transition-colors"
+              title="Download"
             >
               <Download className="w-4 h-4" />
             </button>
@@ -636,480 +808,18 @@ function MediaCard({
       </div>
 
       {/* Info */}
-      <div className="p-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-900 truncate">{media.file_name}</p>
-            <p className="text-xs text-slate-500">{media.category || "Uncategorized"}</p>
-          </div>
-          <TypeIcon className="w-4 h-4 text-slate-400 shrink-0" />
+      <div className="p-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <CategoryBadge
+            category={media.category}
+            mediaId={media.id}
+            storageUrl={media.storage_url}
+            onUpdate={(newCat) => onCategoryUpdate(media.id, newCat)}
+          />
+          <TypeIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
         </div>
       </div>
     </motion.div>
-  );
-}
-
-// ============================================
-// MEDIA VIEWER MODAL (Google Drive Style)
-// ============================================
-
-function MediaViewer({
-  media,
-  mediaList,
-  onClose,
-  onDelete,
-  onCopy,
-  onNavigate,
-}: {
-  media: Media;
-  mediaList?: Media[];
-  onClose: () => void;
-  onDelete: (id: string) => void;
-  onCopy: (media: Media) => void;
-  onNavigate?: (media: Media) => void;
-}) {
-  const [showInfo, setShowInfo] = useState(false);
-  const [zoom, setZoom] = useState(100);
-  const [rotation, setRotation] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Get current index and navigation
-  const currentIndex = mediaList?.findIndex((m) => m.id === media.id) ?? -1;
-  const canNavigatePrev = currentIndex > 0;
-  const canNavigateNext = currentIndex >= 0 && currentIndex < (mediaList?.length ?? 0) - 1;
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      } else if (e.key === "ArrowLeft" && canNavigatePrev && mediaList && onNavigate) {
-        onNavigate(mediaList[currentIndex - 1]);
-      } else if (e.key === "ArrowRight" && canNavigateNext && mediaList && onNavigate) {
-        onNavigate(mediaList[currentIndex + 1]);
-      } else if (e.key === "+" || e.key === "=") {
-        setZoom((z) => Math.min(z + 25, 300));
-      } else if (e.key === "-") {
-        setZoom((z) => Math.max(z - 25, 25));
-      } else if (e.key === "0") {
-        setZoom(100);
-        setRotation(0);
-      } else if (e.key === "r" || e.key === "R") {
-        setRotation((r) => (r + 90) % 360);
-      } else if (e.key === "i" || e.key === "I") {
-        setShowInfo((s) => !s);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, canNavigatePrev, canNavigateNext, currentIndex, mediaList, onNavigate]);
-
-  // Fullscreen toggle
-  const toggleFullscreen = async () => {
-    if (!document.fullscreenElement) {
-      await containerRef.current?.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      await document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
-
-  // Copy link to clipboard
-  const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(media.storage_url);
-    toast.success("Link copied to clipboard!");
-  };
-
-  // Format file size
-  const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return "Unknown";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent size="full" className="bg-slate-900 border-none p-0 max-h-screen">
-        <VisuallyHidden>
-          <DialogTitle>Media Preview - {media.file_name}</DialogTitle>
-        </VisuallyHidden>
-
-        <div ref={containerRef} className="flex flex-col h-screen">
-          {/* Top Toolbar - Google Drive style */}
-          <div className="flex items-center justify-between px-4 py-2 bg-slate-800/80 backdrop-blur-sm border-b border-slate-700 shrink-0">
-            {/* Left: Back button and filename */}
-            <div className="flex items-center gap-3 min-w-0">
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-slate-700 rounded-full transition-colors"
-                title="Close (Esc)"
-              >
-                <ArrowLeft className="w-5 h-5 text-slate-300" />
-              </button>
-              <div className="min-w-0">
-                <h3 className="font-medium text-white truncate max-w-[300px] sm:max-w-[400px]">
-                  {media.file_name}
-                </h3>
-                {media.creator && (
-                  <p className="text-xs text-slate-400">@{media.creator.username}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Center: Zoom controls (for images) */}
-            {media.media_type === "image" && (
-              <div className="hidden sm:flex items-center gap-1 bg-slate-700/50 rounded-full px-2 py-1">
-                <button
-                  onClick={() => setZoom((z) => Math.max(z - 25, 25))}
-                  className="p-1.5 hover:bg-slate-600 rounded-full transition-colors"
-                  title="Zoom out (-)"
-                >
-                  <ZoomOut className="w-4 h-4 text-slate-300" />
-                </button>
-                <span className="text-xs text-slate-300 w-12 text-center font-medium">
-                  {zoom}%
-                </span>
-                <button
-                  onClick={() => setZoom((z) => Math.min(z + 25, 300))}
-                  className="p-1.5 hover:bg-slate-600 rounded-full transition-colors"
-                  title="Zoom in (+)"
-                >
-                  <ZoomIn className="w-4 h-4 text-slate-300" />
-                </button>
-                <div className="w-px h-4 bg-slate-600 mx-1" />
-                <button
-                  onClick={() => setRotation((r) => (r + 90) % 360)}
-                  className="p-1.5 hover:bg-slate-600 rounded-full transition-colors"
-                  title="Rotate (R)"
-                >
-                  <RotateCw className="w-4 h-4 text-slate-300" />
-                </button>
-                <button
-                  onClick={() => {
-                    setZoom(100);
-                    setRotation(0);
-                  }}
-                  className="p-1.5 hover:bg-slate-600 rounded-full transition-colors text-xs text-slate-300"
-                  title="Reset (0)"
-                >
-                  Reset
-                </button>
-              </div>
-            )}
-
-            {/* Right: Actions */}
-            <div className="flex items-center gap-1">
-              {media.media_type === "image" && (
-                <button
-                  onClick={() => onCopy(media)}
-                  className="p-2 hover:bg-slate-700 rounded-full transition-colors"
-                  title="Copy image"
-                >
-                  <Copy className="w-5 h-5 text-slate-300" />
-                </button>
-              )}
-              <button
-                onClick={handleCopyLink}
-                className="p-2 hover:bg-slate-700 rounded-full transition-colors"
-                title="Copy link"
-              >
-                <Link className="w-5 h-5 text-slate-300" />
-              </button>
-              <button
-                onClick={() => window.open(media.storage_url, "_blank")}
-                className="p-2 hover:bg-slate-700 rounded-full transition-colors"
-                title="Open in new tab"
-              >
-                <ExternalLink className="w-5 h-5 text-slate-300" />
-              </button>
-              <button
-                onClick={() => {
-                  const a = document.createElement("a");
-                  a.href = media.storage_url;
-                  a.download = media.file_name;
-                  a.click();
-                }}
-                className="p-2 hover:bg-slate-700 rounded-full transition-colors"
-                title="Download"
-              >
-                <Download className="w-5 h-5 text-slate-300" />
-              </button>
-              <button
-                onClick={toggleFullscreen}
-                className="p-2 hover:bg-slate-700 rounded-full transition-colors hidden sm:block"
-                title="Toggle fullscreen"
-              >
-                {isFullscreen ? (
-                  <Minimize className="w-5 h-5 text-slate-300" />
-                ) : (
-                  <Maximize className="w-5 h-5 text-slate-300" />
-                )}
-              </button>
-              <div className="w-px h-6 bg-slate-700 mx-1" />
-              <button
-                onClick={() => setShowInfo((s) => !s)}
-                className={`p-2 rounded-full transition-colors ${
-                  showInfo ? "bg-brand-600 text-white" : "hover:bg-slate-700 text-slate-300"
-                }`}
-                title="Toggle info (I)"
-              >
-                <Info className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => {
-                  if (confirm("Delete this media? This cannot be undone.")) {
-                    onDelete(media.id);
-                    onClose();
-                  }
-                }}
-                className="p-2 hover:bg-red-500/20 rounded-full transition-colors"
-                title="Delete"
-              >
-                <Trash2 className="w-5 h-5 text-red-400" />
-              </button>
-            </div>
-          </div>
-
-          {/* Main Content Area */}
-          <div className="flex-1 flex overflow-hidden">
-            {/* Media Preview */}
-            <div className="flex-1 relative flex items-center justify-center bg-slate-900 overflow-auto">
-              {/* Navigation arrows */}
-              {canNavigatePrev && mediaList && onNavigate && (
-                <button
-                  onClick={() => onNavigate(mediaList[currentIndex - 1])}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-slate-800/80 hover:bg-slate-700 rounded-full transition-colors z-10"
-                  title="Previous (←)"
-                >
-                  <ChevronLeft className="w-6 h-6 text-white" />
-                </button>
-              )}
-              {canNavigateNext && mediaList && onNavigate && (
-                <button
-                  onClick={() => onNavigate(mediaList[currentIndex + 1])}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-slate-800/80 hover:bg-slate-700 rounded-full transition-colors z-10"
-                  title="Next (→)"
-                >
-                  <ChevronRight className="w-6 h-6 text-white" />
-                </button>
-              )}
-
-              {/* Loading spinner */}
-              {isLoading && media.media_type === "image" && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
-                </div>
-              )}
-
-              {/* Media content */}
-              {media.media_type === "image" ? (
-                <img
-                  src={media.storage_url}
-                  alt={media.file_name}
-                  className="max-w-full max-h-full object-contain transition-all duration-200"
-                  style={{
-                    transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-                    opacity: isLoading ? 0 : 1,
-                  }}
-                  onLoad={() => setIsLoading(false)}
-                  draggable={false}
-                />
-              ) : media.media_type === "video" ? (
-                <video
-                  src={media.storage_url}
-                  controls
-                  autoPlay
-                  className="max-w-full max-h-full rounded-lg"
-                  style={{ maxHeight: "calc(100vh - 120px)" }}
-                />
-              ) : (
-                <div className="flex flex-col items-center gap-6">
-                  <div className="w-32 h-32 bg-slate-800 rounded-2xl flex items-center justify-center">
-                    <Music className="w-16 h-16 text-orange-400" />
-                  </div>
-                  <audio src={media.storage_url} controls autoPlay className="w-full max-w-lg" />
-                </div>
-              )}
-
-              {/* Counter badge */}
-              {mediaList && mediaList.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800/80 rounded-full text-sm text-slate-300">
-                  {currentIndex + 1} / {mediaList.length}
-                </div>
-              )}
-            </div>
-
-            {/* Info Panel */}
-            <AnimatePresence>
-              {showInfo && (
-                <motion.div
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 320, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="border-l border-slate-700 bg-slate-800 overflow-hidden shrink-0"
-                >
-                  <div className="w-80 p-4 space-y-6 overflow-y-auto h-full">
-                    {/* File Details */}
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">
-                        Details
-                      </h4>
-                      <dl className="space-y-3">
-                        <div>
-                          <dt className="text-xs text-slate-500">File name</dt>
-                          <dd className="text-sm text-white break-all">{media.file_name}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-xs text-slate-500">Type</dt>
-                          <dd className="text-sm text-white capitalize">{media.media_type}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-xs text-slate-500">Size</dt>
-                          <dd className="text-sm text-white">
-                            {formatFileSize(media.file_size_bytes)}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-xs text-slate-500">Category</dt>
-                          <dd className="text-sm text-white">
-                            {media.category || "Uncategorized"}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-xs text-slate-500">Created</dt>
-                          <dd className="text-sm text-white">
-                            {format(new Date(media.created_at), "PPP 'at' p")}
-                          </dd>
-                        </div>
-                        {media.creator && (
-                          <div>
-                            <dt className="text-xs text-slate-500">Creator</dt>
-                            <dd className="text-sm text-white">@{media.creator.username}</dd>
-                          </div>
-                        )}
-                      </dl>
-                    </div>
-
-                    {/* Quick Actions */}
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">
-                        Actions
-                      </h4>
-                      <div className="space-y-2">
-                        <button
-                          onClick={() => {
-                            const a = document.createElement("a");
-                            a.href = media.storage_url;
-                            a.download = media.file_name;
-                            a.click();
-                          }}
-                          className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg transition-colors"
-                        >
-                          <Download className="w-4 h-4" />
-                          Download
-                        </button>
-                        {media.media_type === "image" && (
-                          <button
-                            onClick={() => onCopy(media)}
-                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg transition-colors"
-                          >
-                            <Copy className="w-4 h-4" />
-                            Copy to clipboard
-                          </button>
-                        )}
-                        <button
-                          onClick={handleCopyLink}
-                          className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg transition-colors"
-                        >
-                          <Link className="w-4 h-4" />
-                          Copy link
-                        </button>
-                        <button
-                          onClick={() => window.open(media.storage_url, "_blank")}
-                          className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg transition-colors"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Open in new tab
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm("Delete this media? This cannot be undone.")) {
-                              onDelete(media.id);
-                              onClose();
-                            }
-                          }}
-                          className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Keyboard Shortcuts */}
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">
-                        Keyboard Shortcuts
-                      </h4>
-                      <div className="space-y-2 text-xs text-slate-400">
-                        <div className="flex justify-between">
-                          <span>Close</span>
-                          <kbd className="px-2 py-0.5 bg-slate-700 rounded">Esc</kbd>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Previous/Next</span>
-                          <span>
-                            <kbd className="px-2 py-0.5 bg-slate-700 rounded">←</kbd>{" "}
-                            <kbd className="px-2 py-0.5 bg-slate-700 rounded">→</kbd>
-                          </span>
-                        </div>
-                        {media.media_type === "image" && (
-                          <>
-                            <div className="flex justify-between">
-                              <span>Zoom in/out</span>
-                              <span>
-                                <kbd className="px-2 py-0.5 bg-slate-700 rounded">+</kbd>{" "}
-                                <kbd className="px-2 py-0.5 bg-slate-700 rounded">-</kbd>
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Rotate</span>
-                              <kbd className="px-2 py-0.5 bg-slate-700 rounded">R</kbd>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Reset view</span>
-                              <kbd className="px-2 py-0.5 bg-slate-700 rounded">0</kbd>
-                            </div>
-                          </>
-                        )}
-                        <div className="flex justify-between">
-                          <span>Toggle info</span>
-                          <kbd className="px-2 py-0.5 bg-slate-700 rounded">I</kbd>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -1121,9 +831,10 @@ interface UploadFile {
   file: File;
   id: string;
   progress: number;
-  status: "pending" | "uploading" | "complete" | "error";
+  status: "pending" | "uploading" | "processing" | "complete" | "error";
   media?: Media;
   error?: string;
+  preview?: string; // Object URL for preview
 }
 
 function UploadModal({
@@ -1190,17 +901,40 @@ function UploadModal({
   };
 
   const addFiles = (newFiles: File[]) => {
-    const uploadFiles: UploadFile[] = newFiles.map((file) => ({
-      file,
-      id: `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      progress: 0,
-      status: "pending",
-    }));
+    const uploadFiles: UploadFile[] = newFiles.map((file) => {
+      // Generate preview URL for images and videos
+      let preview: string | undefined;
+      if (file.type.startsWith("image/") || file.type.startsWith("video/")) {
+        preview = URL.createObjectURL(file);
+      }
+      return {
+        file,
+        id: `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        progress: 0,
+        status: "pending",
+        preview,
+      };
+    });
     setFiles((prev) => [...prev, ...uploadFiles]);
   };
 
+  // Clean up preview URLs when component unmounts or files are removed
+  useEffect(() => {
+    return () => {
+      files.forEach((f) => {
+        if (f.preview) URL.revokeObjectURL(f.preview);
+      });
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const removeFile = (id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
+    setFiles((prev) => {
+      const fileToRemove = prev.find((f) => f.id === id);
+      if (fileToRemove?.preview) {
+        URL.revokeObjectURL(fileToRemove.preview);
+      }
+      return prev.filter((f) => f.id !== id);
+    });
   };
 
   const handleUpload = async () => {
@@ -1233,9 +967,18 @@ function UploadModal({
           creator_id: creatorId,
           category: category || undefined,
           onProgress: (progress) => {
-            setFiles((prev) =>
-              prev.map((f) => (f.id === uploadFile.id ? { ...f, progress } : f))
-            );
+            // When upload reaches 100%, show processing state
+            if (progress === 100) {
+              setFiles((prev) =>
+                prev.map((f) =>
+                  f.id === uploadFile.id ? { ...f, progress, status: "processing" } : f
+                )
+              );
+            } else {
+              setFiles((prev) =>
+                prev.map((f) => (f.id === uploadFile.id ? { ...f, progress } : f))
+              );
+            }
           },
         });
 
@@ -1377,67 +1120,143 @@ function UploadModal({
             </p>
           </div>
 
-          {/* File List */}
+          {/* File List with Previews */}
           {files.length > 0 && (
-            <div className="space-y-2 max-h-60 overflow-y-auto">
+            <div className="space-y-3">
               <div className="flex items-center justify-between text-sm text-slate-500">
                 <span>{files.length} file(s) selected</span>
-                {completeCount > 0 && (
-                  <span className="text-green-600">{completeCount} uploaded</span>
-                )}
+                <div className="flex items-center gap-3">
+                  {uploadingCount > 0 && (
+                    <span className="text-brand-600 flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      {uploadingCount} uploading
+                    </span>
+                  )}
+                  {files.filter((f) => f.status === "processing").length > 0 && (
+                    <span className="text-amber-600 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 animate-pulse" />
+                      {files.filter((f) => f.status === "processing").length} processing
+                    </span>
+                  )}
+                  {completeCount > 0 && (
+                    <span className="text-green-600">{completeCount} done</span>
+                  )}
+                </div>
               </div>
-              {files.map((uploadFile) => {
-                const FileIcon = getFileIcon(uploadFile.file);
-                return (
-                  <div
-                    key={uploadFile.id}
-                    className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg"
-                  >
-                    <FileIcon className="w-5 h-5 text-slate-400 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-700 truncate">
-                        {uploadFile.file.name}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500">
-                          {formatFileSize(uploadFile.file.size)}
-                        </span>
-                        {uploadFile.status === "uploading" && (
-                          <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+              
+              {/* Grid view for visual files */}
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-72 overflow-y-auto p-1">
+                {files.map((uploadFile) => {
+                  const FileIcon = getFileIcon(uploadFile.file);
+                  const isImage = uploadFile.file.type.startsWith("image/");
+                  const isVideo = uploadFile.file.type.startsWith("video/");
+                  
+                  return (
+                    <div
+                      key={uploadFile.id}
+                      className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                        uploadFile.status === "complete"
+                          ? "border-green-500"
+                          : uploadFile.status === "error"
+                          ? "border-red-500"
+                          : uploadFile.status === "processing"
+                          ? "border-amber-500"
+                          : uploadFile.status === "uploading"
+                          ? "border-brand-500"
+                          : "border-slate-200"
+                      }`}
+                    >
+                      {/* Preview thumbnail */}
+                      {uploadFile.preview ? (
+                        isVideo ? (
+                          <video
+                            src={uploadFile.preview}
+                            className="w-full h-full object-cover"
+                            muted
+                          />
+                        ) : (
+                          <img
+                            src={uploadFile.preview}
+                            alt={uploadFile.file.name}
+                            className="w-full h-full object-cover"
+                          />
+                        )
+                      ) : (
+                        <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                          <FileIcon className="w-8 h-8 text-slate-400" />
+                        </div>
+                      )}
+                      
+                      {/* Processing overlay */}
+                      {uploadFile.status === "processing" && (
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                          <div className="relative">
+                            <Sparkles className="w-8 h-8 text-amber-400 animate-pulse" />
+                            <div className="absolute inset-0 animate-ping">
+                              <Sparkles className="w-8 h-8 text-amber-400 opacity-50" />
+                            </div>
+                          </div>
+                          <span className="text-xs text-white mt-2 font-medium">AI Processing...</span>
+                        </div>
+                      )}
+                      
+                      {/* Uploading overlay with progress */}
+                      {uploadFile.status === "uploading" && (
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                          <Loader2 className="w-6 h-6 text-white animate-spin" />
+                          <span className="text-xs text-white mt-2">{uploadFile.progress}%</span>
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-700">
                             <div
-                              className="h-full bg-brand-500 transition-all"
+                              className="h-full bg-brand-500 transition-all duration-300"
                               style={{ width: `${uploadFile.progress}%` }}
                             />
                           </div>
-                        )}
-                        {uploadFile.status === "error" && (
-                          <span className="text-xs text-red-500">{uploadFile.error}</span>
-                        )}
+                        </div>
+                      )}
+                      
+                      {/* Complete overlay */}
+                      {uploadFile.status === "complete" && (
+                        <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
+                          <div className="bg-green-500 rounded-full p-1.5">
+                            <CheckCircle className="w-5 h-5 text-white" />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Error overlay */}
+                      {uploadFile.status === "error" && (
+                        <div className="absolute inset-0 bg-red-500/20 flex flex-col items-center justify-center p-2">
+                          <div className="bg-red-500 rounded-full p-1.5">
+                            <XCircle className="w-5 h-5 text-white" />
+                          </div>
+                          <span className="text-xs text-red-600 mt-1 text-center truncate w-full">
+                            {uploadFile.error}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Remove button (only for pending) */}
+                      {uploadFile.status === "pending" && !isUploading && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFile(uploadFile.id);
+                          }}
+                          className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+                        >
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      )}
+                      
+                      {/* File info on hover */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 hover:opacity-100 transition-opacity">
+                        <p className="text-xs text-white truncate">{uploadFile.file.name}</p>
+                        <p className="text-xs text-white/70">{formatFileSize(uploadFile.file.size)}</p>
                       </div>
                     </div>
-                    {uploadFile.status === "pending" && !isUploading && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFile(uploadFile.id);
-                        }}
-                        className="p-1 hover:bg-slate-200 rounded"
-                      >
-                        <X className="w-4 h-4 text-slate-400" />
-                      </button>
-                    )}
-                    {uploadFile.status === "uploading" && (
-                      <Loader2 className="w-4 h-4 text-brand-500 animate-spin" />
-                    )}
-                    {uploadFile.status === "complete" && (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                    )}
-                    {uploadFile.status === "error" && (
-                      <XCircle className="w-4 h-4 text-red-500" />
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </DialogBody>
@@ -1479,12 +1298,15 @@ function UploadModal({
 
 export default function MediaPage() {
   const { user, apiKey } = useDashboard();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
   const [media, setMedia] = useState<Media[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
   const [categories, setCategories] = useState<MediaCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("folders");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [viewingMedia, setViewingMedia] = useState<Media | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -1505,8 +1327,86 @@ export default function MediaPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [creatorMediaCounts, setCreatorMediaCounts] = useState<CreatorMediaCounts>({});
   const [globalCounts, setGlobalCounts] = useState<MediaCounts>({ image: 0, video: 0, audio: 0, total: 0 });
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const loadMoreOffset = useRef(0);
 
   const isAdminOrStudio = user?.role === "admin" || user?.role === "studio";
+  const isAdmin = user?.role === "admin";
+  
+  // Handle URL params for permalinks and time filtering
+  const mediaIdParam = searchParams.get("view");
+  const dateFromParam = searchParams.get("from");
+  const dateToParam = searchParams.get("to");
+  const creatorParam = searchParams.get("creator");
+  
+  // Apply URL params to filters on mount
+  useEffect(() => {
+    if (dateFromParam || dateToParam) {
+      setFilters(prev => ({
+        ...prev,
+        dateFrom: dateFromParam || "",
+        dateTo: dateToParam || "",
+      }));
+      setShowFilters(true);
+    }
+    if (creatorParam) {
+      setSelectedCreator(creatorParam);
+    }
+  }, [dateFromParam, dateToParam, creatorParam]);
+  
+  // Open media viewer if mediaId is in URL
+  useEffect(() => {
+    if (mediaIdParam && media.length > 0 && apiKey) {
+      // Find media in current list or fetch it
+      const foundMedia = media.find(m => m.id === mediaIdParam);
+      if (foundMedia) {
+        setViewingMedia(foundMedia);
+      } else {
+        // Fetch the specific media
+        const api = createApiClient(apiKey);
+        api.getMedia(mediaIdParam).then(response => {
+          if (response.success && response.data) {
+            setViewingMedia(response.data);
+          }
+        });
+      }
+    }
+  }, [mediaIdParam, media, apiKey]);
+  
+  // Generate permalink for a media item
+  const getMediaPermalink = useCallback((mediaId: string) => {
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    return `${baseUrl}/dashboard/media?view=${mediaId}`;
+  }, []);
+  
+  // Copy permalink to clipboard
+  const copyPermalink = useCallback(async (mediaId: string) => {
+    const permalink = getMediaPermalink(mediaId);
+    try {
+      await navigator.clipboard.writeText(permalink);
+      toast.success("Permalink copied to clipboard!");
+    } catch {
+      toast.error("Failed to copy permalink");
+    }
+  }, [getMediaPermalink]);
+  
+  // Update URL when viewing media
+  const openMediaViewer = useCallback((mediaItem: Media) => {
+    setViewingMedia(mediaItem);
+    // Update URL without navigation
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", mediaItem.id);
+    router.replace(url.pathname + url.search, { scroll: false });
+  }, [router]);
+  
+  // Close media viewer and clear URL param
+  const closeMediaViewer = useCallback(() => {
+    setViewingMedia(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("view");
+    router.replace(url.pathname + url.search, { scroll: false });
+  }, [router]);
   const [isGlobalDragging, setIsGlobalDragging] = useState(false);
   const dragCounter = useRef(0);
 
@@ -1566,45 +1466,77 @@ export default function MediaPage() {
 
       if (response.success && response.data) {
         setCreators(response.data);
+        
+        // Get the set of creator IDs this user can access
+        const accessibleCreatorIds = new Set(response.data.map(c => c.id));
 
-        // Fetch media counts for each creator
-        const counts: CreatorMediaCounts = {};
-        let totalImage = 0, totalVideo = 0, totalAudio = 0;
+        // Only fetch counts if we don't have them yet (to avoid refetching)
+        if (Object.keys(creatorMediaCounts).length === 0) {
+          // Fetch media counts for each creator
+          const counts: CreatorMediaCounts = {};
+          let totalImage = 0, totalVideo = 0, totalAudio = 0;
 
-        // Fetch all media to calculate counts (more efficient than per-creator API calls)
-        const allMediaResponse = await api.listMedia({ limit: 5000 });
-        if (allMediaResponse.success && allMediaResponse.data) {
-          allMediaResponse.data.forEach((m: Media) => {
-            const creatorId = m.creator_id;
-            if (!counts[creatorId]) {
-              counts[creatorId] = { image: 0, video: 0, audio: 0, total: 0 };
-            }
-            if (m.media_type === "image") {
-              counts[creatorId].image++;
-              totalImage++;
-            } else if (m.media_type === "video") {
-              counts[creatorId].video++;
-              totalVideo++;
-            } else if (m.media_type === "audio") {
-              counts[creatorId].audio++;
-              totalAudio++;
-            }
-            counts[creatorId].total++;
+          // Fetch all media to calculate counts (more efficient than per-creator API calls)
+          const allMediaResponse = await api.listMedia({ limit: 5000 });
+          if (allMediaResponse.success && allMediaResponse.data) {
+            allMediaResponse.data.forEach((m: Media) => {
+              const creatorId = m.creator_id;
+              
+              // Only count media from accessible creators
+              if (!accessibleCreatorIds.has(creatorId)) return;
+              
+              if (!counts[creatorId]) {
+                counts[creatorId] = { image: 0, video: 0, audio: 0, total: 0 };
+              }
+              if (m.media_type === "image") {
+                counts[creatorId].image++;
+                totalImage++;
+              } else if (m.media_type === "video") {
+                counts[creatorId].video++;
+                totalVideo++;
+              } else if (m.media_type === "audio") {
+                counts[creatorId].audio++;
+                totalAudio++;
+              }
+              counts[creatorId].total++;
+            });
+          }
+
+          setCreatorMediaCounts(counts);
+          setGlobalCounts({
+            image: totalImage,
+            video: totalVideo,
+            audio: totalAudio,
+            total: totalImage + totalVideo + totalAudio,
           });
         }
-
-        setCreatorMediaCounts(counts);
-        setGlobalCounts({
-          image: totalImage,
-          video: totalVideo,
-          audio: totalAudio,
-          total: totalImage + totalVideo + totalAudio,
-        });
       }
     } catch (err) {
       console.error("Error fetching creators:", err);
     }
-  }, [apiKey, isAdminOrStudio, user]);
+  }, [apiKey, isAdminOrStudio, user, creatorMediaCounts]);
+
+  // Store studio creator IDs for filtering
+  const [studioCreatorIds, setStudioCreatorIds] = useState<Set<string>>(new Set());
+
+  // Fetch studio creators for permission filtering
+  useEffect(() => {
+    const fetchStudioCreators = async () => {
+      if (!apiKey || user?.role !== "studio" || !user?.studio_id) return;
+      
+      try {
+        const api = createApiClient(apiKey);
+        const response = await api.getStudioCreators(user.studio_id);
+        if (response.success && response.data) {
+          setStudioCreatorIds(new Set(response.data.map(c => c.id)));
+        }
+      } catch (err) {
+        console.error("Error fetching studio creators:", err);
+      }
+    };
+    
+    fetchStudioCreators();
+  }, [apiKey, user?.role, user?.studio_id]);
 
   const fetchMedia = useCallback(
     async (reset = false) => {
@@ -1617,12 +1549,35 @@ export default function MediaPage() {
         const api = createApiClient(apiKey);
         const offset = reset ? 0 : pagination.offset;
 
-        // Determine creator_id filter
+        // Determine creator_id filter based on user role and permissions
         let creatorIdFilter: string | undefined;
+        
         if (user?.role === "model") {
+          // Models can only see their own media
           creatorIdFilter = user?.creator_id || undefined;
-        } else if (selectedCreator) {
-          creatorIdFilter = selectedCreator;
+          if (!creatorIdFilter) {
+            setMedia([]);
+            setIsLoading(false);
+            return;
+          }
+        } else if (user?.role === "studio") {
+          // Studios can only see their creators' media
+          // If a specific creator is selected within the studio, filter by that
+          if (selectedCreator) {
+            // Verify the selected creator belongs to this studio
+            if (!studioCreatorIds.has(selectedCreator)) {
+              setMedia([]);
+              setIsLoading(false);
+              return;
+            }
+            creatorIdFilter = selectedCreator;
+          }
+          // If no specific creator, we'll filter client-side by studioCreatorIds
+        } else if (user?.role === "admin") {
+          // Admins can see all media, but can filter by selected creator
+          if (selectedCreator) {
+            creatorIdFilter = selectedCreator;
+          }
         }
 
         // Determine type filter (if only one type selected, use it)
@@ -1651,6 +1606,11 @@ export default function MediaPage() {
         if (response.success && response.data) {
           let newData = response.data;
 
+          // Studio permission filtering: only show media from studio's creators
+          if (user?.role === "studio" && !selectedCreator && studioCreatorIds.size > 0) {
+            newData = newData.filter((m: Media) => studioCreatorIds.has(m.creator_id));
+          }
+
           // Client-side filtering for multiple types
           if (filters.types.size > 1) {
             newData = newData.filter((m: Media) => filters.types.has(m.media_type as MediaTypeFilter));
@@ -1678,8 +1638,10 @@ export default function MediaPage() {
           setError(response.error || "Failed to load media");
         }
 
-        // Fetch categories
-        const catResponse = await api.getMediaCategories(creatorIdFilter);
+        // Fetch categories (filter by creator or studio creators)
+        let categoryCreatorId = creatorIdFilter;
+        // For studios without specific creator, we don't filter categories
+        const catResponse = await api.getMediaCategories(categoryCreatorId);
         if (catResponse.success && catResponse.data) {
           setCategories(catResponse.data);
         }
@@ -1690,8 +1652,144 @@ export default function MediaPage() {
         setIsLoading(false);
       }
     },
-    [apiKey, filters, pagination.offset, pagination.limit, user, selectedCreator]
+    [apiKey, filters, pagination.offset, pagination.limit, user, selectedCreator, studioCreatorIds]
   );
+
+  // Load more handler for infinite scroll
+  const handleLoadMore = useCallback(async () => {
+    if (!apiKey || isLoadingMore || !pagination.hasMore) return;
+
+    setIsLoadingMore(true);
+    const nextOffset = pagination.offset + pagination.limit;
+
+    try {
+      const api = createApiClient(apiKey);
+
+      // Determine creator_id filter based on user role and permissions
+      let creatorIdFilter: string | undefined;
+      let studioIdFilter: string | undefined;
+      
+      if (user?.role === "model") {
+        creatorIdFilter = user?.creator_id || undefined;
+        if (!creatorIdFilter) return;
+      } else if (user?.role === "studio") {
+        studioIdFilter = user?.studio_id || undefined;
+        if (!studioIdFilter) return;
+        if (selectedCreator) {
+          creatorIdFilter = selectedCreator;
+        }
+      } else if (user?.role === "admin") {
+        if (selectedCreator) {
+          creatorIdFilter = selectedCreator;
+        }
+      }
+
+      // Determine type filter
+      let typeFilter: "image" | "video" | "audio" | undefined;
+      if (filters.types.size === 1) {
+        typeFilter = Array.from(filters.types)[0] as "image" | "video" | "audio";
+      }
+
+      // Determine category filter
+      let categoryFilter: string | undefined;
+      if (filters.categories.size === 1) {
+        categoryFilter = Array.from(filters.categories)[0];
+      }
+
+      const response = await api.listMedia({
+        type: typeFilter,
+        category: categoryFilter,
+        creator_id: creatorIdFilter,
+        studio_id: studioIdFilter,
+        date_from: filters.dateFrom || undefined,
+        date_to: filters.dateTo || undefined,
+        limit: pagination.limit,
+        offset: nextOffset,
+        sort_order: "desc",
+      });
+
+      if (response.success && response.data) {
+        let newData = response.data;
+
+        // Studio permission filtering: only show media from studio's creators
+        if (user?.role === "studio" && !selectedCreator && studioCreatorIds.size > 0) {
+          newData = newData.filter((m: Media) => studioCreatorIds.has(m.creator_id));
+        }
+
+        // Client-side filtering for multiple types
+        if (filters.types.size > 1) {
+          newData = newData.filter((m: Media) => filters.types.has(m.media_type as MediaTypeFilter));
+        }
+
+        // Client-side filtering for multiple categories
+        if (filters.categories.size > 1) {
+          newData = newData.filter((m: Media) => filters.categories.has(m.category || ""));
+        }
+
+        // Deduplicate and append
+        setMedia((prev) => {
+          const existingIds = new Set(prev.map((m) => m.id));
+          const newItems = newData.filter((m: Media) => !existingIds.has(m.id));
+          return [...prev, ...newItems];
+        });
+
+        if (response.pagination) {
+          setPagination(response.pagination);
+        }
+      }
+    } catch (err) {
+      console.error("Error loading more media:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [apiKey, isLoadingMore, pagination, filters, user, selectedCreator, studioCreatorIds]);
+
+  // Force refresh counts
+  const refreshCounts = useCallback(async () => {
+    if (!apiKey || !isAdminOrStudio) return;
+
+    try {
+      const api = createApiClient(apiKey);
+      const counts: CreatorMediaCounts = {};
+      let totalImage = 0, totalVideo = 0, totalAudio = 0;
+
+      const allMediaResponse = await api.listMedia({ limit: 5000 });
+      if (allMediaResponse.success && allMediaResponse.data) {
+        allMediaResponse.data.forEach((m: Media) => {
+          // Filter by studio permissions if applicable
+          if (user?.role === "studio" && studioCreatorIds.size > 0) {
+            if (!studioCreatorIds.has(m.creator_id)) return;
+          }
+          
+          const creatorId = m.creator_id;
+          if (!counts[creatorId]) {
+            counts[creatorId] = { image: 0, video: 0, audio: 0, total: 0 };
+          }
+          if (m.media_type === "image") {
+            counts[creatorId].image++;
+            totalImage++;
+          } else if (m.media_type === "video") {
+            counts[creatorId].video++;
+            totalVideo++;
+          } else if (m.media_type === "audio") {
+            counts[creatorId].audio++;
+            totalAudio++;
+          }
+          counts[creatorId].total++;
+        });
+      }
+
+      setCreatorMediaCounts(counts);
+      setGlobalCounts({
+        image: totalImage,
+        video: totalVideo,
+        audio: totalAudio,
+        total: totalImage + totalVideo + totalAudio,
+      });
+    } catch (err) {
+      console.error("Error refreshing counts:", err);
+    }
+  }, [apiKey, isAdminOrStudio]);
 
   useEffect(() => {
     fetchCreators();
@@ -1699,6 +1797,7 @@ export default function MediaPage() {
 
   useEffect(() => {
     fetchMedia(true);
+    loadMoreOffset.current = 0;
   }, [apiKey, filters, selectedCreator]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Generate folder items for the folder view
@@ -1756,12 +1855,39 @@ export default function MediaPage() {
     if (mediaItem.media_type !== "image") return;
 
     try {
-      const response = await fetch(mediaItem.storage_url);
-      const blob = await response.blob();
+      // Create an image element to load the image
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Failed to load image"));
+        img.src = mediaItem.storage_url;
+      });
 
+      // Create a canvas and draw the image
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Failed to get canvas context");
+      ctx.drawImage(img, 0, 0);
+
+      // Convert canvas to PNG blob (the only image format supported by Clipboard API)
+      const pngBlob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("Failed to create PNG blob"));
+          },
+          "image/png"
+        );
+      });
+
+      // Write to clipboard
       await navigator.clipboard.write([
         new ClipboardItem({
-          [blob.type]: blob,
+          "image/png": pngBlob,
         }),
       ]);
 
@@ -1769,8 +1895,12 @@ export default function MediaPage() {
     } catch (err) {
       console.error("Failed to copy image:", err);
       // Fallback: copy URL instead
-      await navigator.clipboard.writeText(mediaItem.storage_url);
-      toast.success("Image URL copied to clipboard!");
+      try {
+        await navigator.clipboard.writeText(mediaItem.storage_url);
+        toast.success("Image URL copied to clipboard!");
+      } catch {
+        toast.error("Failed to copy to clipboard");
+      }
     }
   };
 
@@ -1830,6 +1960,9 @@ export default function MediaPage() {
 
   const handleFolderClick = (folder: FolderItem) => {
     if (folder.type === "creator") {
+      // Set loading state before navigation to prevent flash
+      setIsLoading(true);
+      setMedia([]); // Clear media to show skeleton
       setSelectedCreator(folder.id);
       setCurrentPath([{ id: folder.id, name: folder.name }]);
       setFilters({ ...filters, categories: new Set() });
@@ -1891,6 +2024,15 @@ export default function MediaPage() {
   // Check if any filters are active
   const hasActiveFilters = filters.types.size > 0 || filters.categories.size > 0 || filters.dateFrom || filters.dateTo;
 
+  // Handle category update for a media item
+  const handleCategoryUpdate = useCallback((mediaId: string, newCategory: string) => {
+    setMedia((prev) =>
+      prev.map((m) => (m.id === mediaId ? { ...m, category: newCategory } : m))
+    );
+    // Refresh categories list
+    fetchMedia(true);
+  }, [fetchMedia]);
+
   return (
     <div className="space-y-6 relative">
       {/* Global Drop Overlay */}
@@ -1921,6 +2063,36 @@ export default function MediaPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                setIsSyncing(true);
+                try {
+                  const response = await fetch("/api/media/sync-pinecone", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ limit: 500 }),
+                  });
+                  const data = await response.json();
+                  if (data.success) {
+                    toast.success(`Synced ${data.synced} media with Pinecone`);
+                  } else {
+                    toast.error("Sync failed");
+                  }
+                } catch {
+                  toast.error("Sync failed");
+                } finally {
+                  setIsSyncing(false);
+                }
+              }}
+              disabled={isSyncing}
+            >
+              <Sparkles className={`w-4 h-4 mr-2 ${isSyncing ? "animate-pulse" : ""}`} />
+              {isSyncing ? "Syncing..." : "Sync AI"}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -2071,25 +2243,6 @@ export default function MediaPage() {
           )}
         </AnimatePresence>
 
-        {/* Category Filters (shown when inside a creator folder or for models) */}
-        {(currentPath.length > 0 || !isAdminOrStudio) && categories.length > 0 && (
-          <div className="p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-white">
-            <div className="flex items-center gap-3 mb-3">
-              <Sparkles className="w-4 h-4 text-brand-500" />
-              <span className="text-sm font-medium text-slate-700">Filter by category</span>
-              {filters.categories.size > 0 && (
-                <span className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">
-                  {filters.categories.size} selected
-                </span>
-              )}
-            </div>
-            <CategoryFilter
-              categories={categories}
-              selectedCategories={filters.categories}
-              onToggle={toggleCategoryFilter}
-            />
-          </div>
-        )}
 
         {/* Batch Actions */}
         {selectedIds.size > 0 && (
@@ -2122,14 +2275,20 @@ export default function MediaPage() {
       </div>
 
       {/* Content */}
-      {isLoading && media.length === 0 ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
-        </div>
+      {isLoading && media.length === 0 && !error ? (
+        viewMode === "folders" && currentPath.length === 0 && isAdminOrStudio ? (
+          <FolderSkeleton />
+        ) : (
+          <MediaSkeleton viewMode={viewMode} />
+        )
       ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-500" />
           <p className="text-red-700">{error}</p>
+          <Button variant="outline" size="sm" onClick={() => fetchMedia(true)} className="ml-auto">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
         </div>
       ) : viewMode === "folders" && currentPath.length === 0 && isAdminOrStudio ? (
         // Folder view at root
@@ -2137,7 +2296,11 @@ export default function MediaPage() {
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-12 text-center">
             <FolderOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
             <h3 className="font-semibold text-slate-700 mb-2">No models found</h3>
-            <p className="text-slate-500 text-sm">Add models to see their media here</p>
+            <p className="text-slate-500 text-sm mb-4">Add models to see their media here</p>
+            <Button onClick={() => setShowUploadModal(true)} className="bg-brand-600 hover:bg-brand-700">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Media
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -2152,19 +2315,76 @@ export default function MediaPage() {
         )
       ) : media.length === 0 ? (
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-12 text-center">
-          <FolderOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="font-semibold text-slate-700 mb-2">No media found</h3>
-          <p className="text-slate-500 text-sm">
+          <CloudUpload className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <h3 className="font-semibold text-slate-700 mb-2">
+            {hasActiveFilters ? "No media found" : "No media yet"}
+          </h3>
+          <p className="text-slate-500 text-sm mb-6">
             {hasActiveFilters
-              ? "Try adjusting your filters"
-              : "Start uploading content to see it here"}
+              ? "Try adjusting your filters or clear them to see all media"
+              : "Upload your first images, videos, or audio files to get started"}
           </p>
+          <div className="flex items-center justify-center gap-3">
+            {hasActiveFilters && (
+              <Button variant="outline" onClick={clearFilters}>
+                Clear Filters
+              </Button>
+            )}
+            <Button onClick={() => setShowUploadModal(true)} className="bg-brand-600 hover:bg-brand-700">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Media
+            </Button>
+          </div>
         </div>
       ) : (
-        <>
+        <div className="flex gap-6">
+          {/* Label Sidebar */}
+          {categories.length > 0 && (
+            <div className="hidden lg:block w-64 shrink-0">
+              <div className="sticky top-6">
+                <LabelSidebar
+                  categories={categories}
+                  selectedCategories={filters.categories}
+                  onToggle={toggleCategoryFilter}
+                />
+              </div>
+            </div>
+          )}
 
-          {/* Media grid/list */}
-          <div className="space-y-4">
+          {/* Main Content */}
+          <div className="flex-1 min-w-0 space-y-4">
+            {/* Mobile Label Filter (horizontal scroll) */}
+            {categories.length > 0 && (
+              <div className="lg:hidden overflow-x-auto pb-2 -mx-4 px-4">
+                <div className="flex items-center gap-2 min-w-max">
+                  {[...categories]
+                    .sort((a, b) => b.count - a.count)
+                    .map((cat) => {
+                      const isSelected = filters.categories.has(cat.name);
+                      const iconConfig = CATEGORY_ICONS[cat.name] || CATEGORY_ICONS["default"];
+                      const IconComponent = iconConfig.icon;
+                      return (
+                        <button
+                          key={cat.name}
+                          onClick={() => toggleCategoryFilter(cat.name)}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                            isSelected
+                              ? "bg-brand-500 text-white shadow-md"
+                              : `${iconConfig.bg} ${iconConfig.color}`
+                          }`}
+                        >
+                          <IconComponent className="w-4 h-4" />
+                          <span>{cat.name}</span>
+                          <span className={`text-xs ${isSelected ? "opacity-70" : "opacity-60"}`}>
+                            {cat.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
             {currentPath.length > 0 && (
               <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">
                 Media Files
@@ -2178,47 +2398,44 @@ export default function MediaPage() {
                     media={item}
                     isSelected={selectedIds.has(item.id)}
                     onSelect={handleSelect}
-                    onView={setViewingMedia}
+                    onView={openMediaViewer}
                     onDelete={handleDelete}
                     onCopy={handleCopyImage}
+                    onCopyPermalink={copyPermalink}
+                    onCategoryUpdate={handleCategoryUpdate}
                     viewMode="list"
+                    apiKey={apiKey || ""}
                   />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {media.map((item) => (
                   <MediaCard
                     key={item.id}
                     media={item}
                     isSelected={selectedIds.has(item.id)}
                     onSelect={handleSelect}
-                    onView={setViewingMedia}
+                    onView={openMediaViewer}
                     onDelete={handleDelete}
                     onCopy={handleCopyImage}
+                    onCopyPermalink={copyPermalink}
+                    onCategoryUpdate={handleCategoryUpdate}
                     viewMode="grid"
+                    apiKey={apiKey || ""}
                   />
                 ))}
               </div>
             )}
-          </div>
 
-          {/* Infinite Scroll Trigger */}
-          {pagination.hasMore && (
+            {/* Infinite Scroll Trigger */}
             <InfiniteScrollTrigger
-              onTrigger={() => {
-                if (!isLoading) {
-                  setPagination((prev) => ({
-                    ...prev,
-                    offset: prev.offset + prev.limit,
-                  }));
-                  fetchMedia(false);
-                }
-              }}
-              isLoading={isLoading}
+              onTrigger={handleLoadMore}
+              isLoading={isLoadingMore}
+              hasMore={pagination.hasMore}
             />
-          )}
-        </>
+          </div>
+        </div>
       )}
 
       {/* Media Viewer Modal */}
@@ -2227,10 +2444,12 @@ export default function MediaPage() {
           <MediaViewer
             media={viewingMedia}
             mediaList={media}
-            onClose={() => setViewingMedia(null)}
+            onClose={closeMediaViewer}
             onDelete={handleDelete}
             onCopy={handleCopyImage}
-            onNavigate={setViewingMedia}
+            onNavigate={openMediaViewer}
+            onCopyPermalink={copyPermalink}
+            permalink={getMediaPermalink(viewingMedia.id)}
           />
         )}
       </AnimatePresence>
@@ -2246,6 +2465,7 @@ export default function MediaPage() {
           apiKey={apiKey}
           onUploadComplete={() => {
             fetchMedia(true);
+            refreshCounts(); // Refresh media counts
             setShowUploadModal(false);
           }}
         />

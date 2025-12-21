@@ -726,7 +726,7 @@ function BioLinkEditor({
           <div className="space-y-2">
             <Label>URL Slug</Label>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-400 shrink-0">lovebite.fans/</span>
+              <span className="text-sm text-slate-400 shrink-0">bites.bio/</span>
               <Input
                 value={formData.slug}
                 onChange={(e) =>
@@ -738,6 +738,9 @@ function BioLinkEditor({
                 placeholder="username"
               />
             </div>
+            {bioLink?.custom_domain && (
+              <p className="text-xs text-brand-600">Custom domain: {bioLink.custom_domain}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -780,13 +783,16 @@ function BioLinkEditor({
             <div className="bg-slate-50 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-700">Preview Link</p>
-                  <p className="text-xs text-slate-500">{`lovebite.fans/${formData.slug}`}</p>
+                  <p className="text-sm font-medium text-slate-700">Preview Links</p>
+                  <p className="text-xs text-slate-500">bites.bio/{formData.slug}</p>
+                  {bioLink.custom_domain && (
+                    <p className="text-xs text-brand-600">{bioLink.custom_domain}</p>
+                  )}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(`/${formData.slug}`, "_blank")}
+                  onClick={() => window.open(bioLink.custom_domain ? `https://${bioLink.custom_domain}` : `https://bites.bio/${formData.slug}`, "_blank")}
                 >
                   <ExternalLink className="w-4 h-4 mr-1" />
                   Preview

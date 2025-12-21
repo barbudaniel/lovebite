@@ -515,12 +515,39 @@ export default function DomainsPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Button size="sm">
+                  <Button size="sm" variant="outline">
                     <ExternalLink className="w-4 h-4 mr-1" />
                     Visit
                   </Button>
                 </a>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  if (confirm("Are you sure you want to remove this custom domain?")) {
+                    setIsSaving(true);
+                    try {
+                      const supabase = getSupabaseBrowserClient();
+                      await supabase
+                        .from("bio_links")
+                        .update({ custom_domain: null })
+                        .eq("id", bioLink?.id);
+                      setBioLink(bioLink ? { ...bioLink, custom_domain: null } : null);
+                      setDomainStatus(null);
+                      setCustomDomain("");
+                      toast.success("Custom domain removed");
+                    } catch (err) {
+                      toast.error("Failed to remove domain");
+                    } finally {
+                      setIsSaving(false);
+                    }
+                  }
+                }}
+                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              >
+                <X className="w-4 h-4" />
+              </Button>
             </div>
           </div>
 

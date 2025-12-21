@@ -1,8 +1,14 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { getCreator, type CreatorProfile, type CreatorLink } from '@/lib/creators';
 import { createClient } from '@supabase/supabase-js';
 import CreatorBioClient from './CreatorBioClient';
 import NotFoundClient from './NotFoundClient';
+
+// Force dynamic rendering - bio links should always show latest data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 // ============================================
 // TYPE DEFINITIONS
@@ -49,20 +55,30 @@ interface BioSocialLink {
   enabled: boolean;
 }
 
-// Create a Supabase client for server-side use
+// Create a Supabase client for server-side use with no caching
 const getSupabaseClient = () => {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' }),
+      },
+    }
   );
 };
+
+// Extended CreatorProfile with bioLinkId for analytics
+interface CreatorProfileWithAnalytics extends CreatorProfile {
+  bioLinkId?: string;
+}
 
 // Convert database data to CreatorProfile format for the original component
 function convertToCreatorProfile(
   bioLink: BioLinkData,
   items: BioLinkItem[],
   socials: BioSocialLink[]
-): CreatorProfile {
+): CreatorProfileWithAnalytics {
   // Convert items to links
   const links: CreatorLink[] = items.map((item) => ({
     id: item.id,
@@ -92,6 +108,7 @@ function convertToCreatorProfile(
 
   return {
     id: bioLink.slug,
+    bioLinkId: bioLink.id, // Include for analytics tracking
     name: bioLink.name,
     tagline: bioLink.tagline || "Content Creator",
     subtitle: bioLink.subtitle || "",
@@ -225,9 +242,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // ============================================
 
 export default async function CreatorPage({ params }: PageProps) {
+  // Force reading headers to ensure dynamic rendering
+  const headersList = await headers();
+  const host = headersList.get('host');
+  
   const { creatorID } = await params;
   
-  // First try Supabase database
+  // First try Supabase database (with no caching)
   const dbCreator = await getBioLinkFromDatabase(creatorID);
   
   if (dbCreator) {

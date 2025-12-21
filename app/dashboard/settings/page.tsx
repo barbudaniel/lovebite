@@ -24,7 +24,21 @@ import {
   Trash2,
   Lock,
   CheckCircle,
+  Building2,
+  Users,
+  Plus,
+  ArrowUpRight,
+  UserPlus,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog-centered";
 
 // ============================================
 // SECTION COMPONENT
@@ -67,6 +81,19 @@ function SettingsSection({
 // MAIN PAGE
 // ============================================
 
+// ============================================
+// SUB-USER INTERFACE
+// ============================================
+
+interface SubUser {
+  id: string;
+  email: string;
+  display_name: string | null;
+  role: string;
+  enabled: boolean;
+  creator?: { username: string } | null;
+}
+
 export default function SettingsPage() {
   const { user, refreshUser } = useDashboard();
   const [isLoading, setIsLoading] = useState(false);
@@ -81,6 +108,19 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  
+  // Model to Studio conversion
+  const [showConvertDialog, setShowConvertDialog] = useState(false);
+  const [studioName, setStudioName] = useState("");
+  const [isConverting, setIsConverting] = useState(false);
+  
+  // Studio sub-users
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [subUsers, setSubUsers] = useState<SubUser[]>([]);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [isAddingUser, setIsAddingUser] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -89,6 +129,122 @@ export default function SettingsPage() {
       setPhone(user.phone || "");
     }
   }, [user]);
+  
+  // Fetch studio sub-users
+  useEffect(() => {
+    if (user?.role === "studio" && user?.studio_id) {
+      fetchSubUsers();
+    }
+  }, [user]);
+  
+  const fetchSubUsers = async () => {
+    if (!user?.studio_id) return;
+    
+    const supabase = getSupabaseBrowserClient();
+    const { data } = await supabase
+      .from("dashboard_users")
+      .select("id, email, display_name, role, enabled, creator:creators(username)")
+      .eq("studio_id", user.studio_id)
+      .neq("id", user.id);
+    
+    setSubUsers(data || []);
+  };
+  
+  // Convert model to studio
+  const handleConvertToStudio = async () => {
+    if (!studioName.trim()) {
+      toast.error("Please enter a studio name");
+      return;
+    }
+    
+    setIsConverting(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      
+      // Create studio
+      const { data: studio, error: studioError } = await supabase
+        .from("studios")
+        .insert({
+          name: studioName.trim(),
+          enabled: true,
+        })
+        .select()
+        .single();
+      
+      if (studioError) throw studioError;
+      
+      // Update user to studio role
+      const { error: userError } = await supabase
+        .from("dashboard_users")
+        .update({
+          role: "studio",
+          studio_id: studio.id,
+        })
+        .eq("id", user?.id);
+      
+      if (userError) throw userError;
+      
+      // Link creator to studio if exists
+      if (user?.creator_id) {
+        await supabase
+          .from("creators")
+          .update({ studio_id: studio.id })
+          .eq("id", user.creator_id);
+      }
+      
+      toast.success("Account converted to studio!");
+      setShowConvertDialog(false);
+      window.location.reload(); // Refresh to update role
+    } catch (err) {
+      console.error("Error converting to studio:", err);
+      toast.error("Failed to convert account");
+    } finally {
+      setIsConverting(false);
+    }
+  };
+  
+  // Add sub-user (studio only)
+  const handleAddSubUser = async () => {
+    if (!newUserEmail || !newUserPassword) {
+      toast.error("Email and password are required");
+      return;
+    }
+    
+    setIsAddingUser(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      
+      // Create auth user via API
+      const response = await fetch("/api/auth/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: newUserEmail,
+          password: newUserPassword,
+          displayName: newUserName,
+          role: "model",
+          studioId: user?.studio_id,
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create user");
+      }
+      
+      toast.success("Sub-user created!");
+      setShowAddUserDialog(false);
+      setNewUserEmail("");
+      setNewUserName("");
+      setNewUserPassword("");
+      fetchSubUsers();
+    } catch (err: any) {
+      console.error("Error adding sub-user:", err);
+      toast.error(err.message || "Failed to create user");
+    } finally {
+      setIsAddingUser(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
@@ -381,6 +537,97 @@ export default function SettingsPage() {
         </div>
       </SettingsSection>
 
+      {/* Model to Studio Conversion - Only for models */}
+      {user.role === "model" && (
+        <SettingsSection
+          title="Upgrade to Studio"
+          description="Convert your account to manage multiple creators"
+          icon={Building2}
+        >
+          <div className="space-y-4">
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+              <h3 className="font-medium text-blue-900 mb-2">Studio Benefits</h3>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Manage multiple content creators</li>
+                <li>• Add team members with their own logins</li>
+                <li>• View combined analytics and statistics</li>
+                <li>• Centralized media library management</li>
+              </ul>
+            </div>
+            <Button
+              onClick={() => setShowConvertDialog(true)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+            >
+              <ArrowUpRight className="w-4 h-4 mr-2" />
+              Convert to Studio
+            </Button>
+          </div>
+        </SettingsSection>
+      )}
+      
+      {/* Studio Team Management - Only for studios */}
+      {user.role === "studio" && (
+        <SettingsSection
+          title="Team Members"
+          description="Manage sub-users in your studio"
+          icon={Users}
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-600">
+                {subUsers.length} team member{subUsers.length !== 1 ? "s" : ""}
+              </p>
+              <Button
+                size="sm"
+                onClick={() => setShowAddUserDialog(true)}
+                className="bg-brand-600 hover:bg-brand-700"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Add Member
+              </Button>
+            </div>
+            
+            {subUsers.length > 0 ? (
+              <div className="space-y-2">
+                {subUsers.map((subUser) => (
+                  <div
+                    key={subUser.id}
+                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium text-slate-900">
+                        {subUser.display_name || subUser.email}
+                      </p>
+                      <p className="text-sm text-slate-500">{subUser.email}</p>
+                      {subUser.creator && (
+                        <p className="text-xs text-brand-600">@{subUser.creator.username}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        subUser.enabled
+                          ? "bg-green-100 text-green-700"
+                          : "bg-slate-200 text-slate-600"
+                      }`}>
+                        {subUser.enabled ? "Active" : "Disabled"}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 capitalize">
+                        {subUser.role}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-slate-500">
+                <Users className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                <p className="text-sm">No team members yet</p>
+              </div>
+            )}
+          </div>
+        </SettingsSection>
+      )}
+
       {/* Danger Zone */}
       <SettingsSection
         title="Session"
@@ -398,6 +645,107 @@ export default function SettingsPage() {
           </Button>
         </div>
       </SettingsSection>
+      
+      {/* Convert to Studio Dialog */}
+      <Dialog open={showConvertDialog} onOpenChange={setShowConvertDialog}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Convert to Studio</DialogTitle>
+            <DialogDescription>
+              This will convert your model account to a studio account
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="studioName">Studio Name</Label>
+              <Input
+                id="studioName"
+                value={studioName}
+                onChange={(e) => setStudioName(e.target.value)}
+                placeholder="My Studio"
+              />
+            </div>
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-700">
+                <AlertCircle className="w-4 h-4 inline mr-1" />
+                This action cannot be reversed. Your current creator profile will be linked to your new studio.
+              </p>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConvertDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConvertToStudio}
+              disabled={isConverting || !studioName.trim()}
+              className="bg-brand-600 hover:bg-brand-700"
+            >
+              {isConverting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Convert Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Sub-User Dialog */}
+      <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Add Team Member</DialogTitle>
+            <DialogDescription>
+              Create a new user account for your team
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="newUserEmail">Email</Label>
+              <Input
+                id="newUserEmail"
+                type="email"
+                value={newUserEmail}
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                placeholder="member@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newUserName">Display Name (Optional)</Label>
+              <Input
+                id="newUserName"
+                value={newUserName}
+                onChange={(e) => setNewUserName(e.target.value)}
+                placeholder="John Doe"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newUserPassword">Temporary Password</Label>
+              <Input
+                id="newUserPassword"
+                type="password"
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+              <p className="text-xs text-slate-500">
+                The user should change this after first login
+              </p>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddSubUser}
+              disabled={isAddingUser || !newUserEmail || !newUserPassword}
+              className="bg-brand-600 hover:bg-brand-700"
+            >
+              {isAddingUser ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserPlus className="w-4 h-4 mr-2" />}
+              Create User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

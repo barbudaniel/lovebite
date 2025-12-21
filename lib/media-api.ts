@@ -327,6 +327,7 @@ export class MediaApiClient {
     type?: 'image' | 'video' | 'audio';
     category?: string;
     creator_id?: string;
+    studio_id?: string;
     date_from?: string;
     date_to?: string;
     limit?: number;
@@ -338,6 +339,7 @@ export class MediaApiClient {
     if (params?.type) searchParams.set('type', params.type);
     if (params?.category) searchParams.set('category', params.category);
     if (params?.creator_id) searchParams.set('creator_id', params.creator_id);
+    if (params?.studio_id) searchParams.set('studio_id', params.studio_id);
     if (params?.date_from) searchParams.set('date_from', params.date_from);
     if (params?.date_to) searchParams.set('date_to', params.date_to);
     if (params?.limit) searchParams.set('limit', String(params.limit));
@@ -385,6 +387,10 @@ export class MediaApiClient {
     return this.request(`/api/v1/media/search?${searchParams.toString()}`);
   }
 
+  async getMedia(id: string): Promise<ApiResponse<Media>> {
+    return this.request(`/api/v1/media/${id}`);
+  }
+
   async deleteMedia(id: string): Promise<ApiResponse<{
     id: string;
     file_name: string;
@@ -402,6 +408,13 @@ export class MediaApiClient {
     return this.request('/api/v1/media/batch', {
       method: 'DELETE',
       body: JSON.stringify({ ids }),
+    });
+  }
+
+  async updateMediaCategory(id: string, category: string): Promise<ApiResponse<Media>> {
+    return this.request(`/api/v1/media/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ category }),
     });
   }
 
