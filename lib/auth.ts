@@ -68,13 +68,13 @@ export function canAccessCreator(
   // Admins can access everything
   if (userRole === 'admin') return true;
   
-  // Models can only access their own creator
-  if (userRole === 'model') {
+  // Independent users can only access their own creator
+  if (userRole === 'independent') {
     return userCreatorId === targetCreatorId;
   }
   
-  // Studios can access creators in their studio
-  if (userRole === 'studio') {
+  // Business users can access creators in their studio
+  if (userRole === 'business') {
     return userStudioId === targetStudioId;
   }
   
@@ -90,7 +90,7 @@ export interface DashboardUser {
   auth_user_id: string;
   email: string | null;
   phone: string | null;
-  role: 'admin' | 'studio' | 'model';
+  role: 'admin' | 'business' | 'independent';
   creator_id: string | null;
   studio_id: string | null;
   display_name: string | null;

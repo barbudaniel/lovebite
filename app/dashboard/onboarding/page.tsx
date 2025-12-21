@@ -676,7 +676,7 @@ function ApproveModal({
           .insert({
             auth_user_id: authData?.user?.id || null,
             email: onboarding.email,
-            role: "model",
+            role: "independent",
             display_name: onboarding.stage_name || onboarding.full_name || "Creator",
             creator_id: creator.id,
             enabled: true,
@@ -987,7 +987,7 @@ function CreateOnboardingModal({
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [stageName, setStageName] = useState("");
-  const [accountType, setAccountType] = useState<"model" | "studio">("model");
+  const [accountType, setAccountType] = useState<"independent" | "business">("independent");
   const [sendEmail, setSendEmail] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [createdData, setCreatedData] = useState<{ id: string; link: string; password?: string } | null>(null);
@@ -1052,7 +1052,7 @@ function CreateOnboardingModal({
 
         const authData = await authResponse.json();
 
-        if (accountType === "model") {
+        if (accountType === "independent") {
           // Create creator
           const { data: creator, error: creatorError } = await supabase
             .from("creators")
@@ -1075,7 +1075,7 @@ function CreateOnboardingModal({
             .insert({
               auth_user_id: authData?.user?.id || null,
               email,
-              role: "model",
+              role: "independent",
               display_name: stageName,
               creator_id: creator.id,
               enabled: true,
@@ -1102,7 +1102,7 @@ function CreateOnboardingModal({
             .insert({
               auth_user_id: authData?.user?.id || null,
               email,
-              role: "studio",
+              role: "business",
               display_name: stageName,
               studio_id: studio.id,
               enabled: true,
@@ -1280,28 +1280,28 @@ function CreateOnboardingModal({
                     <Label>Account Type</Label>
                     <div className="grid grid-cols-2 gap-3">
                       <button
-                        onClick={() => setAccountType("model")}
+                        onClick={() => setAccountType("independent")}
                         className={`p-4 rounded-xl border-2 transition-colors ${
-                          accountType === "model"
+                          accountType === "independent"
                             ? "border-brand-500 bg-brand-50"
                             : "border-slate-200 hover:border-slate-300"
                         }`}
                       >
                         <User className={`w-6 h-6 mx-auto mb-2 ${
-                          accountType === "model" ? "text-brand-600" : "text-slate-400"
+                          accountType === "independent" ? "text-brand-600" : "text-slate-400"
                         }`} />
                         <p className="text-sm font-medium">Independent</p>
                       </button>
                       <button
-                        onClick={() => setAccountType("studio")}
+                        onClick={() => setAccountType("business")}
                         className={`p-4 rounded-xl border-2 transition-colors ${
-                          accountType === "studio"
+                          accountType === "business"
                             ? "border-brand-500 bg-brand-50"
                             : "border-slate-200 hover:border-slate-300"
                         }`}
                       >
                         <Building2 className={`w-6 h-6 mx-auto mb-2 ${
-                          accountType === "studio" ? "text-brand-600" : "text-slate-400"
+                          accountType === "business" ? "text-brand-600" : "text-slate-400"
                         }`} />
                         <p className="text-sm font-medium">Business</p>
                       </button>
@@ -1320,13 +1320,13 @@ function CreateOnboardingModal({
 
                   <div className="space-y-2">
                     <Label htmlFor="stageName">
-                      {accountType === "model" ? "Stage Name / Username" : "Studio Name"}
+                      {accountType === "independent" ? "Stage Name / Username" : "Studio Name"}
                     </Label>
                     <Input
                       id="stageName"
                       value={stageName}
                       onChange={(e) => setStageName(e.target.value)}
-                      placeholder={accountType === "model" ? "CreatorName" : "My Business"}
+                      placeholder={accountType === "independent" ? "CreatorName" : "My Business"}
                     />
                   </div>
                 </>

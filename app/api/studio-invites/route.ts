@@ -39,11 +39,11 @@ export async function GET(request: NextRequest) {
       invited_by_user:dashboard_users!invited_by(id, display_name, email)
     `);
 
-    if (dashboardUser.role === "studio") {
-      // Studios see invites they sent
+    if (dashboardUser.role === "business") {
+      // Business users see invites they sent
       query = query.eq("studio_id", dashboardUser.studio_id);
-    } else if (dashboardUser.role === "model" && dashboardUser.creator_id) {
-      // Models see invites sent to them
+    } else if (dashboardUser.role === "independent" && dashboardUser.creator_id) {
+      // Independent users see invites sent to them
       query = query.eq("creator_id", dashboardUser.creator_id);
     } else if (dashboardUser.role !== "admin") {
       return NextResponse.json({ error: "Invalid role" }, { status: 403 });
@@ -87,11 +87,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (dashboardUser.role !== "studio" && dashboardUser.role !== "admin") {
-      return NextResponse.json({ error: "Only studios can send invites" }, { status: 403 });
+    if (dashboardUser.role !== "business" && dashboardUser.role !== "admin") {
+      return NextResponse.json({ error: "Only business accounts can send invites" }, { status: 403 });
     }
 
-    if (dashboardUser.role === "studio" && !dashboardUser.studio_id) {
+    if (dashboardUser.role === "business" && !dashboardUser.studio_id) {
       return NextResponse.json({ error: "Studio ID not found" }, { status: 400 });
     }
 

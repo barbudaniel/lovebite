@@ -199,7 +199,7 @@ const teamNavItems: NavItem[] = [
     label: "Models",
     href: "/dashboard/models",
     icon: Users,
-    roles: ["admin", "studio"],
+    roles: ["admin", "business"],
   },
   {
     label: "Businesses",
@@ -890,8 +890,8 @@ export default function DashboardLayout({
           if (apiUser?.api_key) {
             foundApiKey = apiUser.api_key;
           }
-        } else if (dashboardUser.role === "model" && dashboardUser.creator_id) {
-          // Model users: ONLY look for their creator-specific API key
+        } else if (dashboardUser.role === "independent" && dashboardUser.creator_id) {
+          // Independent users: ONLY look for their creator-specific API key
           // This ensures they can only see their own media
           const { data: apiUser } = await supabase
             .from("api_users")
@@ -916,11 +916,11 @@ export default function DashboardLayout({
             
             if (studioApiUser?.api_key) {
               foundApiKey = studioApiUser.api_key;
-              console.log("Layout - Model using studio API key (client-side filtering enforced)");
+              console.log("Layout - Independent using studio API key (client-side filtering enforced)");
             }
           }
-        } else if (dashboardUser.role === "studio" && dashboardUser.studio_id) {
-          // Studio users: get their studio API key
+        } else if (dashboardUser.role === "business" && dashboardUser.studio_id) {
+          // Business users: get their studio API key
           const { data: apiUser } = await supabase
             .from("api_users")
             .select("api_key")

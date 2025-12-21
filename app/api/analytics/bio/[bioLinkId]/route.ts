@@ -66,7 +66,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     
     // Studio can access their models' bio links
     let isStudioModel = false;
-    if (dashboardUser.role === "studio" && dashboardUser.studio_id) {
+    if (dashboardUser.role === "business" && dashboardUser.studio_id) {
       // Check if the bio link's creator belongs to this studio
       const { data: creator } = await supabase
         .from("creators")

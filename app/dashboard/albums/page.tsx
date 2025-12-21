@@ -766,7 +766,7 @@ export default function ScenariosPage() {
   const [viewingScenario, setViewingScenario] = useState<Scenario | null>(null);
   const [showMediaSelector, setShowMediaSelector] = useState(false);
 
-  const isAdminOrStudio = user?.role === "admin" || user?.role === "studio";
+  const isAdminOrBusiness = user?.role === "admin" || user?.role === "business";
   const activeCreatorId = isAdminOrStudio ? selectedCreatorId : user?.creator_id;
 
   // Fetch creators for admin/studio
@@ -778,7 +778,7 @@ export default function ScenariosPage() {
         const api = createApiClient(apiKey);
         let response;
         
-        if (user?.role === "studio" && user?.studio_id) {
+        if (user?.role === "business" && user?.studio_id) {
           response = await api.listCreators({ studio_id: user.studio_id, limit: 100 });
         } else {
           response = await api.listCreators({ limit: 200 });

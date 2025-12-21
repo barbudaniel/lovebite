@@ -850,7 +850,7 @@ function UploadModal({
   onClose: () => void;
   creators: Creator[];
   selectedCreatorId: string | null;
-  userRole: "admin" | "studio" | "model";
+  userRole: "admin" | "business" | "independent";
   apiKey: string;
   onUploadComplete: () => void;
 }) {
@@ -1053,7 +1053,7 @@ function UploadModal({
 
         <DialogBody className="space-y-4">
           {/* Model Selection for Admin/Studio */}
-          {(userRole === "admin" || userRole === "studio") && (
+          {(userRole === "admin" || userRole === "business") && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">
                 Upload for Model <span className="text-red-500">*</span>
@@ -1271,7 +1271,7 @@ function UploadModal({
           </Button>
           <Button
             onClick={handleUpload}
-            disabled={isUploading || pendingCount === 0 || (userRole !== "model" && !creatorId)}
+            disabled={isUploading || pendingCount === 0 || (userRole !== "independent" && !creatorId)}
             className="bg-brand-600 hover:bg-brand-700 text-white"
           >
             {isUploading ? (
@@ -1331,7 +1331,7 @@ export default function MediaPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const loadMoreOffset = useRef(0);
 
-  const isAdminOrStudio = user?.role === "admin" || user?.role === "studio";
+  const isAdminOrBusiness = user?.role === "admin" || user?.role === "business";
   const isAdmin = user?.role === "admin";
   
   // Handle URL params for permalinks and time filtering
@@ -1467,7 +1467,7 @@ export default function MediaPage() {
       const api = createApiClient(apiKey);
       
       // Use studio_id filtering for studio users
-      const studioIdParam = user?.role === "studio" ? user?.studio_id || undefined : undefined;
+      const studioIdParam = user?.role === "business" ? user?.studio_id || undefined : undefined;
       
       const response = await api.listCreators({
         studio_id: studioIdParam,
@@ -1538,13 +1538,13 @@ export default function MediaPage() {
       }
       
       // For model users, permissions are loaded if they have a creator_id
-      if (user?.role === "model") {
+      if (user?.role === "independent") {
         setPermissionsLoaded(true);
         return;
       }
       
       // For studio users, we need to fetch their accessible creators
-      if (!apiKey || user?.role !== "studio" || !user?.studio_id) {
+      if (!apiKey || user?.role !== "business" || !user?.studio_id) {
         // No studio_id means no access
         setPermissionsLoaded(true);
         return;
@@ -1584,7 +1584,7 @@ export default function MediaPage() {
         let creatorIdFilter: string | undefined;
         let studioIdFilter: string | undefined;
         
-        if (user?.role === "model") {
+        if (user?.role === "independent") {
           // Models can ONLY see their own media - strict enforcement
           creatorIdFilter = user?.creator_id || undefined;
           if (!creatorIdFilter) {
@@ -1593,7 +1593,7 @@ export default function MediaPage() {
             setIsLoading(false);
             return;
           }
-        } else if (user?.role === "studio") {
+        } else if (user?.role === "business") {
           // Studios can only see media from their linked creators
           // Use server-side studio_id filtering for security
           studioIdFilter = user?.studio_id || undefined;
@@ -1653,7 +1653,7 @@ export default function MediaPage() {
           let newData = response.data;
 
           // Additional client-side filtering for studios as extra security layer
-          if (user?.role === "studio" && studioCreatorIds.size > 0) {
+          if (user?.role === "business" && studioCreatorIds.size > 0) {
             newData = newData.filter((m: Media) => studioCreatorIds.has(m.creator_id));
           }
 
@@ -1714,11 +1714,11 @@ export default function MediaPage() {
       let creatorIdFilter: string | undefined;
       let studioIdFilter: string | undefined;
       
-      if (user?.role === "model") {
+      if (user?.role === "independent") {
         // Models can ONLY load more of their own media
         creatorIdFilter = user?.creator_id || undefined;
         if (!creatorIdFilter) return;
-      } else if (user?.role === "studio") {
+      } else if (user?.role === "business") {
         // Studios use server-side studio_id filtering
         studioIdFilter = user?.studio_id || undefined;
         if (!studioIdFilter) return;
@@ -1764,7 +1764,7 @@ export default function MediaPage() {
         let newData = response.data;
 
         // Additional client-side filtering for studios as extra security layer
-        if (user?.role === "studio" && studioCreatorIds.size > 0) {
+        if (user?.role === "business" && studioCreatorIds.size > 0) {
           newData = newData.filter((m: Media) => studioCreatorIds.has(m.creator_id));
         }
 
@@ -1806,7 +1806,7 @@ export default function MediaPage() {
       let totalImage = 0, totalVideo = 0, totalAudio = 0;
 
       // Use server-side studio_id filtering for studios
-      const studioIdParam = user?.role === "studio" ? user?.studio_id : undefined;
+      const studioIdParam = user?.role === "business" ? user?.studio_id : undefined;
       
       const allMediaResponse = await api.listMedia({ 
         limit: 5000,
@@ -1815,7 +1815,7 @@ export default function MediaPage() {
       if (allMediaResponse.success && allMediaResponse.data) {
         allMediaResponse.data.forEach((m: Media) => {
           // Additional client-side filtering for studios as extra security
-          if (user?.role === "studio" && studioCreatorIds.size > 0) {
+          if (user?.role === "business" && studioCreatorIds.size > 0) {
             if (!studioCreatorIds.has(m.creator_id)) return;
           }
           
@@ -2524,8 +2524,8 @@ export default function MediaPage() {
           isOpen={showUploadModal}
           onClose={() => setShowUploadModal(false)}
           creators={creators}
-          selectedCreatorId={user.role === "model" ? user.creator_id : selectedCreator}
-          userRole={user.role as "admin" | "studio" | "model"}
+          selectedCreatorId={user.role === "independent" ? user.creator_id : selectedCreator}
+          userRole={user.role as "admin" | "business" | "independent"}
           apiKey={apiKey}
           onUploadComplete={() => {
             fetchMedia(true);

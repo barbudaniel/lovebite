@@ -661,7 +661,7 @@ function CreatorSelector({
 
 export default function AccountsPage() {
   const { user } = useDashboard();
-  const isAdminOrStudio = user?.role === "admin" || user?.role === "studio";
+  const isAdminOrBusiness = user?.role === "admin" || user?.role === "business";
   
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -697,7 +697,7 @@ export default function AccountsPage() {
       const supabase = getSupabaseBrowserClient();
       let query = supabase.from("creators").select("id, username").eq("enabled", true);
       
-      if (user?.role === "studio" && user.studio_id) {
+      if (user?.role === "business" && user.studio_id) {
         query = query.eq("studio_id", user.studio_id);
       }
 

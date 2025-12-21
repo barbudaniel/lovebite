@@ -10,6 +10,8 @@ import {
   canStudioAccessModel,
   getResourceFilter,
   isAdmin,
+  isBusiness,
+  isIndependent,
   isStudio,
   isModel,
   canManageModels,
@@ -30,7 +32,7 @@ export function usePermissions({
   creatorId,
   studioId,
 }: UsePermissionsProps) {
-  const userRole = role || "model";
+  const userRole = role || "independent";
 
   const permissions = useMemo(() => {
     return {
@@ -43,6 +45,9 @@ export function usePermissions({
       
       // Role checks
       isAdmin: isAdmin(userRole),
+      isBusiness: isBusiness(userRole),
+      isIndependent: isIndependent(userRole),
+      // Legacy aliases
       isStudio: isStudio(userRole),
       isModel: isModel(userRole),
       canManageModels: canManageModels(userRole),

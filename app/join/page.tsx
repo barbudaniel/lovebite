@@ -224,7 +224,7 @@ function JoinPageContent() {
         auth_user_id: authData.user.id,
         email: formData.email,
         display_name: formData.displayName,
-        role: "model",
+        role: "independent",
         creator_id: creator.id,
         enabled: true,
       });

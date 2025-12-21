@@ -132,7 +132,7 @@ export default function SettingsPage() {
   
   // Fetch studio sub-users
   useEffect(() => {
-    if (user?.role === "studio" && user?.studio_id) {
+    if (user?.role === "business" && user?.studio_id) {
       fetchSubUsers();
     }
   }, [user]);
@@ -177,7 +177,7 @@ export default function SettingsPage() {
       const { error: userError } = await supabase
         .from("dashboard_users")
         .update({
-          role: "studio",
+          role: "business",
           studio_id: studio.id,
         })
         .eq("id", user?.id);
@@ -222,7 +222,7 @@ export default function SettingsPage() {
           email: newUserEmail,
           password: newUserPassword,
           displayName: newUserName,
-          role: "model",
+          role: "independent",
           studioId: user?.studio_id,
         }),
       });
@@ -401,7 +401,7 @@ export default function SettingsPage() {
               className={`px-3 py-1 rounded-full text-sm font-medium ${
                 user.role === "admin"
                   ? "bg-red-100 text-red-700"
-                  : user.role === "studio"
+                  : user.role === "business"
                   ? "bg-blue-100 text-blue-700"
                   : "bg-purple-100 text-purple-700"
               }`}
@@ -538,7 +538,7 @@ export default function SettingsPage() {
       </SettingsSection>
 
       {/* Model to Studio Conversion - Only for models */}
-      {user.role === "model" && (
+      {user.role === "independent" && (
         <SettingsSection
           title="Upgrade to Studio"
           description="Convert your account to manage multiple creators"
@@ -566,7 +566,7 @@ export default function SettingsPage() {
       )}
       
       {/* Studio Team Management - Only for studios */}
-      {user.role === "studio" && (
+      {user.role === "business" && (
         <SettingsSection
           title="Team Members"
           description="Manage sub-users in your studio"

@@ -462,7 +462,7 @@ function ModelModal({
           await supabase.from("dashboard_users").insert({
             auth_user_id: authData?.user?.id || null,
             email: formData.email,
-            role: "model",
+            role: "independent",
             display_name: formData.displayName || formData.username,
             creator_id: newCreator.id,
             studio_id: studioId,
@@ -1262,7 +1262,7 @@ export default function ModelsPage() {
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showBioLinkEditor, setShowBioLinkEditor] = useState(false);
 
-  const isStudioOrAdmin = user?.role === "studio" || user?.role === "admin";
+  const isBusinessOrAdmin = user?.role === "business" || user?.role === "admin";
   const isAdmin = user?.role === "admin";
   const studioId = user?.studio_id;
   
@@ -1286,7 +1286,7 @@ export default function ModelsPage() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (user?.role === "studio" && studioId) {
+      if (user?.role === "business" && studioId) {
         query = query.eq("studio_id", studioId);
       }
 
@@ -1312,7 +1312,7 @@ export default function ModelsPage() {
       }
 
       // Fetch studio invites (for studios)
-      if (user?.role === "studio" && studioId) {
+      if (user?.role === "business" && studioId) {
         try {
           const response = await fetch("/api/studio-invites");
           const { data: invitesData } = await response.json();
@@ -1417,7 +1417,7 @@ export default function ModelsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {user?.role === "studio" && (
+          {user?.role === "business" && (
             <Button
               variant="outline"
               onClick={() => setShowInviteModal(true)}
@@ -1437,7 +1437,7 @@ export default function ModelsPage() {
       </div>
 
       {/* Pending Invites */}
-      {user?.role === "studio" && (
+      {user?.role === "business" && (
         <PendingInvitesSection invites={invites} onCancelInvite={handleCancelInvite} />
       )}
 

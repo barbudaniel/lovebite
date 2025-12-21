@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
       .single();
 
-    if (!dashboardUser || (dashboardUser.role !== "admin" && dashboardUser.role !== "studio")) {
+    if (!dashboardUser || (dashboardUser.role !== "admin" && dashboardUser.role !== "business")) {
       return NextResponse.json({ error: "Access denied. Admin or Studio role required." }, { status: 403 });
     }
 
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
       .select("id, username")
       .eq("enabled", true);
 
-    if (dashboardUser.role === "studio" && dashboardUser.studio_id) {
+    if (dashboardUser.role === "business" && dashboardUser.studio_id) {
       creatorsQuery = creatorsQuery.eq("studio_id", dashboardUser.studio_id);
     }
 

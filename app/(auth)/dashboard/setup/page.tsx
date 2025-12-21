@@ -17,7 +17,7 @@ import {
   Check,
 } from "lucide-react";
 
-type AccountType = "model" | "studio"; // internal: model = independent, studio = business
+type AccountType = "independent" | "business";
 
 function SetupContent() {
   const router = useRouter();
@@ -27,7 +27,7 @@ function SetupContent() {
   const [authUser, setAuthUser] = useState<{ id: string; email: string } | null>(null);
   
   const [formData, setFormData] = useState({
-    accountType: "model" as AccountType,
+    accountType: "independent" as AccountType,
     displayName: "",
     stageName: "",
     phone: "",
@@ -124,8 +124,8 @@ function SetupContent() {
         return;
       }
 
-      // If model, also create a creator record
-      if (formData.accountType === "model") {
+      // If independent, also create a creator record
+      if (formData.accountType === "independent") {
         const { data: creator, error: creatorError } = await supabase
           .from("creators")
           .insert({
@@ -148,8 +148,8 @@ function SetupContent() {
         }
       }
 
-      // If studio, create a studio record
-      if (formData.accountType === "studio") {
+      // If business, create a studio record
+      if (formData.accountType === "business") {
         const { data: studio, error: studioError } = await supabase
           .from("studios")
           .insert({
@@ -234,17 +234,17 @@ function SetupContent() {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <button
                   onClick={() =>
-                    setFormData({ ...formData, accountType: "model" })
+                    setFormData({ ...formData, accountType: "independent" })
                   }
                   className={`p-6 rounded-xl border-2 transition-all text-left ${
-                    formData.accountType === "model"
+                    formData.accountType === "independent"
                       ? "border-brand-500 bg-brand-50"
                       : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
                   <User
                     className={`w-8 h-8 mb-3 ${
-                      formData.accountType === "model"
+                      formData.accountType === "independent"
                         ? "text-brand-600"
                         : "text-slate-400"
                     }`}
@@ -256,17 +256,17 @@ function SetupContent() {
                 </button>
                 <button
                   onClick={() =>
-                    setFormData({ ...formData, accountType: "studio" })
+                    setFormData({ ...formData, accountType: "business" })
                   }
                   className={`p-6 rounded-xl border-2 transition-all text-left ${
-                    formData.accountType === "studio"
+                    formData.accountType === "business"
                       ? "border-brand-500 bg-brand-50"
                       : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
                   <Building2
                     className={`w-8 h-8 mb-3 ${
-                      formData.accountType === "studio"
+                      formData.accountType === "business"
                         ? "text-brand-600"
                         : "text-slate-400"
                     }`}
@@ -297,7 +297,7 @@ function SetupContent() {
               <div className="space-y-4 mb-6">
                 <div className="space-y-2">
                   <Label htmlFor="displayName">
-                    {formData.accountType === "studio" ? "Business Name" : "Display Name"} *
+                    {formData.accountType === "business" ? "Business Name" : "Display Name"} *
                   </Label>
                   <Input
                     id="displayName"
@@ -306,14 +306,14 @@ function SetupContent() {
                       setFormData({ ...formData, displayName: e.target.value })
                     }
                     placeholder={
-                      formData.accountType === "studio"
+                      formData.accountType === "business"
                         ? "Your Business Name"
                         : "Your Name"
                     }
                   />
                 </div>
 
-                {formData.accountType === "model" && (
+                {formData.accountType === "independent" && (
                   <div className="space-y-2">
                     <Label htmlFor="stageName">Stage Name (optional)</Label>
                     <Input

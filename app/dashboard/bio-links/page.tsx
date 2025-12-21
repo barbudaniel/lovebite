@@ -918,7 +918,7 @@ export default function BioLinksPage() {
   const [creators, setCreators] = useState<CreatorOption[]>([]);
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   
-  const isAdminOrStudio = user?.role === "admin" || user?.role === "studio";
+  const isAdminOrBusiness = user?.role === "admin" || user?.role === "business";
   const effectiveCreatorId = isAdminOrStudio ? selectedCreatorId : user?.creator_id;
 
   // Fetch creators list for admin/studio
@@ -933,7 +933,7 @@ export default function BioLinksPage() {
         .eq("enabled", true)
         .order("username");
       
-      if (user?.role === "studio" && user?.studio_id) {
+      if (user?.role === "business" && user?.studio_id) {
         query = query.eq("studio_id", user.studio_id);
       }
       

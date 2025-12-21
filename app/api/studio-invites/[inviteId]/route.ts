@@ -51,14 +51,14 @@ export async function PATCH(
     }
 
     // Check authorization
-    const isModel = dashboardUser.role === "model" && dashboardUser.creator_id === invite.creator_id;
-    const isStudio = dashboardUser.role === "studio" && dashboardUser.studio_id === invite.studio_id;
+    const isIndependent = dashboardUser.role === "independent" && dashboardUser.creator_id === invite.creator_id;
+    const isBusiness = dashboardUser.role === "business" && dashboardUser.studio_id === invite.studio_id;
     const isAdmin = dashboardUser.role === "admin";
 
-    // Models can accept/decline, studios can only cancel
+    // Independent users can accept/decline, business users can only cancel
     if (action === "accept" || action === "decline") {
-      if (!isModel && !isAdmin) {
-        return NextResponse.json({ error: "Only the invited model can respond to this invite" }, { status: 403 });
+      if (!isIndependent && !isAdmin) {
+        return NextResponse.json({ error: "Only the invited creator can respond to this invite" }, { status: 403 });
       }
     }
 
@@ -97,12 +97,12 @@ export async function PATCH(
         .neq("id", inviteId)
         .eq("status", "pending");
 
-      // Notify the studio
+      // Notify the business
       const { data: studioUsers } = await supabaseAdmin
         .from("dashboard_users")
         .select("id")
         .eq("studio_id", invite.studio_id)
-        .eq("role", "studio");
+        .eq("role", "business");
 
       const { data: creator2 } = await supabaseAdmin
         .from("creators")
@@ -175,10 +175,10 @@ export async function DELETE(
     }
 
     // Check authorization
-    const isStudio = dashboardUser.role === "studio" && dashboardUser.studio_id === invite.studio_id;
+    const isBusiness = dashboardUser.role === "business" && dashboardUser.studio_id === invite.studio_id;
     const isAdmin = dashboardUser.role === "admin";
 
-    if (!isStudio && !isAdmin) {
+    if (!isBusiness && !isAdmin) {
       return NextResponse.json({ error: "Not authorized to cancel this invite" }, { status: 403 });
     }
 

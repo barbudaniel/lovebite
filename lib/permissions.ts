@@ -3,7 +3,7 @@
  * Defines what each role can do in the dashboard
  */
 
-export type UserRole = "admin" | "studio" | "model";
+export type UserRole = "admin" | "business" | "independent";
 
 // ============================================
 // PERMISSION DEFINITIONS
@@ -11,46 +11,46 @@ export type UserRole = "admin" | "studio" | "model";
 
 export const permissions = {
   // Media permissions
-  "media:view": ["admin", "studio", "model"],
-  "media:upload": ["admin", "studio", "model"],
-  "media:delete": ["admin", "studio", "model"],
+  "media:view": ["admin", "business", "independent"],
+  "media:upload": ["admin", "business", "independent"],
+  "media:delete": ["admin", "business", "independent"],
   "media:delete_any": ["admin"],
   
   // Album permissions
-  "albums:view": ["admin", "studio", "model"],
-  "albums:create": ["admin", "studio", "model"],
-  "albums:edit": ["admin", "studio", "model"],
-  "albums:delete": ["admin", "studio", "model"],
+  "albums:view": ["admin", "business", "independent"],
+  "albums:create": ["admin", "business", "independent"],
+  "albums:edit": ["admin", "business", "independent"],
+  "albums:delete": ["admin", "business", "independent"],
   "albums:delete_any": ["admin"],
   
   // Bio links permissions
-  "bio_links:view": ["admin", "studio", "model"],
-  "bio_links:create": ["admin", "studio", "model"],
-  "bio_links:edit": ["admin", "studio", "model"],
-  "bio_links:delete": ["admin", "studio", "model"],
+  "bio_links:view": ["admin", "business", "independent"],
+  "bio_links:create": ["admin", "business", "independent"],
+  "bio_links:edit": ["admin", "business", "independent"],
+  "bio_links:delete": ["admin", "business", "independent"],
   
   // Social accounts permissions
-  "accounts:view": ["admin", "studio", "model"],
-  "accounts:add": ["admin", "studio", "model"],
-  "accounts:edit": ["admin", "studio", "model"],
-  "accounts:delete": ["admin", "studio", "model"],
+  "accounts:view": ["admin", "business", "independent"],
+  "accounts:add": ["admin", "business", "independent"],
+  "accounts:edit": ["admin", "business", "independent"],
+  "accounts:delete": ["admin", "business", "independent"],
   
   // Statistics permissions
-  "stats:view_own": ["admin", "studio", "model"],
+  "stats:view_own": ["admin", "business", "independent"],
   "stats:view_any": ["admin"],
-  "stats:view_studio_models": ["admin", "studio"],
+  "stats:view_studio_models": ["admin", "business"],
   
-  // Model management permissions
-  "models:view": ["admin", "studio"],
-  "models:add": ["admin", "studio"],
-  "models:edit": ["admin", "studio"],
-  "models:remove": ["admin", "studio"],
+  // Model management permissions (business can manage their creators)
+  "models:view": ["admin", "business"],
+  "models:add": ["admin", "business"],
+  "models:edit": ["admin", "business"],
+  "models:remove": ["admin", "business"],
   
   // Contract permissions
-  "contracts:view_own": ["admin", "studio", "model"],
+  "contracts:view_own": ["admin", "business", "independent"],
   "contracts:view_any": ["admin"],
   "contracts:create": ["admin"],
-  "contracts:sign": ["admin", "studio", "model"],
+  "contracts:sign": ["admin", "business", "independent"],
   
   // Onboarding permissions
   "onboarding:view": ["admin"],
@@ -65,8 +65,8 @@ export const permissions = {
   "studios:delete": ["admin"],
   
   // Settings permissions
-  "settings:view": ["admin", "studio", "model"],
-  "settings:edit": ["admin", "studio", "model"],
+  "settings:view": ["admin", "business", "independent"],
+  "settings:edit": ["admin", "business", "independent"],
   "settings:manage_users": ["admin"],
   
   // Admin permissions
@@ -144,7 +144,7 @@ export function canAccessResource(
 }
 
 /**
- * Check if a studio user can access a model's resources
+ * Check if a business user can access a creator's resources
  */
 export function canStudioAccessModel(
   userRole: UserRole,
@@ -155,7 +155,7 @@ export function canStudioAccessModel(
     return true;
   }
 
-  if (userRole === "studio" && studioId && modelStudioId && studioId === modelStudioId) {
+  if (userRole === "business" && studioId && modelStudioId && studioId === modelStudioId) {
     return true;
   }
 
@@ -170,16 +170,20 @@ export function isAdmin(role: UserRole): boolean {
   return role === "admin";
 }
 
-export function isStudio(role: UserRole): boolean {
-  return role === "studio";
+export function isBusiness(role: UserRole): boolean {
+  return role === "business";
 }
 
-export function isModel(role: UserRole): boolean {
-  return role === "model";
+export function isIndependent(role: UserRole): boolean {
+  return role === "independent";
 }
+
+// Legacy aliases for backwards compatibility
+export const isStudio = isBusiness;
+export const isModel = isIndependent;
 
 export function canManageModels(role: UserRole): boolean {
-  return role === "admin" || role === "studio";
+  return role === "admin" || role === "business";
 }
 
 // ============================================
@@ -199,7 +203,7 @@ export function getResourceFilter(
     return { type: "all" };
   }
 
-  if (userRole === "studio" && studioId) {
+  if (userRole === "business" && studioId) {
     return { type: "studio", id: studioId };
   }
 

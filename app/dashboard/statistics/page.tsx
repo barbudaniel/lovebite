@@ -258,7 +258,7 @@ export default function StatisticsPage() {
   const [selectedModelId, setSelectedModelId] = useState<string | null>(creatorParam);
   const [initialized, setInitialized] = useState(false);
 
-  const isAdminOrStudio = user?.role === "admin" || user?.role === "studio";
+  const isAdminOrBusiness = user?.role === "admin" || user?.role === "business";
   
   // Initialize selectedModelId from URL param
   useEffect(() => {
@@ -268,16 +268,16 @@ export default function StatisticsPage() {
     }
   }, [creatorParam, initialized]);
 
-  // Fetch available models for admin/studio
+  // Fetch available models for admin/business
   useEffect(() => {
-    if (!isAdminOrStudio) return;
+    if (!isAdminOrBusiness) return;
 
     const fetchModels = async () => {
       const supabase = getSupabaseBrowserClient();
       let query = supabase.from("creators").select("id, username").eq("enabled", true);
       
-      // Studio can only see their own models
-      if (user?.role === "studio" && user?.studio_id) {
+      // Business can only see their own models
+      if (user?.role === "business" && user?.studio_id) {
         query = query.eq("studio_id", user.studio_id);
       }
       
@@ -288,7 +288,7 @@ export default function StatisticsPage() {
     };
 
     fetchModels();
-  }, [isAdminOrStudio, user]);
+  }, [isAdminOrBusiness, user]);
 
   useEffect(() => {
     fetchAllData();
@@ -303,9 +303,9 @@ export default function StatisticsPage() {
       // Determine which creator to fetch stats for
       let targetCreatorId: string | null = null;
       
-      if (user?.role === "model") {
+      if (user?.role === "independent") {
         targetCreatorId = user?.creator_id || null;
-      } else if (isAdminOrStudio && selectedModelId) {
+      } else if (isAdminOrBusiness && selectedModelId) {
         targetCreatorId = selectedModelId;
       }
 
@@ -317,7 +317,7 @@ export default function StatisticsPage() {
           if (response.success && response.data) {
             setMediaStats(response.data);
           }
-        } else if (isAdminOrStudio) {
+        } else if (isAdminOrBusiness) {
           // Fetch platform overview
           const response = await api.getPlatformOverview();
           if (response.success && response.data) {

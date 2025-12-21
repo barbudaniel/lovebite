@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         auth_user_id: authUser.user.id,
         email,
         display_name: displayName || null,
-        role: role || "model",
+        role: role || "independent",
         studio_id: studioId || null,
         creator_id: creatorId || null,
         enabled: true,

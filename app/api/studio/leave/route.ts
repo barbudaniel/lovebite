@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (dashboardUser.role !== "model" || !dashboardUser.creator_id) {
+    if (dashboardUser.role !== "independent" || !dashboardUser.creator_id) {
       return NextResponse.json({ error: "Only models can leave studios" }, { status: 403 });
     }
 
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       .from("dashboard_users")
       .select("id")
       .eq("studio_id", studioId)
-      .eq("role", "studio");
+      .eq("role", "business");
 
     if (studioUsers) {
       for (const studioUser of studioUsers) {

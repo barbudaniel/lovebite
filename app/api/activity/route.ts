@@ -104,7 +104,7 @@ async function notifyStudioOfUpload(
       .from("dashboard_users")
       .select("id")
       .eq("studio_id", creator.studio_id)
-      .eq("role", "studio");
+      .eq("role", "business");
 
     if (!studioUsers || studioUsers.length === 0) return;
 

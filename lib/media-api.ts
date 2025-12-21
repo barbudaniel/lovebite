@@ -29,7 +29,7 @@ export interface ApiUser {
   id: string;
   username: string;
   api_key?: string;
-  role: 'admin' | 'studio' | 'model';
+  role: 'admin' | 'business' | 'independent';
   creator_id: string | null;
   studio_id: string | null;
   enabled: boolean;
