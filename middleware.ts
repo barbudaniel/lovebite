@@ -74,14 +74,17 @@ export async function middleware(request: NextRequest) {
     // Protected routes - redirect to login if no session
     const isLoginPage = pathname === '/dashboard/login';
     const isSetupPage = pathname === '/dashboard/setup';
+    const isForgotPasswordPage = pathname === '/dashboard/login/forgot-password';
+    const isResetPasswordPage = pathname === '/dashboard/login/reset-password';
+    const isPublicAuthPage = isLoginPage || isSetupPage || isForgotPasswordPage || isResetPasswordPage;
     
-    if (!session && !isLoginPage && !isSetupPage) {
+    if (!session && !isPublicAuthPage) {
       const loginUrl = new URL('/dashboard/login', request.url);
       return NextResponse.redirect(loginUrl);
     }
 
-    // If logged in and trying to access login page, redirect to dashboard
-    if (session && isLoginPage) {
+    // If logged in and trying to access login page (but not reset-password), redirect to dashboard
+    if (session && isLoginPage && !isResetPasswordPage) {
       const dashboardUrl = new URL('/dashboard', request.url);
       return NextResponse.redirect(dashboardUrl);
     }
