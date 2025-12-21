@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { getStudioInviteHtml } from "@/lib/email-templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
