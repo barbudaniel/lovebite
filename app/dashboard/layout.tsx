@@ -671,6 +671,10 @@ export default function DashboardLayout({
       }
 
       // Get API key based on role
+      // IMPORTANT: API key assignment determines what media the user can access
+      // Model users should ONLY get their creator-specific API key
+      // Studio users should get their studio API key
+      // This prevents models from seeing other models' media within the same studio
       try {
         let foundApiKey: string | null = null;
         
@@ -687,20 +691,41 @@ export default function DashboardLayout({
           if (apiUser?.api_key) {
             foundApiKey = apiUser.api_key;
           }
-        } else if (dashboardUser.creator_id || dashboardUser.studio_id) {
-          // Models/Studios get their specific API key
-          const filters = [];
-          if (dashboardUser.creator_id) {
-            filters.push(`creator_id.eq.${dashboardUser.creator_id}`);
-          }
-          if (dashboardUser.studio_id) {
-            filters.push(`studio_id.eq.${dashboardUser.studio_id}`);
-          }
-          
+        } else if (dashboardUser.role === "model" && dashboardUser.creator_id) {
+          // Model users: ONLY look for their creator-specific API key
+          // This ensures they can only see their own media
           const { data: apiUser } = await supabase
             .from("api_users")
             .select("api_key")
-            .or(filters.join(","))
+            .eq("creator_id", dashboardUser.creator_id)
+            .eq("enabled", true)
+            .limit(1)
+            .maybeSingle();
+          
+          if (apiUser?.api_key) {
+            foundApiKey = apiUser.api_key;
+          } else if (dashboardUser.studio_id) {
+            // Fallback: if model doesn't have their own API key, try studio key
+            // But note: client-side filtering will still restrict their view
+            const { data: studioApiUser } = await supabase
+              .from("api_users")
+              .select("api_key")
+              .eq("studio_id", dashboardUser.studio_id)
+              .eq("enabled", true)
+              .limit(1)
+              .maybeSingle();
+            
+            if (studioApiUser?.api_key) {
+              foundApiKey = studioApiUser.api_key;
+              console.log("Layout - Model using studio API key (client-side filtering enforced)");
+            }
+          }
+        } else if (dashboardUser.role === "studio" && dashboardUser.studio_id) {
+          // Studio users: get their studio API key
+          const { data: apiUser } = await supabase
+            .from("api_users")
+            .select("api_key")
+            .eq("studio_id", dashboardUser.studio_id)
             .eq("enabled", true)
             .limit(1)
             .maybeSingle();
@@ -711,7 +736,7 @@ export default function DashboardLayout({
         }
 
         if (foundApiKey) {
-          console.log("Layout - API key found for user");
+          console.log("Layout - API key found for user role:", dashboardUser.role);
           setApiKey(foundApiKey);
         } else if (dashboardUser.role === "admin") {
           // Only admins get fallback to admin API key
@@ -731,7 +756,7 @@ export default function DashboardLayout({
           }
         } else {
           // Non-admin users without their own API key cannot access media
-          console.log("Layout - No API key for non-admin user");
+          console.log("Layout - No API key for non-admin user:", dashboardUser.role);
           setApiKey(null);
         }
       } catch (e) {

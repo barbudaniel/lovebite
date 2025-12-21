@@ -1456,12 +1456,16 @@ export default function MediaPage() {
 
   // Fetch creators and their media counts for folder view
   const fetchCreators = useCallback(async () => {
-    if (!apiKey || !isAdminOrStudio) return;
+    if (!apiKey || !isAdminOrStudio || !permissionsLoaded) return;
 
     try {
       const api = createApiClient(apiKey);
+      
+      // Use studio_id filtering for studio users
+      const studioIdParam = user?.role === "studio" ? user?.studio_id || undefined : undefined;
+      
       const response = await api.listCreators({
-        studio_id: user?.role === "studio" ? user?.studio_id || undefined : undefined,
+        studio_id: studioIdParam,
       });
 
       if (response.success && response.data) {
@@ -1476,13 +1480,16 @@ export default function MediaPage() {
           const counts: CreatorMediaCounts = {};
           let totalImage = 0, totalVideo = 0, totalAudio = 0;
 
-          // Fetch all media to calculate counts (more efficient than per-creator API calls)
-          const allMediaResponse = await api.listMedia({ limit: 5000 });
+          // Use server-side studio_id filtering for studios
+          const allMediaResponse = await api.listMedia({ 
+            limit: 5000,
+            studio_id: studioIdParam, 
+          });
           if (allMediaResponse.success && allMediaResponse.data) {
             allMediaResponse.data.forEach((m: Media) => {
               const creatorId = m.creator_id;
               
-              // Only count media from accessible creators
+              // Only count media from accessible creators (extra client-side check)
               if (!accessibleCreatorIds.has(creatorId)) return;
               
               if (!counts[creatorId]) {
@@ -1514,15 +1521,33 @@ export default function MediaPage() {
     } catch (err) {
       console.error("Error fetching creators:", err);
     }
-  }, [apiKey, isAdminOrStudio, user, creatorMediaCounts]);
+  }, [apiKey, isAdminOrStudio, user, creatorMediaCounts, permissionsLoaded]);
 
-  // Store studio creator IDs for filtering
+  // Store studio creator IDs for filtering and track loading state
   const [studioCreatorIds, setStudioCreatorIds] = useState<Set<string>>(new Set());
+  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
 
   // Fetch studio creators for permission filtering
   useEffect(() => {
     const fetchStudioCreators = async () => {
-      if (!apiKey || user?.role !== "studio" || !user?.studio_id) return;
+      // For admin users, permissions are always loaded (they can see everything)
+      if (user?.role === "admin") {
+        setPermissionsLoaded(true);
+        return;
+      }
+      
+      // For model users, permissions are loaded if they have a creator_id
+      if (user?.role === "model") {
+        setPermissionsLoaded(true);
+        return;
+      }
+      
+      // For studio users, we need to fetch their accessible creators
+      if (!apiKey || user?.role !== "studio" || !user?.studio_id) {
+        // No studio_id means no access
+        setPermissionsLoaded(true);
+        return;
+      }
       
       try {
         const api = createApiClient(apiKey);
@@ -1532,6 +1557,8 @@ export default function MediaPage() {
         }
       } catch (err) {
         console.error("Error fetching studio creators:", err);
+      } finally {
+        setPermissionsLoaded(true);
       }
     };
     
@@ -1541,6 +1568,9 @@ export default function MediaPage() {
   const fetchMedia = useCallback(
     async (reset = false) => {
       if (!apiKey) return;
+      
+      // Wait for permissions to be loaded before fetching
+      if (!permissionsLoaded) return;
 
       setIsLoading(true);
       setError(null);
@@ -1549,35 +1579,49 @@ export default function MediaPage() {
         const api = createApiClient(apiKey);
         const offset = reset ? 0 : pagination.offset;
 
-        // Determine creator_id filter based on user role and permissions
+        // Determine creator_id and studio_id filters based on user role and permissions
         let creatorIdFilter: string | undefined;
+        let studioIdFilter: string | undefined;
         
         if (user?.role === "model") {
-          // Models can only see their own media
+          // Models can ONLY see their own media - strict enforcement
           creatorIdFilter = user?.creator_id || undefined;
           if (!creatorIdFilter) {
+            // No creator_id means no access to media
             setMedia([]);
             setIsLoading(false);
             return;
           }
         } else if (user?.role === "studio") {
-          // Studios can only see their creators' media
-          // If a specific creator is selected within the studio, filter by that
+          // Studios can only see media from their linked creators
+          // Use server-side studio_id filtering for security
+          studioIdFilter = user?.studio_id || undefined;
+          if (!studioIdFilter) {
+            // No studio_id means no access
+            setMedia([]);
+            setIsLoading(false);
+            return;
+          }
+          // If a specific creator is selected, also filter by that
           if (selectedCreator) {
             // Verify the selected creator belongs to this studio
-            if (!studioCreatorIds.has(selectedCreator)) {
+            if (studioCreatorIds.size > 0 && !studioCreatorIds.has(selectedCreator)) {
               setMedia([]);
               setIsLoading(false);
               return;
             }
             creatorIdFilter = selectedCreator;
           }
-          // If no specific creator, we'll filter client-side by studioCreatorIds
         } else if (user?.role === "admin") {
           // Admins can see all media, but can filter by selected creator
           if (selectedCreator) {
             creatorIdFilter = selectedCreator;
           }
+        } else {
+          // Unknown role - no access
+          setMedia([]);
+          setIsLoading(false);
+          return;
         }
 
         // Determine type filter (if only one type selected, use it)
@@ -1596,6 +1640,7 @@ export default function MediaPage() {
           type: typeFilter,
           category: categoryFilter,
           creator_id: creatorIdFilter,
+          studio_id: studioIdFilter, // Use server-side studio filtering
           date_from: filters.dateFrom || undefined,
           date_to: filters.dateTo || undefined,
           limit: pagination.limit,
@@ -1606,8 +1651,8 @@ export default function MediaPage() {
         if (response.success && response.data) {
           let newData = response.data;
 
-          // Studio permission filtering: only show media from studio's creators
-          if (user?.role === "studio" && !selectedCreator && studioCreatorIds.size > 0) {
+          // Additional client-side filtering for studios as extra security layer
+          if (user?.role === "studio" && studioCreatorIds.size > 0) {
             newData = newData.filter((m: Media) => studioCreatorIds.has(m.creator_id));
           }
 
@@ -1638,9 +1683,8 @@ export default function MediaPage() {
           setError(response.error || "Failed to load media");
         }
 
-        // Fetch categories (filter by creator or studio creators)
+        // Fetch categories (filter by creator or studio)
         let categoryCreatorId = creatorIdFilter;
-        // For studios without specific creator, we don't filter categories
         const catResponse = await api.getMediaCategories(categoryCreatorId);
         if (catResponse.success && catResponse.data) {
           setCategories(catResponse.data);
@@ -1652,12 +1696,12 @@ export default function MediaPage() {
         setIsLoading(false);
       }
     },
-    [apiKey, filters, pagination.offset, pagination.limit, user, selectedCreator, studioCreatorIds]
+    [apiKey, filters, pagination.offset, pagination.limit, user, selectedCreator, studioCreatorIds, permissionsLoaded]
   );
 
   // Load more handler for infinite scroll
   const handleLoadMore = useCallback(async () => {
-    if (!apiKey || isLoadingMore || !pagination.hasMore) return;
+    if (!apiKey || isLoadingMore || !pagination.hasMore || !permissionsLoaded) return;
 
     setIsLoadingMore(true);
     const nextOffset = pagination.offset + pagination.limit;
@@ -1665,23 +1709,30 @@ export default function MediaPage() {
     try {
       const api = createApiClient(apiKey);
 
-      // Determine creator_id filter based on user role and permissions
+      // Determine creator_id and studio_id filters based on user role
       let creatorIdFilter: string | undefined;
       let studioIdFilter: string | undefined;
       
       if (user?.role === "model") {
+        // Models can ONLY load more of their own media
         creatorIdFilter = user?.creator_id || undefined;
         if (!creatorIdFilter) return;
       } else if (user?.role === "studio") {
+        // Studios use server-side studio_id filtering
         studioIdFilter = user?.studio_id || undefined;
         if (!studioIdFilter) return;
         if (selectedCreator) {
+          // Verify selected creator belongs to studio
+          if (studioCreatorIds.size > 0 && !studioCreatorIds.has(selectedCreator)) return;
           creatorIdFilter = selectedCreator;
         }
       } else if (user?.role === "admin") {
         if (selectedCreator) {
           creatorIdFilter = selectedCreator;
         }
+      } else {
+        // Unknown role - no access
+        return;
       }
 
       // Determine type filter
@@ -1711,8 +1762,8 @@ export default function MediaPage() {
       if (response.success && response.data) {
         let newData = response.data;
 
-        // Studio permission filtering: only show media from studio's creators
-        if (user?.role === "studio" && !selectedCreator && studioCreatorIds.size > 0) {
+        // Additional client-side filtering for studios as extra security layer
+        if (user?.role === "studio" && studioCreatorIds.size > 0) {
           newData = newData.filter((m: Media) => studioCreatorIds.has(m.creator_id));
         }
 
@@ -1742,21 +1793,27 @@ export default function MediaPage() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [apiKey, isLoadingMore, pagination, filters, user, selectedCreator, studioCreatorIds]);
+  }, [apiKey, isLoadingMore, pagination, filters, user, selectedCreator, studioCreatorIds, permissionsLoaded]);
 
   // Force refresh counts
   const refreshCounts = useCallback(async () => {
-    if (!apiKey || !isAdminOrStudio) return;
+    if (!apiKey || !isAdminOrStudio || !permissionsLoaded) return;
 
     try {
       const api = createApiClient(apiKey);
       const counts: CreatorMediaCounts = {};
       let totalImage = 0, totalVideo = 0, totalAudio = 0;
 
-      const allMediaResponse = await api.listMedia({ limit: 5000 });
+      // Use server-side studio_id filtering for studios
+      const studioIdParam = user?.role === "studio" ? user?.studio_id : undefined;
+      
+      const allMediaResponse = await api.listMedia({ 
+        limit: 5000,
+        studio_id: studioIdParam,
+      });
       if (allMediaResponse.success && allMediaResponse.data) {
         allMediaResponse.data.forEach((m: Media) => {
-          // Filter by studio permissions if applicable
+          // Additional client-side filtering for studios as extra security
           if (user?.role === "studio" && studioCreatorIds.size > 0) {
             if (!studioCreatorIds.has(m.creator_id)) return;
           }
@@ -1789,16 +1846,22 @@ export default function MediaPage() {
     } catch (err) {
       console.error("Error refreshing counts:", err);
     }
-  }, [apiKey, isAdminOrStudio]);
+  }, [apiKey, isAdminOrStudio, user, studioCreatorIds, permissionsLoaded]);
 
   useEffect(() => {
-    fetchCreators();
-  }, [fetchCreators]);
+    // Only fetch creators once permissions are loaded
+    if (permissionsLoaded) {
+      fetchCreators();
+    }
+  }, [fetchCreators, permissionsLoaded]);
 
   useEffect(() => {
-    fetchMedia(true);
-    loadMoreOffset.current = 0;
-  }, [apiKey, filters, selectedCreator]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Only fetch media once permissions are loaded
+    if (permissionsLoaded) {
+      fetchMedia(true);
+      loadMoreOffset.current = 0;
+    }
+  }, [apiKey, filters, selectedCreator, permissionsLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Generate folder items for the folder view
   const folderItems = useMemo<FolderItem[]>(() => {
