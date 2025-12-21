@@ -28,7 +28,23 @@ import {
   Image as ImageIcon,
   Link as LinkIcon,
   Mail,
+  Phone,
+  Power,
+  PowerOff,
+  Settings,
+  ChevronRight,
+  Palette,
+  Globe,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog-centered";
 
 // ============================================
 // TYPES
@@ -61,6 +77,16 @@ interface DashboardUser {
   enabled: boolean;
 }
 
+interface BioLink {
+  id: string;
+  creator_id: string;
+  slug: string;
+  name: string;
+  tagline: string | null;
+  is_published: boolean;
+  custom_domain: string | null;
+}
+
 // ============================================
 // MODEL CARD
 // ============================================
@@ -68,15 +94,23 @@ interface DashboardUser {
 function ModelCard({
   creator,
   dashboardUser,
+  bioLink,
   onEdit,
   onRemove,
   onViewProfile,
+  onToggleActive,
+  onEditBioLink,
+  onViewStats,
 }: {
   creator: Creator;
   dashboardUser?: DashboardUser;
+  bioLink?: BioLink;
   onEdit: () => void;
   onRemove: () => void;
   onViewProfile: () => void;
+  onToggleActive: () => void;
+  onEditBioLink: () => void;
+  onViewStats: () => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -84,7 +118,9 @@ function ModelCard({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all group"
+      className={`bg-white rounded-xl border overflow-hidden hover:shadow-lg transition-all group ${
+        !creator.active || !creator.enabled ? "border-slate-200 opacity-75" : "border-slate-200"
+      }`}
     >
       {/* Header / Avatar */}
       <div className="relative h-24 bg-gradient-to-br from-brand-100 to-brand-200">
@@ -104,20 +140,29 @@ function ModelCard({
 
         {/* Status badge */}
         <div className="absolute top-3 right-3">
-          <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleActive();
+            }}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
               creator.active && creator.enabled
-                ? "bg-green-100 text-green-700"
-                : "bg-slate-100 text-slate-600"
+                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                creator.active && creator.enabled ? "bg-green-500" : "bg-slate-400"
-              }`}
-            />
-            {creator.active && creator.enabled ? "Active" : "Inactive"}
-          </span>
+            {creator.active && creator.enabled ? (
+              <>
+                <Power className="w-3 h-3" />
+                Active
+              </>
+            ) : (
+              <>
+                <PowerOff className="w-3 h-3" />
+                Inactive
+              </>
+            )}
+          </button>
         </div>
 
         {/* Actions menu */}
@@ -133,7 +178,7 @@ function ModelCard({
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20 min-w-[140px]">
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20 min-w-[160px]">
                   <button
                     onClick={() => {
                       onViewProfile();
@@ -152,8 +197,29 @@ function ModelCard({
                     className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
                   >
                     <Edit2 className="w-4 h-4" />
-                    Edit
+                    Edit Model
                   </button>
+                  <button
+                    onClick={() => {
+                      onEditBioLink();
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
+                  >
+                    <LinkIcon className="w-4 h-4" />
+                    Edit Bio Link
+                  </button>
+                  <button
+                    onClick={() => {
+                      onViewStats();
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    View Stats
+                  </button>
+                  <div className="border-t border-slate-100 my-1" />
                   <button
                     onClick={() => {
                       onRemove();
@@ -173,28 +239,95 @@ function ModelCard({
 
       {/* Content */}
       <div className="p-4">
-        <h3 className="font-semibold text-slate-900 truncate">
-          {creator.display_name || creator.username}
-        </h3>
-        <p className="text-sm text-slate-500 truncate">@{creator.username}</p>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="font-semibold text-slate-900 truncate">
+              {creator.display_name || creator.username}
+            </h3>
+            <p className="text-sm text-slate-500 truncate">@{creator.username}</p>
+          </div>
+        </div>
 
-        {/* Stats row */}
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100">
+        {/* Contact info */}
+        <div className="flex flex-col gap-1 mt-3 pt-3 border-t border-slate-100">
           {creator.email && (
-            <span className="text-xs text-slate-500 flex items-center gap-1">
-              <Mail className="w-3 h-3" />
+            <span className="text-xs text-slate-500 flex items-center gap-1 truncate">
+              <Mail className="w-3 h-3 shrink-0" />
               {creator.email}
+            </span>
+          )}
+          {creator.phone && (
+            <span className="text-xs text-slate-500 flex items-center gap-1">
+              <Phone className="w-3 h-3 shrink-0" />
+              {creator.phone}
             </span>
           )}
         </div>
 
-        {/* Dashboard access indicator */}
-        {dashboardUser && (
-          <div className="mt-2 flex items-center gap-1 text-xs text-green-600">
-            <CheckCircle className="w-3 h-3" />
-            Has dashboard access
+        {/* Bio Link Info */}
+        {bioLink && (
+          <div className="mt-3 p-3 bg-gradient-to-r from-violet-50 to-pink-50 rounded-lg border border-violet-100">
+            <div className="flex items-center gap-2 mb-2">
+              <LinkIcon className="w-4 h-4 text-violet-600" />
+              <span className="text-xs font-medium text-violet-700">Bio Links</span>
+              <span
+                className={`ml-auto text-xs px-1.5 py-0.5 rounded ${
+                  bioLink.is_published
+                    ? "bg-green-100 text-green-700"
+                    : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {bioLink.is_published ? "Live" : "Draft"}
+              </span>
+            </div>
+            <div className="space-y-1">
+              {/* Main bites.bio link */}
+              <a
+                href={`https://bites.bio/${bioLink.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-800 transition-colors"
+              >
+                <span className="truncate">bites.bio/{bioLink.slug}</span>
+                <ExternalLink className="w-3 h-3 shrink-0" />
+              </a>
+              {/* Custom domain if exists */}
+              {bioLink.custom_domain && (
+                <a
+                  href={`https://${bioLink.custom_domain}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-pink-600 hover:text-pink-800 transition-colors"
+                >
+                  <Globe className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{bioLink.custom_domain}</span>
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                </a>
+              )}
+            </div>
           </div>
         )}
+
+        {/* No Bio Link */}
+        {!bioLink && (
+          <button
+            onClick={onEditBioLink}
+            className="mt-3 w-full p-3 border-2 border-dashed border-slate-200 rounded-lg text-center hover:border-violet-300 hover:bg-violet-50/50 transition-colors group"
+          >
+            <LinkIcon className="w-4 h-4 text-slate-400 group-hover:text-violet-500 mx-auto mb-1" />
+            <span className="text-xs text-slate-500 group-hover:text-violet-600">Create Bio Link</span>
+          </button>
+        )}
+
+        {/* Status indicators */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          {dashboardUser && (
+            <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+              <CheckCircle className="w-3 h-3" />
+              Dashboard
+            </span>
+          )}
+        </div>
 
         {/* Quick actions */}
         <div className="flex gap-2 mt-4">
@@ -202,7 +335,7 @@ function ModelCard({
             variant="outline"
             size="sm"
             className="flex-1"
-            onClick={onViewProfile}
+            onClick={onEditBioLink}
           >
             <LinkIcon className="w-3 h-3 mr-1" />
             Bio Link
@@ -211,7 +344,7 @@ function ModelCard({
             variant="outline"
             size="sm"
             className="flex-1"
-            onClick={onEdit}
+            onClick={onViewStats}
           >
             <BarChart3 className="w-3 h-3 mr-1" />
             Stats
@@ -252,7 +385,6 @@ function ModelModal({
   const [tempPassword, setTempPassword] = useState("");
 
   useEffect(() => {
-    // Generate temp password for new models
     if (mode === "add") {
       const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
       let pwd = "";
@@ -278,7 +410,6 @@ function ModelModal({
       const supabase = getSupabaseBrowserClient();
 
       if (mode === "add") {
-        // Create new model
         const { data: newCreator, error: creatorError } = await supabase
           .from("creators")
           .insert({
@@ -297,9 +428,7 @@ function ModelModal({
 
         if (creatorError) throw creatorError;
 
-        // Create dashboard access if requested
         if (createDashboardAccess && formData.email) {
-          // Create auth user
           const authResponse = await fetch("/api/admin/create-user", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -312,7 +441,6 @@ function ModelModal({
 
           const authData = await authResponse.json();
 
-          // Create dashboard user
           await supabase.from("dashboard_users").insert({
             auth_user_id: authData?.user?.id || null,
             email: formData.email,
@@ -323,7 +451,6 @@ function ModelModal({
             enabled: true,
           });
 
-          // Create bio link
           await supabase.from("bio_links").insert({
             creator_id: newCreator.id,
             slug: formData.username.toLowerCase().replace(/\s+/g, ""),
@@ -332,15 +459,11 @@ function ModelModal({
             is_published: false,
           });
 
-          toast.success(
-            `Model added! Password: ${tempPassword}`,
-            { duration: 10000 }
-          );
+          toast.success(`Model added! Password: ${tempPassword}`, { duration: 10000 });
         } else {
           toast.success("Model added successfully!");
         }
       } else if (mode === "edit" && creator) {
-        // Update existing model
         const { error: updateError } = await supabase
           .from("creators")
           .update({
@@ -368,32 +491,18 @@ function ModelModal({
   };
 
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 z-50"
-        onClick={onClose}
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="fixed inset-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-lg sm:w-full sm:max-h-[90vh] bg-white rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col"
-      >
-        {/* Header */}
-        <div className="p-6 border-b border-slate-200 flex items-center justify-between shrink-0">
-          <h3 className="text-lg font-semibold text-slate-900">
-            {mode === "add" ? "Add New Model" : "Edit Model"}
-          </h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>{mode === "add" ? "Add New Model" : "Edit Model"}</DialogTitle>
+          <DialogDescription>
+            {mode === "add"
+              ? "Create a new model profile for your studio"
+              : "Update model information"}
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <DialogBody className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Username *</Label>
@@ -412,9 +521,7 @@ function ModelModal({
               <Label>Display Name</Label>
               <Input
                 value={formData.displayName}
-                onChange={(e) =>
-                  setFormData({ ...formData, displayName: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                 placeholder="Display Name"
               />
             </div>
@@ -425,9 +532,7 @@ function ModelModal({
             <Input
               type="email"
               value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="model@example.com"
             />
           </div>
@@ -436,9 +541,7 @@ function ModelModal({
             <Label>Phone</Label>
             <Input
               value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="+1234567890"
             />
           </div>
@@ -447,31 +550,30 @@ function ModelModal({
             <Label>Bio</Label>
             <textarea
               value={formData.bio}
-              onChange={(e) =>
-                setFormData({ ...formData, bio: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
               placeholder="Short bio..."
               rows={3}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900"
             />
           </div>
 
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 transition-colors">
             <input
               type="checkbox"
               checked={formData.active}
-              onChange={(e) =>
-                setFormData({ ...formData, active: e.target.checked })
-              }
+              onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
               className="w-4 h-4 rounded border-slate-300 text-brand-600"
             />
-            <span className="text-sm text-slate-700">Active (can receive work)</span>
+            <div>
+              <span className="text-sm font-medium text-slate-700">Active</span>
+              <p className="text-xs text-slate-500">Can receive work and assignments</p>
+            </div>
           </label>
 
           {mode === "add" && (
             <>
               <div className="border-t border-slate-200 pt-4">
-                <label className="flex items-start gap-3 cursor-pointer">
+                <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 transition-colors">
                   <input
                     type="checkbox"
                     checked={createDashboardAccess}
@@ -491,9 +593,7 @@ function ModelModal({
 
               {createDashboardAccess && (
                 <div className="bg-slate-50 rounded-xl p-4 space-y-3">
-                  <p className="text-sm text-slate-600">
-                    A temporary password will be generated:
-                  </p>
+                  <p className="text-sm text-slate-600">Temporary password:</p>
                   <div className="flex items-center gap-2">
                     <Input
                       value={tempPassword}
@@ -512,16 +612,15 @@ function ModelModal({
                     </Button>
                   </div>
                   <p className="text-xs text-amber-600">
-                    ⚠️ Save this password - you won't be able to see it again!
+                    ⚠️ Save this password - you won&apos;t be able to see it again!
                   </p>
                 </div>
               )}
             </>
           )}
-        </div>
+        </DialogBody>
 
-        {/* Actions */}
-        <div className="p-6 border-t border-slate-200 flex gap-3 shrink-0">
+        <DialogFooter className="gap-3">
           <Button variant="outline" onClick={onClose} className="flex-1">
             Cancel
           </Button>
@@ -537,9 +636,181 @@ function ModelModal({
             )}
             {mode === "add" ? "Add Model" : "Save Changes"}
           </Button>
-        </div>
-      </motion.div>
-    </>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
+// BIO LINK EDITOR MODAL
+// ============================================
+
+function BioLinkEditor({
+  creator,
+  bioLink,
+  onClose,
+  onSaved,
+}: {
+  creator: Creator;
+  bioLink: BioLink | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    slug: bioLink?.slug || creator.username,
+    name: bioLink?.name || creator.display_name || creator.username,
+    tagline: bioLink?.tagline || "",
+    is_published: bioLink?.is_published ?? false,
+  });
+
+  const handleSave = async () => {
+    if (!formData.slug) {
+      toast.error("URL slug is required");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      if (bioLink) {
+        // Update existing
+        const { error } = await supabase
+          .from("bio_links")
+          .update({
+            slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, ""),
+            name: formData.name,
+            tagline: formData.tagline || null,
+            is_published: formData.is_published,
+          })
+          .eq("id", bioLink.id);
+
+        if (error) throw error;
+      } else {
+        // Create new
+        const { error } = await supabase.from("bio_links").insert({
+          creator_id: creator.id,
+          slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, ""),
+          name: formData.name,
+          tagline: formData.tagline || null,
+          is_published: formData.is_published,
+        });
+
+        if (error) throw error;
+      }
+
+      toast.success("Bio link saved!");
+      onSaved();
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Error saving bio link:", error);
+      toast.error(error.message || "Failed to save bio link");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>Edit Bio Link</DialogTitle>
+          <DialogDescription>
+            Customize {creator.display_name || creator.username}&apos;s bio link page
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogBody className="space-y-4">
+          <div className="space-y-2">
+            <Label>URL Slug</Label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-400 shrink-0">lovebite.fans/</span>
+              <Input
+                value={formData.slug}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
+                  })
+                }
+                placeholder="username"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Display Name</Label>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Your Name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Tagline</Label>
+            <Input
+              value={formData.tagline}
+              onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+              placeholder="Content Creator • Model"
+            />
+          </div>
+
+          <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 transition-colors">
+            <div
+              className={`w-10 h-6 rounded-full transition-colors relative ${
+                formData.is_published ? "bg-green-500" : "bg-slate-300"
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${
+                  formData.is_published ? "left-5" : "left-1"
+                }`}
+              />
+            </div>
+            <div>
+              <span className="text-sm font-medium text-slate-700">Published</span>
+              <p className="text-xs text-slate-500">Make bio link publicly visible</p>
+            </div>
+          </label>
+
+          {bioLink && (
+            <div className="bg-slate-50 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-700">Preview Link</p>
+                  <p className="text-xs text-slate-500">{`lovebite.fans/${formData.slug}`}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/${formData.slug}`, "_blank")}
+                >
+                  <ExternalLink className="w-4 h-4 mr-1" />
+                  Preview
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogBody>
+
+        <DialogFooter className="gap-3">
+          <Button variant="outline" onClick={onClose} className="flex-1">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex-1 bg-brand-600 hover:bg-brand-700"
+          >
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -566,23 +837,12 @@ function RemoveModal({
       const supabase = getSupabaseBrowserClient();
 
       if (deleteCompletely) {
-        // Delete dashboard user first
         await supabase.from("dashboard_users").delete().eq("creator_id", creator.id);
-
-        // Delete bio link
         await supabase.from("bio_links").delete().eq("creator_id", creator.id);
-
-        // Delete creator
         await supabase.from("creators").delete().eq("id", creator.id);
-
         toast.success("Model deleted completely");
       } else if (removeFromStudio) {
-        // Just remove from studio
-        await supabase
-          .from("creators")
-          .update({ studio_id: null })
-          .eq("id", creator.id);
-
+        await supabase.from("creators").update({ studio_id: null }).eq("id", creator.id);
         toast.success("Model removed from studio");
       }
 
@@ -597,28 +857,16 @@ function RemoveModal({
   };
 
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 z-50"
-        onClick={onClose}
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="fixed inset-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:w-full bg-white rounded-2xl shadow-xl z-50 overflow-hidden"
-      >
-        <div className="p-6 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">Remove Model</h3>
-          <p className="text-sm text-slate-500 mt-1">
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="sm">
+        <DialogHeader>
+          <DialogTitle>Remove Model</DialogTitle>
+          <DialogDescription>
             {creator.display_name || creator.username}
-          </p>
-        </div>
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="p-6 space-y-4">
+        <DialogBody className="space-y-4">
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
             <p className="text-sm text-amber-700">
               Choose how you want to handle this model:
@@ -658,39 +906,37 @@ function RemoveModal({
               className="w-4 h-4 mt-1 text-red-600"
             />
             <div>
-              <span className="text-sm font-medium text-red-600">
-                Delete completely
-              </span>
+              <span className="text-sm font-medium text-red-600">Delete completely</span>
               <p className="text-xs text-slate-500">
                 All profile data will be permanently deleted
               </p>
             </div>
           </label>
+        </DialogBody>
 
-          <div className="flex gap-3 pt-4">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleRemove}
-              disabled={isRemoving}
-              className={`flex-1 ${
-                deleteCompletely
-                  ? "bg-red-600 hover:bg-red-700"
-                  : "bg-amber-600 hover:bg-amber-700"
-              }`}
-            >
-              {isRemoving ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <Trash2 className="w-4 h-4 mr-2" />
-              )}
-              {deleteCompletely ? "Delete" : "Remove"}
-            </Button>
-          </div>
-        </div>
-      </motion.div>
-    </>
+        <DialogFooter className="gap-3">
+          <Button variant="outline" onClick={onClose} className="flex-1">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleRemove}
+            disabled={isRemoving}
+            className={`flex-1 ${
+              deleteCompletely
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-amber-600 hover:bg-amber-700"
+            }`}
+          >
+            {isRemoving ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Trash2 className="w-4 h-4 mr-2" />
+            )}
+            {deleteCompletely ? "Delete" : "Remove"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -702,15 +948,27 @@ export default function ModelsPage() {
   const { user } = useDashboard();
   const [models, setModels] = useState<Creator[]>([]);
   const [dashboardUsers, setDashboardUsers] = useState<DashboardUser[]>([]);
+  const [bioLinks, setBioLinks] = useState<BioLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedModel, setSelectedModel] = useState<Creator | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [showBioLinkEditor, setShowBioLinkEditor] = useState(false);
 
   const isStudioOrAdmin = user?.role === "studio" || user?.role === "admin";
+  const isAdmin = user?.role === "admin";
   const studioId = user?.studio_id;
+  
+  // For admin, get studio_id from selected model when editing
+  const getEditStudioId = (model: Creator | null): string | null => {
+    if (isAdmin && model?.studio_id) {
+      return model.studio_id;
+    }
+    return studioId || null;
+  };
 
   const fetchModels = async () => {
     if (!isStudioOrAdmin) return;
@@ -724,7 +982,6 @@ export default function ModelsPage() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      // Studio users only see their models
       if (user?.role === "studio" && studioId) {
         query = query.eq("studio_id", studioId);
       }
@@ -734,15 +991,20 @@ export default function ModelsPage() {
 
       setModels(creatorsData || []);
 
-      // Fetch dashboard users for these creators
       if (creatorsData && creatorsData.length > 0) {
         const creatorIds = creatorsData.map((c) => c.id);
+
         const { data: dashboardData } = await supabase
           .from("dashboard_users")
           .select("*")
           .in("creator_id", creatorIds);
-
         setDashboardUsers(dashboardData || []);
+
+        const { data: bioLinksData } = await supabase
+          .from("bio_links")
+          .select("*")
+          .in("creator_id", creatorIds);
+        setBioLinks(bioLinksData || []);
       }
     } catch (err) {
       console.error("Error fetching models:", err);
@@ -756,6 +1018,29 @@ export default function ModelsPage() {
     fetchModels();
   }, [user]);
 
+  const handleToggleActive = async (creator: Creator) => {
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const newActive = !creator.active;
+
+      const { error } = await supabase
+        .from("creators")
+        .update({ active: newActive })
+        .eq("id", creator.id);
+
+      if (error) throw error;
+
+      setModels((prev) =>
+        prev.map((m) => (m.id === creator.id ? { ...m, active: newActive } : m))
+      );
+
+      toast.success(`Model ${newActive ? "activated" : "deactivated"}`);
+    } catch (err) {
+      console.error("Error toggling active:", err);
+      toast.error("Failed to update model status");
+    }
+  };
+
   const filteredModels = models.filter((m) => {
     const matchesSearch =
       !searchQuery ||
@@ -763,19 +1048,25 @@ export default function ModelsPage() {
       m.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.email?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesSearch;
+    const matchesFilter =
+      filterActive === "all" ||
+      (filterActive === "active" && m.active && m.enabled) ||
+      (filterActive === "inactive" && (!m.active || !m.enabled));
+
+    return matchesSearch && matchesFilter;
   });
 
   const getDashboardUser = (creatorId: string) =>
     dashboardUsers.find((d) => d.creator_id === creatorId);
 
+  const getBioLink = (creatorId: string) =>
+    bioLinks.find((b) => b.creator_id === creatorId);
+
   if (!isStudioOrAdmin) {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-3">
         <AlertCircle className="w-5 h-5 text-amber-500" />
-        <p className="text-amber-700">
-          Only studios and administrators can manage models.
-        </p>
+        <p className="text-amber-700">Only studios and administrators can manage models.</p>
       </div>
     );
   }
@@ -801,15 +1092,49 @@ export default function ModelsPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <Input
-          placeholder="Search models..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search & Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder="Search models..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setFilterActive("all")}
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filterActive === "all"
+                ? "bg-brand-100 text-brand-700"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setFilterActive("active")}
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filterActive === "active"
+                ? "bg-green-100 text-green-700"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            Active
+          </button>
+          <button
+            onClick={() => setFilterActive("inactive")}
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filterActive === "inactive"
+                ? "bg-slate-200 text-slate-700"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            Inactive
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -825,16 +1150,14 @@ export default function ModelsPage() {
           <p className="text-sm text-green-600">Active</p>
         </div>
         <div className="bg-blue-50 rounded-xl border border-blue-200 p-4">
-          <p className="text-2xl font-bold text-blue-700">
-            {dashboardUsers.length}
-          </p>
+          <p className="text-2xl font-bold text-blue-700">{dashboardUsers.length}</p>
           <p className="text-sm text-blue-600">With Dashboard</p>
         </div>
-        <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
-          <p className="text-2xl font-bold text-slate-700">
-            {models.filter((m) => !m.active || !m.enabled).length}
+        <div className="bg-purple-50 rounded-xl border border-purple-200 p-4">
+          <p className="text-2xl font-bold text-purple-700">
+            {bioLinks.filter((b) => b.is_published).length}
           </p>
-          <p className="text-sm text-slate-500">Inactive</p>
+          <p className="text-sm text-purple-600">Published Links</p>
         </div>
       </div>
 
@@ -848,8 +1171,8 @@ export default function ModelsPage() {
           <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="font-semibold text-slate-700 mb-2">No models found</h3>
           <p className="text-slate-500 text-sm mb-4">
-            {searchQuery
-              ? "Try adjusting your search"
+            {searchQuery || filterActive !== "all"
+              ? "Try adjusting your search or filters"
               : "Add your first model to get started"}
           </p>
           <Button onClick={() => setShowAddModal(true)}>
@@ -864,6 +1187,7 @@ export default function ModelsPage() {
               key={model.id}
               creator={model}
               dashboardUser={getDashboardUser(model.id)}
+              bioLink={getBioLink(model.id)}
               onEdit={() => {
                 setSelectedModel(model);
                 setShowEditModal(true);
@@ -873,7 +1197,16 @@ export default function ModelsPage() {
                 setShowRemoveModal(true);
               }}
               onViewProfile={() => {
-                window.open(`/${model.username}`, "_blank");
+                const bio = getBioLink(model.id);
+                window.open(`/${bio?.slug || model.username}`, "_blank");
+              }}
+              onToggleActive={() => handleToggleActive(model)}
+              onEditBioLink={() => {
+                setSelectedModel(model);
+                setShowBioLinkEditor(true);
+              }}
+              onViewStats={() => {
+                window.location.href = `/dashboard/statistics?creator=${model.id}`;
               }}
             />
           ))}
@@ -894,11 +1227,11 @@ export default function ModelsPage() {
           />
         )}
 
-        {showEditModal && selectedModel && studioId && (
+        {showEditModal && selectedModel && (isAdmin || studioId) && (
           <ModelModal
             mode="edit"
             creator={selectedModel}
-            studioId={studioId}
+            studioId={getEditStudioId(selectedModel) || ""}
             onClose={() => {
               setShowEditModal(false);
               setSelectedModel(null);
@@ -920,6 +1253,22 @@ export default function ModelsPage() {
             }}
             onRemoved={() => {
               setShowRemoveModal(false);
+              setSelectedModel(null);
+              fetchModels();
+            }}
+          />
+        )}
+
+        {showBioLinkEditor && selectedModel && (
+          <BioLinkEditor
+            creator={selectedModel}
+            bioLink={getBioLink(selectedModel.id) || null}
+            onClose={() => {
+              setShowBioLinkEditor(false);
+              setSelectedModel(null);
+            }}
+            onSaved={() => {
+              setShowBioLinkEditor(false);
               setSelectedModel(null);
               fetchModels();
             }}

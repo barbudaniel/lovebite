@@ -3,7 +3,6 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import type { DashboardUser } from "@/lib/auth";
 import {
@@ -13,8 +12,6 @@ import {
   Users,
   Settings,
   LogOut,
-  Menu,
-  X,
   ChevronDown,
   Shield,
   Building2,
@@ -26,7 +23,39 @@ import {
   Loader2,
   FileText,
   MessageCircle,
+  MessageSquare,
+  PanelLeft,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // ============================================
 // CONTEXT
@@ -69,10 +98,9 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   roles?: string[];
-  children?: NavItem[];
 }
 
-const navigationItems: NavItem[] = [
+const mainNavItems: NavItem[] = [
   {
     label: "Dashboard",
     href: "/dashboard",
@@ -84,9 +112,9 @@ const navigationItems: NavItem[] = [
     icon: ImageIcon,
   },
   {
-    label: "Albums",
+    label: "Scenarios",
     href: "/dashboard/albums",
-    icon: FolderOpen,
+    icon: MessageSquare,
   },
   {
     label: "Bio Links",
@@ -103,6 +131,9 @@ const navigationItems: NavItem[] = [
     href: "/dashboard/statistics",
     icon: BarChart3,
   },
+];
+
+const managementNavItems: NavItem[] = [
   {
     label: "Models",
     href: "/dashboard/models",
@@ -121,7 +152,7 @@ const navigationItems: NavItem[] = [
   },
 ];
 
-const adminItems: NavItem[] = [
+const adminNavItems: NavItem[] = [
   {
     label: "Onboarding",
     href: "/dashboard/onboarding",
@@ -143,36 +174,23 @@ const adminItems: NavItem[] = [
 ];
 
 // ============================================
-// SIDEBAR COMPONENT
+// APP SIDEBAR COMPONENT
 // ============================================
 
-function Sidebar({
-  isOpen,
-  onClose,
-  user,
-  onLogout,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  user: DashboardUser | null;
-  onLogout: () => void;
-}) {
+function AppSidebar({ user, onLogout }: { user: DashboardUser | null; onLogout: () => void }) {
   const pathname = usePathname();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
-  const filteredNav = navigationItems.filter(
-    (item) => !item.roles || (user && item.roles.includes(user.role))
-  );
-
-  const filteredAdmin = adminItems.filter(
-    (item) => !item.roles || (user && item.roles.includes(user.role))
-  );
+  const filterByRole = (items: NavItem[]) =>
+    items.filter((item) => !item.roles || (user && item.roles.includes(user.role)));
 
   const getRoleBadge = () => {
     if (!user) return null;
     const colors = {
-      admin: "bg-red-100 text-red-700",
-      studio: "bg-blue-100 text-blue-700",
-      model: "bg-purple-100 text-purple-700",
+      admin: "bg-red-500/10 text-red-600 border-red-500/20",
+      studio: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+      model: "bg-purple-500/10 text-purple-600 border-purple-500/20",
     };
     const icons = {
       admin: Shield,
@@ -181,143 +199,149 @@ function Sidebar({
     };
     const Icon = icons[user.role];
     return (
-      <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${colors[user.role]}`}
-      >
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${colors[user.role]}`}>
         <Icon className="w-3 h-3" />
-        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+        {!isCollapsed && (user.role.charAt(0).toUpperCase() + user.role.slice(1))}
       </span>
     );
   };
 
   return (
-    <>
-      {/* Mobile overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={onClose}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{ x: isOpen ? 0 : "-100%" }}
-        transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="fixed left-0 top-0 bottom-0 w-72 bg-slate-900 text-white z-50 lg:translate-x-0 lg:static"
-      >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="px-6 py-5 border-b border-slate-800">
-            <Link href="/dashboard" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-                <span className="text-xl font-bold text-white">L</span>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-white">Lovebite</h1>
-                <p className="text-xs text-slate-400">Creator Dashboard</p>
-              </div>
-            </Link>
-            {/* Mobile close button */}
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 hover:bg-slate-800 rounded-lg lg:hidden"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            {filteredNav.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                    isActive
-                      ? "bg-brand-600 text-white shadow-lg shadow-brand-600/25"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
-
-            {/* Admin Section */}
-            {filteredAdmin.length > 0 && (
-              <>
-                <div className="pt-4 pb-2">
-                  <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Admin
-                  </p>
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+      <SidebarHeader className="border-b border-sidebar-border">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="/dashboard" className="flex items-center gap-3">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 text-white">
+                  <span className="text-sm font-bold">L</span>
                 </div>
-                {filteredAdmin.map((item) => {
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-semibold">Lovebite</span>
+                  <span className="text-xs text-muted-foreground">Creator Dashboard</span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent>
+        {/* Main Navigation */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {mainNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Management */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {filterByRole(managementNavItems).map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Admin Section */}
+        {filterByRole(adminNavItems).length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {filterByRole(adminNavItems).map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                   return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={onClose}
-                      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                        isActive
-                          ? "bg-brand-600 text-white shadow-lg shadow-brand-600/25"
-                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                      }`}
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{item.label}</span>
-                    </Link>
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                        <Link href={item.href}>
+                          <Icon className="size-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   );
                 })}
-              </>
-            )}
-          </nav>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+      </SidebarContent>
 
-          {/* User Section */}
-          <div className="p-4 border-t border-slate-800">
-            <div className="flex items-center gap-3 px-3 py-2 mb-3">
-              <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
-                {user?.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt=""
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <User className="w-5 h-5 text-slate-400" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
-                  {user?.display_name || user?.email || "User"}
-                </p>
-                {getRoleBadge()}
-              </div>
-            </div>
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-3 w-full px-4 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-all"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Sign Out</span>
-            </button>
-          </div>
-        </div>
-      </motion.aside>
-    </>
+      <SidebarFooter className="border-t border-sidebar-border">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 text-white">
+                    {user?.avatar_url ? (
+                      <img src={user.avatar_url} alt="" className="size-8 rounded-lg object-cover" />
+                    ) : (
+                      <User className="size-4" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-0.5 leading-none min-w-0">
+                    <span className="font-medium truncate">{user?.display_name || "User"}</span>
+                    <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+                  </div>
+                  <ChevronDown className="ml-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="start" className="w-56">
+                <DropdownMenuLabel className="flex items-center gap-2">
+                  <span>My Account</span>
+                  {getRoleBadge()}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/settings">
+                    <Settings className="mr-2 size-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onLogout} className="text-red-600">
+                  <LogOut className="mr-2 size-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 }
 
@@ -325,49 +349,25 @@ function Sidebar({
 // HEADER COMPONENT
 // ============================================
 
-function Header({
-  onMenuClick,
-  user,
-}: {
-  onMenuClick: () => void;
-  user: DashboardUser | null;
-}) {
+function Header({ user }: { user: DashboardUser | null }) {
   return (
-    <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200">
-      <div className="flex items-center justify-between px-4 sm:px-6 h-16">
-        <button
-          onClick={onMenuClick}
-          className="p-2 hover:bg-slate-100 rounded-lg lg:hidden"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:px-6">
+      <SidebarTrigger className="-ml-1" />
 
-        <div className="flex-1 lg:flex-none" />
+      <div className="flex-1" />
 
-        <div className="flex items-center gap-3">
-          <button className="relative p-2 hover:bg-slate-100 rounded-lg">
-            <Bell className="w-5 h-5 text-slate-600" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-brand-500 rounded-full" />
-          </button>
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="size-4" />
+          <span className="absolute -top-0.5 -right-0.5 size-2 bg-pink-500 rounded-full" />
+        </Button>
 
-          <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-slate-200">
-            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-              {user?.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt=""
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <User className="w-4 h-4 text-slate-500" />
-              )}
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-medium text-slate-900">
-                {user?.display_name || user?.creator?.username || "User"}
-              </p>
-              <p className="text-xs text-slate-500">{user?.email}</p>
-            </div>
+        <div className="hidden sm:flex items-center gap-3 pl-3 border-l">
+          <div className="text-right">
+            <p className="text-sm font-medium">
+              {user?.display_name || user?.email || "User"}
+            </p>
+            <p className="text-xs text-muted-foreground">{user?.role}</p>
           </div>
         </div>
       </div>
@@ -384,7 +384,6 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<DashboardUser | null>(null);
   const [creator, setCreator] = useState<Creator | null>(null);
@@ -395,38 +394,39 @@ export default function DashboardLayout({
     try {
       const supabase = getSupabaseBrowserClient();
 
-      const {
-        data: { user: authUser },
-        error: authError,
-      } = await supabase.auth.getUser();
+      // Get session from cookies
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-      if (authError || !authUser) {
-        console.log("No authenticated user, redirecting to login");
+      console.log("Layout - Session check:", { session: !!session, sessionError });
+
+      if (!session) {
         router.push("/dashboard/login");
         return;
       }
+
+      const authUser = session.user;
+      console.log("Layout - Auth user:", { id: authUser.id, email: authUser.email });
 
       // Get dashboard user profile
       const { data: dashboardUser, error } = await supabase
         .from("dashboard_users")
         .select("*")
-        .eq("auth_user_id", authUser.id)
-        .single();
+        .or(`auth_user_id.eq.${authUser.id},email.eq.${authUser.email}`)
+        .maybeSingle();
 
-      if (error) {
-        // If table doesn't exist or user not found, redirect to setup
-        console.log("Dashboard user error:", error.message);
-        if (error.code === "PGRST116" || error.code === "42P01") {
-          // No row found or table doesn't exist
-          router.push("/dashboard/setup");
-          return;
-        }
-        // Other error - redirect to setup anyway
-        router.push("/dashboard/setup");
-        return;
+      console.log("Layout - Dashboard user:", { dashboardUser, error });
+
+      // Update auth_user_id if found by email but not auth_user_id
+      if (dashboardUser && dashboardUser.auth_user_id !== authUser.id) {
+        console.log("Layout - Updating auth_user_id for user");
+        await supabase
+          .from("dashboard_users")
+          .update({ auth_user_id: authUser.id })
+          .eq("id", dashboardUser.id);
       }
 
-      if (!dashboardUser) {
+      if (error || !dashboardUser) {
+        console.log("Layout - No user found, redirecting to setup");
         router.push("/dashboard/setup");
         return;
       }
@@ -456,10 +456,20 @@ export default function DashboardLayout({
         }
       }
 
-      // Get API key if available (for API calls)
-      // Skip if no creator_id or studio_id to avoid invalid query
-      if (dashboardUser.creator_id || dashboardUser.studio_id) {
-        try {
+      // Get API key based on role
+      try {
+        let apiKeyQuery;
+        
+        if (dashboardUser.role === "admin") {
+          // Admin gets the admin API key
+          apiKeyQuery = supabase
+            .from("api_users")
+            .select("api_key")
+            .eq("role", "admin")
+            .eq("enabled", true)
+            .single();
+        } else if (dashboardUser.creator_id || dashboardUser.studio_id) {
+          // Models/Studios get their specific API key
           const filters = [];
           if (dashboardUser.creator_id) {
             filters.push(`creator_id.eq.${dashboardUser.creator_id}`);
@@ -468,19 +478,23 @@ export default function DashboardLayout({
             filters.push(`studio_id.eq.${dashboardUser.studio_id}`);
           }
           
-          const { data: apiUser } = await supabase
+          apiKeyQuery = supabase
             .from("api_users")
             .select("api_key")
             .or(filters.join(","))
             .eq("enabled", true)
             .single();
+        }
 
+        if (apiKeyQuery) {
+          const { data: apiUser } = await apiKeyQuery;
           if (apiUser?.api_key) {
+            console.log("Layout - API key found");
             setApiKey(apiUser.api_key);
           }
-        } catch (e) {
-          console.log("API key not found:", e);
         }
+      } catch (e) {
+        console.log("API key not found:", e);
       }
 
       setIsLoading(false);
@@ -498,16 +512,19 @@ export default function DashboardLayout({
     const supabase = getSupabaseBrowserClient();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
+    } = supabase.auth.onAuthStateChange((event: string) => {
       if (event === "SIGNED_OUT") {
         router.push("/dashboard/login");
+      } else if (event === "SIGNED_IN") {
+        fetchUser();
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogout = async () => {
     const supabase = getSupabaseBrowserClient();
@@ -517,10 +534,10 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 text-brand-600 animate-spin mx-auto mb-4" />
-          <p className="text-slate-500">Loading dashboard...</p>
+          <Loader2 className="size-8 text-pink-600 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -536,20 +553,17 @@ export default function DashboardLayout({
         refreshUser: fetchUser,
       }}
     >
-      <div className="min-h-screen bg-slate-50 flex">
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          user={user}
-          onLogout={handleLogout}
-        />
-
-        <div className="flex-1 flex flex-col min-w-0">
-          <Header onMenuClick={() => setIsSidebarOpen(true)} user={user} />
-          <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
-        </div>
-      </div>
+      <TooltipProvider delayDuration={0}>
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full">
+            <AppSidebar user={user} onLogout={handleLogout} />
+            <div className="flex-1 flex flex-col">
+              <Header user={user} />
+              <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+            </div>
+          </div>
+        </SidebarProvider>
+      </TooltipProvider>
     </DashboardContext.Provider>
   );
 }
-

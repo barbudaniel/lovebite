@@ -23,6 +23,7 @@ import {
   ShieldOff,
   ExternalLink,
   Copy,
+  Users,
 } from "lucide-react";
 
 // ============================================
@@ -391,33 +392,137 @@ function AccountCard({
 }
 
 // ============================================
+// CREATOR SELECTOR (for Admin/Studio)
+// ============================================
+
+interface Creator {
+  id: string;
+  username: string;
+  enabled: boolean;
+  studio_id?: string;
+}
+
+function CreatorSelector({
+  creators,
+  selectedId,
+  onSelect,
+}: {
+  creators: Creator[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const [search, setSearch] = useState("");
+  
+  const filtered = creators.filter((c) =>
+    c.username.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center">
+            <Users className="w-5 h-5 text-brand-600" />
+          </div>
+          <div>
+            <p className="text-sm text-slate-500">Managing accounts for</p>
+            <p className="font-semibold text-slate-900">
+              {creators.find((c) => c.id === selectedId)?.username
+                ? `@${creators.find((c) => c.id === selectedId)?.username}`
+                : "Select a creator"}
+            </p>
+          </div>
+        </div>
+        <div className="flex-1 sm:max-w-xs">
+          <select
+            value={selectedId || ""}
+            onChange={(e) => onSelect(e.target.value)}
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          >
+            <option value="">Select a creator...</option>
+            {filtered.map((creator) => (
+              <option key={creator.id} value={creator.id}>
+                @{creator.username} {!creator.enabled && "(Disabled)"}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
 // MAIN PAGE
 // ============================================
 
 export default function AccountsPage() {
   const { user } = useDashboard();
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
+  const [creators, setCreators] = useState<Creator[]>([]);
+  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingPlatform, setEditingPlatform] = useState<PlatformId | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const isAdminOrStudio = user?.role === "admin" || user?.role === "studio";
+  const activeCreatorId = isAdminOrStudio ? selectedCreatorId : user?.creator_id;
+
+  // Fetch creators for admin/studio
+  useEffect(() => {
+    const fetchCreators = async () => {
+      if (!isAdminOrStudio) return;
+      
+      try {
+        const supabase = getSupabaseBrowserClient();
+        let query = supabase.from("creators").select("id, username, enabled, studio_id").order("username");
+        
+        // Studio can only see their own creators
+        if (user?.role === "studio" && user?.studio_id) {
+          query = query.eq("studio_id", user.studio_id);
+        }
+        
+        const { data, error: fetchError } = await query;
+        if (fetchError) throw fetchError;
+        setCreators(data || []);
+        
+        // Auto-select first creator
+        if (data && data.length > 0 && !selectedCreatorId) {
+          setSelectedCreatorId(data[0].id);
+        }
+      } catch (err) {
+        console.error("Error fetching creators:", err);
+      }
+    };
+
+    fetchCreators();
+  }, [isAdminOrStudio, user]);
+
+  // Model: auto-select self
+  useEffect(() => {
+    if (!isAdminOrStudio && user?.creator_id) {
+      setSelectedCreatorId(user.creator_id);
+    }
+  }, [isAdminOrStudio, user?.creator_id]);
+
   useEffect(() => {
     fetchAccounts();
-  }, [user]);
+  }, [activeCreatorId]);
 
   const fetchAccounts = async () => {
-    if (!user?.creator_id) {
+    if (!activeCreatorId) {
       setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
     try {
       const supabase = getSupabaseBrowserClient();
       const { data, error: fetchError } = await supabase
         .from("creator_social_accounts")
         .select("*")
-        .eq("creator_id", user.creator_id)
+        .eq("creator_id", activeCreatorId)
         .order("platform");
 
       if (fetchError) throw fetchError;
@@ -431,7 +536,7 @@ export default function AccountsPage() {
   };
 
   const handleSave = async (platform: PlatformId, data: Partial<SocialAccount>) => {
-    if (!user?.creator_id) return;
+    if (!activeCreatorId) return;
 
     setIsSaving(true);
     try {
@@ -455,7 +560,7 @@ export default function AccountsPage() {
         const { error: insertError } = await supabase
           .from("creator_social_accounts")
           .insert({
-            creator_id: user.creator_id,
+            creator_id: activeCreatorId,
             platform,
             ...data,
           });
@@ -498,7 +603,7 @@ export default function AccountsPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && !isAdminOrStudio) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
@@ -506,7 +611,8 @@ export default function AccountsPage() {
     );
   }
 
-  if (!user?.creator_id) {
+  // Only show this for non-admin/studio users without a creator profile
+  if (!isAdminOrStudio && !user?.creator_id) {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-3">
         <AlertCircle className="w-5 h-5 text-amber-500" />
@@ -517,68 +623,108 @@ export default function AccountsPage() {
     );
   }
 
+  const selectedCreator = creators.find((c) => c.id === activeCreatorId);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Platform Accounts</h1>
         <p className="text-slate-500">
-          Manage your login credentials for each platform
+          {isAdminOrStudio
+            ? "Manage platform login credentials for creators"
+            : "Manage your login credentials for each platform"}
         </p>
       </div>
 
-      {/* Security Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-        <ShieldCheck className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm text-blue-800 font-medium">Your credentials are encrypted</p>
-          <p className="text-sm text-blue-700">
-            All passwords are securely stored. Only you and authorized team members can access them.
+      {/* Creator Selector for Admin/Studio */}
+      {isAdminOrStudio && (
+        <CreatorSelector
+          creators={creators}
+          selectedId={selectedCreatorId}
+          onSelect={setSelectedCreatorId}
+        />
+      )}
+
+      {/* No creator selected for admin/studio */}
+      {isAdminOrStudio && !activeCreatorId && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center">
+          <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-600 font-medium">Select a creator to manage their accounts</p>
+          <p className="text-sm text-slate-400 mt-1">
+            Choose from the dropdown above to view and edit platform credentials
           </p>
         </div>
-      </div>
+      )}
 
-      {/* Accounts Grid */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {PLATFORMS.map((platform) => {
-          const account = accounts.find((a) => a.platform === platform.id);
-          return (
-            <AccountCard
-              key={platform.id}
-              account={account || null}
-              platform={platform}
-              isEditing={editingPlatform === platform.id}
-              onEdit={() => setEditingPlatform(platform.id)}
-              onDelete={() => handleDelete(platform.id)}
-              onSave={(data) => handleSave(platform.id, data)}
-              onCancel={() => setEditingPlatform(null)}
-            />
-          );
-        })}
-      </div>
+      {/* Show content when creator is selected */}
+      {activeCreatorId && (
+        <>
+          {/* Security Notice */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-blue-800 font-medium">Credentials are encrypted</p>
+              <p className="text-sm text-blue-700">
+                All passwords are securely stored. Only authorized team members can access them.
+              </p>
+            </div>
+          </div>
 
-      {/* Stats */}
-      <div className="bg-slate-50 rounded-xl p-6">
-        <h2 className="font-semibold text-slate-900 mb-4">Account Summary</h2>
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-2xl font-bold text-slate-900">{accounts.length}</p>
-            <p className="text-sm text-slate-500">Connected</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-green-600">
-              {accounts.filter((a) => a.two_factor_enabled).length}
-            </p>
-            <p className="text-sm text-slate-500">2FA Enabled</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-amber-600">
-              {PLATFORMS.length - accounts.length}
-            </p>
-            <p className="text-sm text-slate-500">Not Configured</p>
-          </div>
-        </div>
-      </div>
+          {/* Loading state */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 text-brand-600 animate-spin" />
+            </div>
+          ) : (
+            <>
+              {/* Accounts Grid */}
+              <div className="grid gap-4 md:grid-cols-2">
+                {PLATFORMS.map((platform) => {
+                  const account = accounts.find((a) => a.platform === platform.id);
+                  return (
+                    <AccountCard
+                      key={platform.id}
+                      account={account || null}
+                      platform={platform}
+                      isEditing={editingPlatform === platform.id}
+                      onEdit={() => setEditingPlatform(platform.id)}
+                      onDelete={() => handleDelete(platform.id)}
+                      onSave={(data) => handleSave(platform.id, data)}
+                      onCancel={() => setEditingPlatform(null)}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Stats */}
+              <div className="bg-slate-50 rounded-xl p-6">
+                <h2 className="font-semibold text-slate-900 mb-4">
+                  Account Summary {selectedCreator && <span className="text-slate-400 font-normal">for @{selectedCreator.username}</span>}
+                </h2>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold text-slate-900">{accounts.length}</p>
+                    <p className="text-sm text-slate-500">Connected</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-green-600">
+                      {accounts.filter((a) => a.two_factor_enabled).length}
+                    </p>
+                    <p className="text-sm text-slate-500">2FA Enabled</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-amber-600">
+                      {PLATFORMS.length - accounts.length}
+                    </p>
+                    <p className="text-sm text-slate-500">Not Configured</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }

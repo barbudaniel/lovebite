@@ -37,26 +37,42 @@ function SetupContent() {
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = getSupabaseBrowserClient();
-      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log("Setup - Session check:", { session: !!session, sessionError });
+      
+      if (!session) {
         router.push("/dashboard/login");
         return;
       }
 
-      // Check if user already has a profile
-      const { data: existingUser } = await supabase
+      const user = session.user;
+      console.log("Setup - Auth user:", { id: user.id, email: user.email });
+
+      // Check if user already has a profile (by auth_user_id OR email)
+      const { data: existingUser, error: existingError } = await supabase
         .from("dashboard_users")
-        .select("id")
-        .eq("auth_user_id", user.id)
-        .single();
+        .select("id, auth_user_id, email")
+        .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
+        .maybeSingle();
+
+      console.log("Setup - Existing user check:", { existingUser, existingError });
 
       if (existingUser) {
-        // User already setup, redirect to dashboard
+        // User already exists - update auth_user_id if needed and redirect
+        if (existingUser.auth_user_id !== user.id) {
+          console.log("Setup - Updating auth_user_id for existing user");
+          await supabase
+            .from("dashboard_users")
+            .update({ auth_user_id: user.id })
+            .eq("id", existingUser.id);
+        }
         router.push("/dashboard");
         return;
       }
 
+      // No existing user found - show setup form
       setAuthUser({ id: user.id, email: user.email || "" });
       setIsLoading(false);
     };
@@ -76,6 +92,19 @@ function SetupContent() {
     try {
       const supabase = getSupabaseBrowserClient();
 
+      // Check if user already exists (might have been created in another tab)
+      const { data: existingUser } = await supabase
+        .from("dashboard_users")
+        .select("id")
+        .or(`auth_user_id.eq.${authUser.id},email.eq.${authUser.email}`)
+        .maybeSingle();
+
+      if (existingUser) {
+        toast.success("Account already set up!");
+        router.push("/dashboard");
+        return;
+      }
+
       // Create dashboard user record
       const { data: dashboardUser, error } = await supabase
         .from("dashboard_users")
@@ -89,7 +118,11 @@ function SetupContent() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Dashboard user insert error:", error.message, error.details, error.hint, error.code);
+        toast.error(error.message || "Failed to create account");
+        return;
+      }
 
       // If model, also create a creator record
       if (formData.accountType === "model") {
@@ -105,7 +138,7 @@ function SetupContent() {
           .single();
 
         if (creatorError) {
-          console.error("Error creating creator:", creatorError);
+          console.error("Error creating creator:", creatorError.message, creatorError.details);
         } else if (creator) {
           // Link creator to dashboard user
           await supabase
@@ -127,7 +160,7 @@ function SetupContent() {
           .single();
 
         if (studioError) {
-          console.error("Error creating studio:", studioError);
+          console.error("Error creating studio:", studioError.message, studioError.details);
         } else if (studio) {
           // Link studio to dashboard user
           await supabase
@@ -139,10 +172,10 @@ function SetupContent() {
 
       toast.success("Account setup complete!");
       router.push("/dashboard");
-    } catch (err: unknown) {
-      const error = err as Error;
-      console.error("Setup error:", error);
-      toast.error("Failed to complete setup. Please try again.");
+    } catch (err) {
+      console.error("Setup error:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error occurred";
+      toast.error(`Failed to complete setup: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }

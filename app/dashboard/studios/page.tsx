@@ -22,7 +22,25 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
+  Mail,
+  Phone,
+  Globe,
+  Calendar,
+  Link2,
+  ExternalLink,
+  Copy,
+  User,
+  MessageCircle,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog-centered";
 
 // ============================================
 // TYPES
@@ -31,6 +49,9 @@ import {
 interface Studio {
   id: string;
   name: string;
+  email?: string | null;
+  phone?: string | null;
+  country?: string | null;
   group_id: string | null;
   enabled: boolean;
   created_at: string;
@@ -40,17 +61,25 @@ interface Studio {
   };
 }
 
+interface Creator {
+  id: string;
+  username: string;
+  enabled: boolean;
+}
+
 // ============================================
 // STUDIO CARD
 // ============================================
 
 function StudioCard({
   studio,
+  creatorsCount,
   onView,
   onEdit,
   onToggle,
 }: {
   studio: Studio;
+  creatorsCount: number;
   onView: () => void;
   onEdit: () => void;
   onToggle: () => void;
@@ -96,15 +125,28 @@ function StudioCard({
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-            {studio.group_id && (
-              <span className="flex items-center gap-1 font-mono text-xs">
-                Group: {studio.group_id.slice(0, 8)}...
+            {studio.email && (
+              <span className="flex items-center gap-1">
+                <Mail className="w-3.5 h-3.5" />
+                {studio.email}
+              </span>
+            )}
+            {studio.country && (
+              <span className="flex items-center gap-1">
+                <Globe className="w-3.5 h-3.5" />
+                {studio.country}
               </span>
             )}
             <span className="flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
-              {studio._count?.creators || 0} models
+              {creatorsCount} {creatorsCount === 1 ? "model" : "models"}
             </span>
+            {studio.group_id && (
+              <span className="flex items-center gap-1 font-mono text-xs">
+                <MessageCircle className="w-3.5 h-3.5" />
+                WhatsApp
+              </span>
+            )}
           </div>
         </div>
 
@@ -131,6 +173,221 @@ function StudioCard({
 }
 
 // ============================================
+// VIEW MODAL
+// ============================================
+
+function ViewStudioModal({
+  studio,
+  creators,
+  onClose,
+  onEdit,
+}: {
+  studio: Studio;
+  creators: Creator[];
+  onClose: () => void;
+  onEdit: () => void;
+}) {
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent size="lg">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+              studio.enabled 
+                ? "bg-gradient-to-br from-blue-100 to-blue-200" 
+                : "bg-red-100"
+            }`}>
+              <Building2 className={`w-6 h-6 ${
+                studio.enabled ? "text-blue-600" : "text-red-600"
+              }`} />
+            </div>
+            <div>
+              <DialogTitle>{studio.name}</DialogTitle>
+              <DialogDescription>
+                Studio details and associated models
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <DialogBody>
+          <div className="space-y-6">
+            {/* Status Badge */}
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${
+                  studio.enabled
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {studio.enabled ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <XCircle className="w-4 h-4" />
+                )}
+                {studio.enabled ? "Active" : "Disabled"}
+              </span>
+            </div>
+
+            {/* Details Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {studio.email && (
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                    <Mail className="w-4 h-4" />
+                    Email
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-slate-900">{studio.email}</p>
+                    <button
+                      onClick={() => copyToClipboard(studio.email!)}
+                      className="p-1 hover:bg-slate-200 rounded"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-slate-400" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {studio.phone && (
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                    <Phone className="w-4 h-4" />
+                    Phone
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-slate-900">{studio.phone}</p>
+                    <button
+                      onClick={() => copyToClipboard(studio.phone!)}
+                      className="p-1 hover:bg-slate-200 rounded"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-slate-400" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {studio.country && (
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                    <Globe className="w-4 h-4" />
+                    Country
+                  </div>
+                  <p className="font-medium text-slate-900">{studio.country}</p>
+                </div>
+              )}
+
+              <div className="bg-slate-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                  <Calendar className="w-4 h-4" />
+                  Created
+                </div>
+                <p className="font-medium text-slate-900">
+                  {format(new Date(studio.created_at), "MMM d, yyyy")}
+                </p>
+              </div>
+
+              {studio.group_id && (
+                <div className="bg-slate-50 rounded-xl p-4 col-span-2">
+                  <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                    <MessageCircle className="w-4 h-4" />
+                    WhatsApp Group ID
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="font-mono text-sm text-slate-900 bg-slate-100 px-2 py-1 rounded">
+                      {studio.group_id}
+                    </code>
+                    <button
+                      onClick={() => copyToClipboard(studio.group_id!)}
+                      className="p-1 hover:bg-slate-200 rounded"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-slate-400" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Models */}
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Associated Models ({creators.length})
+              </h4>
+              {creators.length === 0 ? (
+                <div className="bg-slate-50 rounded-xl p-6 text-center">
+                  <User className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-slate-500 text-sm">No models assigned to this studio</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {creators.map((creator) => (
+                    <div
+                      key={creator.id}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                        creator.enabled ? "bg-slate-50" : "bg-red-50"
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        creator.enabled
+                          ? "bg-gradient-to-br from-pink-400 to-violet-400 text-white"
+                          : "bg-red-200 text-red-600"
+                      }`}>
+                        {creator.username.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">
+                          @{creator.username}
+                        </p>
+                      </div>
+                      {!creator.enabled && (
+                        <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Studio ID */}
+            <div className="border-t border-slate-200 pt-4">
+              <p className="text-xs text-slate-400 mb-1">Studio ID</p>
+              <div className="flex items-center gap-2">
+                <code className="font-mono text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded">
+                  {studio.id}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(studio.id)}
+                  className="p-1 hover:bg-slate-100 rounded"
+                >
+                  <Copy className="w-3 h-3 text-slate-400" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </DialogBody>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          <Button onClick={onEdit} className="bg-brand-600 hover:bg-brand-700">
+            <Edit2 className="w-4 h-4 mr-2" />
+            Edit Studio
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
 // CREATE/EDIT MODAL
 // ============================================
 
@@ -145,6 +402,9 @@ function StudioModal({
 }) {
   const [formData, setFormData] = useState({
     name: studio?.name || "",
+    email: studio?.email || "",
+    phone: studio?.phone || "",
+    country: studio?.country || "",
     group_id: studio?.group_id || "",
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -165,6 +425,9 @@ function StudioModal({
           .from("studios")
           .update({
             name: formData.name,
+            email: formData.email || null,
+            phone: formData.phone || null,
+            country: formData.country || null,
             group_id: formData.group_id || null,
             updated_at: new Date().toISOString(),
           })
@@ -176,6 +439,9 @@ function StudioModal({
         // Create
         const { error } = await supabase.from("studios").insert({
           name: formData.name,
+          email: formData.email || null,
+          phone: formData.phone || null,
+          country: formData.country || null,
           group_id: formData.group_id || null,
           enabled: true,
         });
@@ -195,62 +461,83 @@ function StudioModal({
   };
 
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 z-50"
-        onClick={onClose}
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="fixed inset-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-lg sm:w-full sm:max-h-[85vh] bg-white rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col"
-      >
-        <div className="p-6 border-b border-slate-200 flex items-center justify-between shrink-0">
-          <h3 className="text-lg font-semibold text-slate-900">
-            {studio ? "Edit Studio" : "Add Studio"}
-          </h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>{studio ? "Edit Studio" : "Add Studio"}</DialogTitle>
+          <DialogDescription>
+            {studio ? "Update studio information" : "Create a new studio account"}
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Studio Name *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Studio Name"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="group_id">WhatsApp Group ID (optional)</Label>
-            <Input
-              id="group_id"
-              value={formData.group_id}
-              onChange={(e) => setFormData({ ...formData, group_id: e.target.value })}
-              placeholder="WhatsApp group ID for notifications"
-            />
-            <p className="text-xs text-slate-500">Used for sending aggregate notifications to studio</p>
-          </div>
-
-          {studio && (
-            <div className="bg-slate-50 rounded-lg p-4">
-              <p className="text-xs text-slate-500 mb-1">Studio ID</p>
-              <code className="text-sm font-mono text-slate-700">
-                {studio.id}
-              </code>
+        <DialogBody>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Studio Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Studio Name"
+              />
             </div>
-          )}
-        </div>
 
-        <div className="p-6 border-t border-slate-200 flex justify-end gap-3 shrink-0">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="contact@studio.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+1234567890"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="country">Country</Label>
+              <Input
+                id="country"
+                value={formData.country}
+                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                placeholder="e.g. Romania"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="group_id">WhatsApp Group ID (optional)</Label>
+              <Input
+                id="group_id"
+                value={formData.group_id}
+                onChange={(e) => setFormData({ ...formData, group_id: e.target.value })}
+                placeholder="WhatsApp group ID for notifications"
+              />
+              <p className="text-xs text-slate-500">Used for sending aggregate notifications to studio</p>
+            </div>
+
+            {studio && (
+              <div className="bg-slate-50 rounded-lg p-4">
+                <p className="text-xs text-slate-500 mb-1">Studio ID</p>
+                <code className="text-sm font-mono text-slate-700">
+                  {studio.id}
+                </code>
+              </div>
+            )}
+          </div>
+        </DialogBody>
+
+        <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
@@ -262,9 +549,9 @@ function StudioModal({
             {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {studio ? "Save Changes" : "Create Studio"}
           </Button>
-        </div>
-      </motion.div>
-    </>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -275,22 +562,47 @@ function StudioModal({
 export default function StudiosPage() {
   const { user } = useDashboard();
   const [studios, setStudios] = useState<Studio[]>([]);
+  const [studioCreators, setStudioCreators] = useState<Record<string, Creator[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [selectedStudio, setSelectedStudio] = useState<Studio | null>(null);
 
   const fetchStudios = async () => {
     setIsLoading(true);
     try {
       const supabase = getSupabaseBrowserClient();
-      const { data, error } = await supabase
+      
+      // Fetch studios
+      const { data: studiosData, error: studiosError } = await supabase
         .from("studios")
         .select("*")
         .order("name");
 
-      if (error) throw error;
-      setStudios((data as Studio[]) || []);
+      if (studiosError) throw studiosError;
+      setStudios((studiosData as Studio[]) || []);
+
+      // Fetch creators for each studio
+      const { data: creatorsData, error: creatorsError } = await supabase
+        .from("creators")
+        .select("id, username, enabled, studio_id")
+        .order("username");
+
+      if (creatorsError) throw creatorsError;
+
+      // Group creators by studio_id
+      const creatorsByStudio: Record<string, Creator[]> = {};
+      (creatorsData || []).forEach((creator: any) => {
+        if (creator.studio_id) {
+          if (!creatorsByStudio[creator.studio_id]) {
+            creatorsByStudio[creator.studio_id] = [];
+          }
+          creatorsByStudio[creator.studio_id].push(creator);
+        }
+      });
+      setStudioCreators(creatorsByStudio);
+
     } catch (err) {
       console.error("Error fetching studios:", err);
       toast.error("Failed to load studios");
@@ -337,6 +649,7 @@ export default function StudiosPage() {
     total: studios.length,
     active: studios.filter((s) => s.enabled).length,
     disabled: studios.filter((s) => !s.enabled).length,
+    totalModels: Object.values(studioCreators).reduce((acc, arr) => acc + arr.length, 0),
   };
 
   if (user?.role !== "admin") {
@@ -371,7 +684,7 @@ export default function StudiosPage() {
           <Button
             onClick={() => {
               setSelectedStudio(null);
-              setShowModal(true);
+              setShowEditModal(true);
             }}
             className="bg-brand-600 hover:bg-brand-700"
           >
@@ -382,7 +695,7 @@ export default function StudiosPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
           <p className="text-sm text-slate-500">Total Studios</p>
@@ -395,13 +708,17 @@ export default function StudiosPage() {
           <p className="text-2xl font-bold text-red-700">{stats.disabled}</p>
           <p className="text-sm text-red-600">Disabled</p>
         </div>
+        <div className="bg-violet-50 rounded-xl border border-violet-200 p-4">
+          <p className="text-2xl font-bold text-violet-700">{stats.totalModels}</p>
+          <p className="text-sm text-violet-600">Total Models</p>
+        </div>
       </div>
 
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <Input
-          placeholder="Search studios..."
+          placeholder="Search studios by name, email, or country..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -425,7 +742,7 @@ export default function StudiosPage() {
           <Button
             onClick={() => {
               setSelectedStudio(null);
-              setShowModal(true);
+              setShowEditModal(true);
             }}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -438,13 +755,14 @@ export default function StudiosPage() {
             <StudioCard
               key={studio.id}
               studio={studio}
+              creatorsCount={studioCreators[studio.id]?.length || 0}
               onView={() => {
                 setSelectedStudio(studio);
-                setShowModal(true);
+                setShowViewModal(true);
               }}
               onEdit={() => {
                 setSelectedStudio(studio);
-                setShowModal(true);
+                setShowEditModal(true);
               }}
               onToggle={() => handleToggle(studio)}
             />
@@ -452,24 +770,37 @@ export default function StudiosPage() {
         </div>
       )}
 
-      {/* Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <StudioModal
-            studio={selectedStudio}
-            onClose={() => {
-              setShowModal(false);
-              setSelectedStudio(null);
-            }}
-            onSaved={() => {
-              setShowModal(false);
-              setSelectedStudio(null);
-              fetchStudios();
-            }}
-          />
-        )}
-      </AnimatePresence>
+      {/* View Modal */}
+      {showViewModal && selectedStudio && (
+        <ViewStudioModal
+          studio={selectedStudio}
+          creators={studioCreators[selectedStudio.id] || []}
+          onClose={() => {
+            setShowViewModal(false);
+            setSelectedStudio(null);
+          }}
+          onEdit={() => {
+            setShowViewModal(false);
+            setShowEditModal(true);
+          }}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <StudioModal
+          studio={selectedStudio}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedStudio(null);
+          }}
+          onSaved={() => {
+            setShowEditModal(false);
+            setSelectedStudio(null);
+            fetchStudios();
+          }}
+        />
+      )}
     </div>
   );
 }
-

@@ -405,6 +405,103 @@ export class MediaApiClient {
     });
   }
 
+  async uploadMedia(params: {
+    file: File;
+    creator_id: string;
+    category?: string;
+    onProgress?: (progress: number) => void;
+  }): Promise<ApiResponse<Media>> {
+    const formData = new FormData();
+    formData.append('file', params.file);
+    formData.append('creator_id', params.creator_id);
+    if (params.category) {
+      formData.append('category', params.category);
+    }
+
+    return new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE_URL}/api/v1/media/upload`);
+      xhr.setRequestHeader('X-API-Key', this.apiKey);
+
+      if (params.onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded / event.total) * 100);
+            params.onProgress!(progress);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(response);
+          } else {
+            resolve({
+              success: false,
+              error: response.error || `HTTP ${xhr.status}`,
+            });
+          }
+        } catch {
+          resolve({
+            success: false,
+            error: 'Failed to parse response',
+          });
+        }
+      };
+
+      xhr.onerror = () => {
+        resolve({
+          success: false,
+          error: 'Network error',
+        });
+      };
+
+      xhr.send(formData);
+    });
+  }
+
+  async uploadMultipleMedia(params: {
+    files: File[];
+    creator_id: string;
+    category?: string;
+    onFileProgress?: (fileIndex: number, progress: number) => void;
+    onFileComplete?: (fileIndex: number, success: boolean, media?: Media) => void;
+  }): Promise<ApiResponse<{ uploaded: number; failed: number; media: Media[] }>> {
+    const results: Media[] = [];
+    let failed = 0;
+
+    for (let i = 0; i < params.files.length; i++) {
+      const file = params.files[i];
+      const response = await this.uploadMedia({
+        file,
+        creator_id: params.creator_id,
+        category: params.category,
+        onProgress: (progress) => {
+          params.onFileProgress?.(i, progress);
+        },
+      });
+
+      if (response.success && response.data) {
+        results.push(response.data);
+        params.onFileComplete?.(i, true, response.data);
+      } else {
+        failed++;
+        params.onFileComplete?.(i, false);
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        uploaded: results.length,
+        failed,
+        media: results,
+      },
+    };
+  }
+
   // ============================================
   // STATISTICS ENDPOINTS
   // ============================================

@@ -44,17 +44,17 @@ function LoginContent() {
     }
   }, [searchParams]);
 
-  // Check if already logged in
+  // Check if already logged in (middleware should handle this, but just in case)
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = getSupabaseBrowserClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        router.push("/dashboard");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        window.location.href = "/dashboard";
       }
     };
     checkAuth();
-  }, [router]);
+  }, []);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,10 +72,9 @@ function LoginContent() {
       });
 
       if (error) {
-        // If user doesn't exist, suggest signup
+        // Handle different error cases
         if (error.message.includes("Invalid login credentials")) {
-          toast.error("Account not found. Please sign up first.");
-          setIsSignUp(true);
+          toast.error("Invalid email or password. Please try again.");
           setIsLoading(false);
           return;
         }
@@ -83,7 +82,8 @@ function LoginContent() {
       }
 
       toast.success("Welcome back!");
-      router.push("/dashboard");
+      // Use window.location for hard redirect to avoid caching issues
+      window.location.href = "/dashboard";
     } catch (err: unknown) {
       const error = err as Error;
       console.error("Login error:", error);
@@ -129,7 +129,7 @@ function LoginContent() {
       } else if (data.user && data.session) {
         // Auto-confirmed (happens in dev or if email confirmation is disabled)
         toast.success("Account created! Setting up your profile...");
-        router.push("/dashboard/setup");
+        window.location.href = "/dashboard/setup";
       }
     } catch (err: unknown) {
       const error = err as Error;
@@ -197,43 +197,37 @@ function LoginContent() {
         throw new Error("Invalid verification code");
       }
 
-      const supabase = getSupabaseBrowserClient();
+      // Use our custom phone auth API to get a session token
+      const response = await fetch("/api/auth/phone-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
 
-      // Check if user exists with this phone
-      const { data: existingUser } = await supabase
-        .from("dashboard_users")
-        .select("auth_user_id")
-        .eq("phone", phone)
-        .single();
+      const data = await response.json();
 
-      if (existingUser?.auth_user_id) {
-        // Sign in with phone OTP (Supabase handles this)
-        const { error } = await supabase.auth.signInWithOtp({
-          phone,
-        });
-
-        if (error) throw error;
-      } else {
-        // Create new user
-        const { data: authData, error: signUpError } = await supabase.auth.signUp({
-          phone,
-          password: generatedCode, // Temporary password
-        });
-
-        if (signUpError) throw signUpError;
-
-        // Create dashboard user
-        if (authData.user) {
-          await supabase.from("dashboard_users").insert({
-            auth_user_id: authData.user.id,
-            phone,
-            role: "model",
-          });
-        }
+      if (!response.ok) {
+        throw new Error(data.error || "Authentication failed");
       }
 
-      toast.success("Welcome!");
-      router.push("/dashboard");
+      // Verify the token to create a session
+      if (data.token) {
+        const supabase = getSupabaseBrowserClient();
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: data.token,
+          type: "magiclink",
+        });
+        
+        if (error) {
+          console.error("OTP verification error:", error);
+          throw new Error("Failed to create session");
+        }
+
+        toast.success("Welcome!");
+        window.location.href = "/dashboard";
+      } else {
+        throw new Error("No authentication token received");
+      }
     } catch (err: unknown) {
       const error = err as Error;
       console.error("Verification error:", error);

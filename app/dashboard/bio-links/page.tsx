@@ -32,6 +32,15 @@ import {
   Settings,
   Palette,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog-centered";
 
 // ============================================
 // TYPES
@@ -226,133 +235,121 @@ function LinkEditor({
   ];
 
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 z-50"
-        onClick={onClose}
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="fixed inset-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-lg sm:w-full bg-white rounded-2xl shadow-xl z-50 overflow-hidden"
-      >
-        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900">
-            {item ? "Edit Link" : "Add Link"}
-          </h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>{item ? "Edit Link" : "Add Link"}</DialogTitle>
+          <DialogDescription>
+            {item ? "Update your link settings" : "Add a new link to your bio page"}
+          </DialogDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-          <div className="space-y-2">
-            <Label htmlFor="label">Label *</Label>
-            <Input
-              id="label"
-              value={formData.label}
-              onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-              placeholder="OnlyFans VIP"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="sub_text">Subtitle</Label>
-            <Input
-              id="sub_text"
-              value={formData.sub_text}
-              onChange={(e) => setFormData({ ...formData, sub_text: e.target.value })}
-              placeholder="Exclusive content just for you"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="href">URL *</Label>
-            <Input
-              id="href"
-              type="url"
-              value={formData.href}
-              onChange={(e) => setFormData({ ...formData, href: e.target.value })}
-              placeholder="https://onlyfans.com/username"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit}>
+          <DialogBody className="space-y-4">
             <div className="space-y-2">
-              <Label>Icon</Label>
-              <div className="flex flex-wrap gap-2">
-                {ICON_TYPES.map((iconDef) => {
-                  const Icon = iconDef.icon;
-                  return (
-                    <button
-                      key={iconDef.id}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, icon_type: iconDef.id })}
-                      className={`p-2 rounded-lg border transition-all ${
-                        formData.icon_type === iconDef.id
-                          ? "border-brand-500 bg-brand-50"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <Icon className="w-5 h-5" />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Icon Color</Label>
-              <div className="flex flex-wrap gap-2">
-                {colorOptions.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, icon_color: color })}
-                    className={`w-8 h-8 rounded-lg ${color} transition-all ${
-                      formData.icon_color === color
-                        ? "ring-2 ring-offset-2 ring-brand-500"
-                        : ""
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="pill_text">Badge Text</Label>
+              <Label htmlFor="label">Label *</Label>
               <Input
-                id="pill_text"
-                value={formData.pill_text}
-                onChange={(e) => setFormData({ ...formData, pill_text: e.target.value })}
-                placeholder="FREE"
+                id="label"
+                value={formData.label}
+                onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+                placeholder="OnlyFans VIP"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Badge Color</Label>
-              <select
-                value={formData.pill_color}
-                onChange={(e) => setFormData({ ...formData, pill_color: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-              >
-                <option value="">Default</option>
-                <option value="bg-green-100 text-green-700">Green</option>
-                <option value="bg-blue-100 text-blue-700">Blue</option>
-                <option value="bg-purple-100 text-purple-700">Purple</option>
-                <option value="bg-amber-100 text-amber-700">Amber</option>
-                <option value="bg-rose-100 text-rose-700">Rose</option>
-              </select>
+              <Label htmlFor="sub_text">Subtitle</Label>
+              <Input
+                id="sub_text"
+                value={formData.sub_text}
+                onChange={(e) => setFormData({ ...formData, sub_text: e.target.value })}
+                placeholder="Exclusive content just for you"
+              />
             </div>
-          </div>
 
-          <div className="flex gap-3 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="href">URL *</Label>
+              <Input
+                id="href"
+                type="url"
+                value={formData.href}
+                onChange={(e) => setFormData({ ...formData, href: e.target.value })}
+                placeholder="https://onlyfans.com/username"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Icon</Label>
+                <div className="flex flex-wrap gap-2">
+                  {ICON_TYPES.map((iconDef) => {
+                    const Icon = iconDef.icon;
+                    return (
+                      <button
+                        key={iconDef.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, icon_type: iconDef.id })}
+                        className={`p-2 rounded-lg border transition-all ${
+                          formData.icon_type === iconDef.id
+                            ? "border-brand-500 bg-brand-50"
+                            : "border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Icon Color</Label>
+                <div className="flex flex-wrap gap-2">
+                  {colorOptions.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, icon_color: color })}
+                      className={`w-8 h-8 rounded-lg ${color} transition-all ${
+                        formData.icon_color === color
+                          ? "ring-2 ring-offset-2 ring-brand-500"
+                          : ""
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="pill_text">Badge Text</Label>
+                <Input
+                  id="pill_text"
+                  value={formData.pill_text}
+                  onChange={(e) => setFormData({ ...formData, pill_text: e.target.value })}
+                  placeholder="FREE"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Badge Color</Label>
+                <select
+                  value={formData.pill_color}
+                  onChange={(e) => setFormData({ ...formData, pill_color: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-900"
+                >
+                  <option value="">Default</option>
+                  <option value="bg-green-100 text-green-700">Green</option>
+                  <option value="bg-blue-100 text-blue-700">Blue</option>
+                  <option value="bg-purple-100 text-purple-700">Purple</option>
+                  <option value="bg-amber-100 text-amber-700">Amber</option>
+                  <option value="bg-rose-100 text-rose-700">Rose</option>
+                </select>
+              </div>
+            </div>
+          </DialogBody>
+
+          <DialogFooter className="gap-3">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
@@ -360,10 +357,10 @@ function LinkEditor({
               <Save className="w-4 h-4 mr-2" />
               Save
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </motion.div>
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -470,9 +467,9 @@ export default function BioLinksPage() {
 
       if (socialsError) throw socialsError;
       setSocialLinks(socials || []);
-    } catch (err) {
-      console.error("Error fetching bio link:", err);
-      setError("Failed to load bio link");
+    } catch (err: any) {
+      console.error("Error fetching bio link:", err?.message || err?.code || JSON.stringify(err));
+      setError(err?.message || "Failed to load bio link");
     } finally {
       setIsLoading(false);
     }
@@ -714,6 +711,106 @@ export default function BioLinksPage() {
             Publish
           </Button>
         )}
+      </div>
+
+      {/* Domain Management Section */}
+      <div className="bg-gradient-to-r from-violet-50 to-pink-50 rounded-2xl border border-violet-200 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
+            <Globe className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-slate-900">Your Bio Links</h2>
+            <p className="text-sm text-slate-500">Share your profile anywhere</p>
+          </div>
+        </div>
+        
+        <div className="space-y-3">
+          {/* Main bites.bio link */}
+          <div className="bg-white rounded-xl p-4 flex items-center justify-between border border-violet-100">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
+                <Link2 className="w-4 h-4 text-violet-600" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Primary Link</p>
+                <a
+                  href={`https://bites.bio/${bioLink?.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-violet-600 font-medium hover:text-violet-800 flex items-center gap-1"
+                >
+                  bites.bio/{bioLink?.slug}
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(`https://bites.bio/${bioLink?.slug}`);
+                toast.success("Link copied!");
+              }}
+            >
+              <Copy className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Custom Domain */}
+          {bioLink?.custom_domain ? (
+            <div className="bg-white rounded-xl p-4 flex items-center justify-between border border-pink-100">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center">
+                  <Globe className="w-4 h-4 text-pink-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Custom Domain</p>
+                  <a
+                    href={`https://${bioLink.custom_domain}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-pink-600 font-medium hover:text-pink-800 flex items-center gap-1"
+                  >
+                    {bioLink.custom_domain}
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Active</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://${bioLink.custom_domain}`);
+                    toast.success("Link copied!");
+                  }}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <a
+              href="/dashboard/bio-links/domains"
+              className="block bg-white/50 rounded-xl p-4 border-2 border-dashed border-pink-200 hover:border-pink-300 hover:bg-white transition-all group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center group-hover:bg-pink-100">
+                    <Plus className="w-4 h-4 text-pink-400 group-hover:text-pink-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-700 group-hover:text-pink-700">Add Custom Domain</p>
+                    <p className="text-xs text-slate-500">Use your own domain like yourname.com</p>
+                  </div>
+                </div>
+                <span className="text-pink-500 group-hover:text-pink-600">→</span>
+              </div>
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Links Section */}
