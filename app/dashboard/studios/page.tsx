@@ -1,0 +1,475 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { useDashboard } from "../layout";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import {
+  Building2,
+  Search,
+  Plus,
+  Eye,
+  Edit2,
+  X,
+  Loader2,
+  AlertCircle,
+  Users,
+  RefreshCw,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
+
+// ============================================
+// TYPES
+// ============================================
+
+interface Studio {
+  id: string;
+  name: string;
+  group_id: string | null;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+  _count?: {
+    creators: number;
+  };
+}
+
+// ============================================
+// STUDIO CARD
+// ============================================
+
+function StudioCard({
+  studio,
+  onView,
+  onEdit,
+  onToggle,
+}: {
+  studio: Studio;
+  onView: () => void;
+  onEdit: () => void;
+  onToggle: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`bg-white rounded-xl border p-5 hover:shadow-md transition-all ${
+        studio.enabled ? "border-slate-200" : "border-red-200 bg-red-50/30"
+      }`}
+    >
+      <div className="flex items-start gap-4">
+        {/* Icon */}
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+          studio.enabled 
+            ? "bg-gradient-to-br from-blue-100 to-blue-200" 
+            : "bg-red-100"
+        }`}>
+          <Building2 className={`w-6 h-6 ${
+            studio.enabled ? "text-blue-600" : "text-red-600"
+          }`} />
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-semibold text-slate-900">{studio.name}</h3>
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                studio.enabled
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {studio.enabled ? (
+                <CheckCircle className="w-3 h-3" />
+              ) : (
+                <XCircle className="w-3 h-3" />
+              )}
+              {studio.enabled ? "Active" : "Disabled"}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+            {studio.group_id && (
+              <span className="flex items-center gap-1 font-mono text-xs">
+                Group: {studio.group_id.slice(0, 8)}...
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              <Users className="w-3.5 h-3.5" />
+              {studio._count?.creators || 0} models
+            </span>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onView}>
+            <Eye className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={onEdit}>
+            <Edit2 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onToggle}
+            className={studio.enabled ? "text-red-600 hover:bg-red-50" : "text-green-600 hover:bg-green-50"}
+          >
+            {studio.enabled ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// CREATE/EDIT MODAL
+// ============================================
+
+function StudioModal({
+  studio,
+  onClose,
+  onSaved,
+}: {
+  studio: Studio | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    name: studio?.name || "",
+    group_id: studio?.group_id || "",
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!formData.name.trim()) {
+      toast.error("Studio name is required");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      if (studio) {
+        // Update
+        const { error } = await supabase
+          .from("studios")
+          .update({
+            name: formData.name,
+            group_id: formData.group_id || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", studio.id);
+
+        if (error) throw error;
+        toast.success("Studio updated successfully");
+      } else {
+        // Create
+        const { error } = await supabase.from("studios").insert({
+          name: formData.name,
+          group_id: formData.group_id || null,
+          enabled: true,
+        });
+
+        if (error) throw error;
+        toast.success("Studio created successfully");
+      }
+
+      onSaved();
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Error saving studio:", error);
+      toast.error("Failed to save studio");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 z-50"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="fixed inset-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-lg sm:w-full sm:max-h-[85vh] bg-white rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col"
+      >
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between shrink-0">
+          <h3 className="text-lg font-semibold text-slate-900">
+            {studio ? "Edit Studio" : "Add Studio"}
+          </h3>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Studio Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Studio Name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="group_id">WhatsApp Group ID (optional)</Label>
+            <Input
+              id="group_id"
+              value={formData.group_id}
+              onChange={(e) => setFormData({ ...formData, group_id: e.target.value })}
+              placeholder="WhatsApp group ID for notifications"
+            />
+            <p className="text-xs text-slate-500">Used for sending aggregate notifications to studio</p>
+          </div>
+
+          {studio && (
+            <div className="bg-slate-50 rounded-lg p-4">
+              <p className="text-xs text-slate-500 mb-1">Studio ID</p>
+              <code className="text-sm font-mono text-slate-700">
+                {studio.id}
+              </code>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-slate-200 flex justify-end gap-3 shrink-0">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="bg-brand-600 hover:bg-brand-700"
+          >
+            {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {studio ? "Save Changes" : "Create Studio"}
+          </Button>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
+
+export default function StudiosPage() {
+  const { user } = useDashboard();
+  const [studios, setStudios] = useState<Studio[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [selectedStudio, setSelectedStudio] = useState<Studio | null>(null);
+
+  const fetchStudios = async () => {
+    setIsLoading(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data, error } = await supabase
+        .from("studios")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+      setStudios((data as Studio[]) || []);
+    } catch (err) {
+      console.error("Error fetching studios:", err);
+      toast.error("Failed to load studios");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role === "admin") {
+      fetchStudios();
+    }
+  }, [user]);
+
+  const handleToggle = async (studio: Studio) => {
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { error } = await supabase
+        .from("studios")
+        .update({ enabled: !studio.enabled })
+        .eq("id", studio.id);
+
+      if (error) throw error;
+      toast.success(studio.enabled ? "Studio disabled" : "Studio enabled");
+      fetchStudios();
+    } catch (err) {
+      console.error("Error toggling studio:", err);
+      toast.error("Failed to update studio");
+    }
+  };
+
+  const filteredStudios = studios.filter((s) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      s.name.toLowerCase().includes(query) ||
+      s.email?.toLowerCase().includes(query) ||
+      s.country?.toLowerCase().includes(query)
+    );
+  });
+
+  // Stats
+  const stats = {
+    total: studios.length,
+    active: studios.filter((s) => s.enabled).length,
+    disabled: studios.filter((s) => !s.enabled).length,
+  };
+
+  if (user?.role !== "admin") {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-3">
+        <AlertCircle className="w-5 h-5 text-amber-500" />
+        <p className="text-amber-700">
+          Only administrators can access this page.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Studios</h1>
+          <p className="text-slate-500">Manage studios and their models</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchStudios}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button
+            onClick={() => {
+              setSelectedStudio(null);
+              setShowModal(true);
+            }}
+            className="bg-brand-600 hover:bg-brand-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Studio
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
+          <p className="text-sm text-slate-500">Total Studios</p>
+        </div>
+        <div className="bg-green-50 rounded-xl border border-green-200 p-4">
+          <p className="text-2xl font-bold text-green-700">{stats.active}</p>
+          <p className="text-sm text-green-600">Active</p>
+        </div>
+        <div className="bg-red-50 rounded-xl border border-red-200 p-4">
+          <p className="text-2xl font-bold text-red-700">{stats.disabled}</p>
+          <p className="text-sm text-red-600">Disabled</p>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input
+          placeholder="Search studios..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {/* List */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+        </div>
+      ) : filteredStudios.length === 0 ? (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-12 text-center">
+          <Building2 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <h3 className="font-semibold text-slate-700 mb-2">No studios found</h3>
+          <p className="text-slate-500 text-sm mb-4">
+            {searchQuery
+              ? "Try adjusting your search"
+              : "Create your first studio to get started"}
+          </p>
+          <Button
+            onClick={() => {
+              setSelectedStudio(null);
+              setShowModal(true);
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Studio
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredStudios.map((studio) => (
+            <StudioCard
+              key={studio.id}
+              studio={studio}
+              onView={() => {
+                setSelectedStudio(studio);
+                setShowModal(true);
+              }}
+              onEdit={() => {
+                setSelectedStudio(studio);
+                setShowModal(true);
+              }}
+              onToggle={() => handleToggle(studio)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <StudioModal
+            studio={selectedStudio}
+            onClose={() => {
+              setShowModal(false);
+              setSelectedStudio(null);
+            }}
+            onSaved={() => {
+              setShowModal(false);
+              setSelectedStudio(null);
+              fetchStudios();
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+

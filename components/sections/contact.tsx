@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Send, Heart, Shield, Clock, CheckCircle2 } from "lucide-react";
+import { Send, Heart, Shield, Clock, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
 import { AnimatedSection } from "@/components/motion/animated-section";
 
 const interestOptions = [
@@ -43,6 +44,20 @@ export function Contact() {
             Earn money by selling your self-made content on subscription platforms.
             Together we can make it a lucrative reality.
           </p>
+          
+          {/* Quick Start CTA */}
+          <div className="mt-6">
+            <Link href="/join">
+              <Button size="lg" className="bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-600/25 group">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Create Your Bio Link
+                <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+            <p className="mt-2 text-sm text-slate-400">
+              Get your free bio link page in 2 minutes
+            </p>
+          </div>
         </AnimatedSection>
 
         <div className="max-w-xl mx-auto">

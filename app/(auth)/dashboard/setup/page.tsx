@@ -1,0 +1,364 @@
+"use client";
+
+import { useState, useEffect, Suspense } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "motion/react";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import {
+  User,
+  Building2,
+  Loader2,
+  ArrowRight,
+  Sparkles,
+  Check,
+} from "lucide-react";
+
+type AccountType = "model" | "studio";
+
+function SetupContent() {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [authUser, setAuthUser] = useState<{ id: string; email: string } | null>(null);
+  
+  const [formData, setFormData] = useState({
+    accountType: "model" as AccountType,
+    displayName: "",
+    stageName: "",
+    phone: "",
+  });
+
+  // Check if user is authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = getSupabaseBrowserClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        router.push("/dashboard/login");
+        return;
+      }
+
+      // Check if user already has a profile
+      const { data: existingUser } = await supabase
+        .from("dashboard_users")
+        .select("id")
+        .eq("auth_user_id", user.id)
+        .single();
+
+      if (existingUser) {
+        // User already setup, redirect to dashboard
+        router.push("/dashboard");
+        return;
+      }
+
+      setAuthUser({ id: user.id, email: user.email || "" });
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, [router]);
+
+  const handleComplete = async () => {
+    if (!authUser) return;
+
+    if (!formData.displayName.trim()) {
+      toast.error("Please enter your display name");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      // Create dashboard user record
+      const { data: dashboardUser, error } = await supabase
+        .from("dashboard_users")
+        .insert({
+          auth_user_id: authUser.id,
+          email: authUser.email,
+          display_name: formData.displayName,
+          role: formData.accountType,
+          enabled: true,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // If model, also create a creator record
+      if (formData.accountType === "model") {
+        const { data: creator, error: creatorError } = await supabase
+          .from("creators")
+          .insert({
+            username: formData.stageName || formData.displayName.toLowerCase().replace(/\s+/g, '_'),
+            group_id: crypto.randomUUID(),
+            storage_folder: `creators/${crypto.randomUUID()}`,
+            enabled: true,
+          })
+          .select()
+          .single();
+
+        if (creatorError) {
+          console.error("Error creating creator:", creatorError);
+        } else if (creator) {
+          // Link creator to dashboard user
+          await supabase
+            .from("dashboard_users")
+            .update({ creator_id: creator.id })
+            .eq("id", dashboardUser.id);
+        }
+      }
+
+      // If studio, create a studio record
+      if (formData.accountType === "studio") {
+        const { data: studio, error: studioError } = await supabase
+          .from("studios")
+          .insert({
+            name: formData.displayName,
+            enabled: true,
+          })
+          .select()
+          .single();
+
+        if (studioError) {
+          console.error("Error creating studio:", studioError);
+        } else if (studio) {
+          // Link studio to dashboard user
+          await supabase
+            .from("dashboard_users")
+            .update({ studio_id: studio.id })
+            .eq("id", dashboardUser.id);
+        }
+      }
+
+      toast.success("Account setup complete!");
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Setup error:", error);
+      toast.error("Failed to complete setup. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-lg"
+      >
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 mb-4">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Welcome to Lovebite
+          </h1>
+          <p className="text-slate-400">
+            Let&apos;s get your creator account set up
+          </p>
+        </div>
+
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+          {/* Progress */}
+          <div className="px-6 pt-6">
+            <div className="flex items-center gap-2 mb-6">
+              {[1, 2].map((s) => (
+                <div
+                  key={s}
+                  className={`flex-1 h-1 rounded-full transition-all ${
+                    s <= step ? "bg-brand-500" : "bg-slate-200"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Step 1: Account Type */}
+          {step === 1 && (
+            <div className="p-6 pt-0">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                What type of account do you need?
+              </h2>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <button
+                  onClick={() =>
+                    setFormData({ ...formData, accountType: "model" })
+                  }
+                  className={`p-6 rounded-xl border-2 transition-all text-left ${
+                    formData.accountType === "model"
+                      ? "border-brand-500 bg-brand-50"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <User
+                    className={`w-8 h-8 mb-3 ${
+                      formData.accountType === "model"
+                        ? "text-brand-600"
+                        : "text-slate-400"
+                    }`}
+                  />
+                  <p className="font-semibold text-slate-900">Creator</p>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Individual content creator
+                  </p>
+                </button>
+                <button
+                  onClick={() =>
+                    setFormData({ ...formData, accountType: "studio" })
+                  }
+                  className={`p-6 rounded-xl border-2 transition-all text-left ${
+                    formData.accountType === "studio"
+                      ? "border-brand-500 bg-brand-50"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <Building2
+                    className={`w-8 h-8 mb-3 ${
+                      formData.accountType === "studio"
+                        ? "text-brand-600"
+                        : "text-slate-400"
+                    }`}
+                  />
+                  <p className="font-semibold text-slate-900">Studio</p>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Manage multiple creators
+                  </p>
+                </button>
+              </div>
+              <Button
+                onClick={() => setStep(2)}
+                className="w-full bg-brand-600 hover:bg-brand-700"
+              >
+                Continue
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          )}
+
+          {/* Step 2: Profile Info */}
+          {step === 2 && (
+            <div className="p-6 pt-0">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                Tell us about yourself
+              </h2>
+
+              <div className="space-y-4 mb-6">
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">
+                    {formData.accountType === "studio" ? "Studio Name" : "Display Name"} *
+                  </Label>
+                  <Input
+                    id="displayName"
+                    value={formData.displayName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, displayName: e.target.value })
+                    }
+                    placeholder={
+                      formData.accountType === "studio"
+                        ? "Your Studio Name"
+                        : "Your Name"
+                    }
+                  />
+                </div>
+
+                {formData.accountType === "model" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="stageName">Stage Name (optional)</Label>
+                    <Input
+                      id="stageName"
+                      value={formData.stageName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, stageName: e.target.value })
+                      }
+                      placeholder="Your creator name"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone (optional)</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    placeholder="+1 234 567 8900"
+                  />
+                </div>
+
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-sm text-slate-600">
+                    <span className="font-medium">Email:</span> {authUser?.email}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  className="flex-1"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleComplete}
+                  disabled={isSaving || !formData.displayName.trim()}
+                  className="flex-1 bg-brand-600 hover:bg-brand-700"
+                >
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4 mr-2" />
+                  )}
+                  Complete Setup
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-slate-500 text-sm mt-6">
+          Need help?{" "}
+          <a href="mailto:support@lovebite.com" className="text-brand-400 hover:text-brand-300">
+            Contact support
+          </a>
+        </p>
+      </motion.div>
+    </div>
+  );
+}
+
+export default function SetupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+      </div>
+    }>
+      <SetupContent />
+    </Suspense>
+  );
+}
+
