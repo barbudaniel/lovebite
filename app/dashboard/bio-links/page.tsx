@@ -739,6 +739,14 @@ function SettingsModal({
       return;
     }
 
+    // Validate slug against reserved usernames
+    const { validateUsername } = await import("@/lib/reserved-usernames");
+    const slugError = validateUsername(form.slug);
+    if (slugError) {
+      toast.error(slugError);
+      return;
+    }
+
     setIsSaving(true);
     try {
       await onSave(form);

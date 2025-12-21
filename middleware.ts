@@ -68,13 +68,18 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect('https://lovebite.fans');
     }
     
-    // Exclude system routes from username rewrite
+    // System routes should redirect to lovebite.fans
     const systemRoutes = ['/dashboard', '/api', '/admin', '/join', '/register', '/bio', '/creator', '/_next'];
     const isSystemRoute = systemRoutes.some(route => pathname.startsWith(route));
     
-    // /:username -> rewrite to /creator/:username (but not system routes)
+    if (isSystemRoute) {
+      // Redirect system routes to lovebite.fans
+      return NextResponse.redirect(`https://lovebite.fans${pathname}`);
+    }
+    
+    // /:username -> rewrite to /creator/:username
     const username = pathname.slice(1); // Remove leading slash
-    if (username && !username.includes('/') && !isSystemRoute) {
+    if (username && !username.includes('/')) {
       return NextResponse.rewrite(new URL(`/creator/${username}`, request.url));
     }
   }

@@ -106,16 +106,20 @@ function JoinPageContent() {
 
   // Check username availability
   const checkUsername = useCallback(async (username: string) => {
+    // Import and use validation from shared utility
+    const { validateUsername, isReservedUsername } = await import("@/lib/reserved-usernames");
+    
     if (!username || username.length < 3) {
       setUsernameAvailable(null);
       setUsernameError(username.length > 0 ? "Username must be at least 3 characters" : null);
       return;
     }
 
-    // Validate format
-    if (!/^[a-z0-9_]+$/.test(username)) {
+    // Validate format and reserved names
+    const validationError = validateUsername(username);
+    if (validationError) {
       setUsernameAvailable(false);
-      setUsernameError("Only lowercase letters, numbers, and underscores allowed");
+      setUsernameError(validationError);
       return;
     }
 
