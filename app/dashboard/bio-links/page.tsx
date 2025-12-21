@@ -259,7 +259,7 @@ function LinkEditor({
       const supabase = getSupabaseBrowserClient();
       
       if (item) {
-        await supabase
+        const { error } = await supabase
           .from("bio_link_items")
           .update({
             label: form.label,
@@ -271,6 +271,8 @@ function LinkEditor({
             media_url: form.media_url,
           })
           .eq("id", item.id);
+        
+        if (error) throw error;
       } else {
         const { data: lastItem } = await supabase
           .from("bio_link_items")
@@ -280,7 +282,7 @@ function LinkEditor({
           .limit(1)
           .maybeSingle();
 
-        await supabase.from("bio_link_items").insert({
+        const { error } = await supabase.from("bio_link_items").insert({
           bio_link_id: bioLinkId,
           label: form.label,
           href: form.href,
@@ -292,14 +294,16 @@ function LinkEditor({
           sort_order: (lastItem?.sort_order || 0) + 1,
           enabled: true,
         });
+        
+        if (error) throw error;
       }
 
       toast.success(item ? "Link updated" : "Link added");
       onSave();
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error saving link:", err);
-      toast.error("Failed to save link");
+      toast.error(err?.message || "Failed to save link");
     } finally {
       setIsSaving(false);
     }

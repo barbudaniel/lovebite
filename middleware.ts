@@ -57,6 +57,12 @@ export async function middleware(request: NextRequest) {
     if (pathname === '/') {
       return NextResponse.rewrite(new URL(`/creator/${creatorSlug}`, request.url));
     }
+    
+    // Allow API routes to pass through (for analytics tracking, etc.)
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.next();
+    }
+    
     // Any other path -> redirect to root
     return NextResponse.redirect(new URL('/', request.url));
   }
