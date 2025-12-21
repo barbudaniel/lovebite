@@ -57,10 +57,54 @@ async function getGeoFromIP(ip: string): Promise<{ country: string; city: string
   return { country: "Unknown", city: "Unknown", region: "Unknown" };
 }
 
+// Resolve bioLinkId from slug if not provided directly
+async function resolveBioLinkId(bioLinkId: string | undefined, creatorSlug: string | undefined): Promise<string | null> {
+  // If we already have a valid bioLinkId, use it
+  if (bioLinkId) {
+    return bioLinkId;
+  }
+  
+  // If we have a creatorSlug, try to look up the bio_link
+  if (creatorSlug) {
+    const { data: bioLink } = await supabase
+      .from("bio_links")
+      .select("id")
+      .ilike("slug", creatorSlug)
+      .maybeSingle();
+    
+    if (bioLink?.id) {
+      return bioLink.id;
+    }
+    
+    // Also try custom_domain lookup in case slug matches a domain
+    const { data: bioByDomain } = await supabase
+      .from("bio_links")
+      .select("id")
+      .ilike("custom_domain", creatorSlug)
+      .maybeSingle();
+    
+    if (bioByDomain?.id) {
+      return bioByDomain.id;
+    }
+  }
+  
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, bioLinkId, linkItemId, linkLabel, linkUrl, visitorId, referrer } = body;
+    const { type, bioLinkId: providedBioLinkId, creatorSlug, linkItemId, linkLabel, linkUrl, visitorId, referrer } = body;
+    
+    // Resolve the bioLinkId - either from provided value or lookup by slug
+    const bioLinkId = await resolveBioLinkId(providedBioLinkId, creatorSlug);
+    
+    if (!bioLinkId) {
+      // No bio link found - cannot track without a valid bio_link_id
+      // This happens for legacy creators not yet in the database
+      console.log(`Analytics: No bio_link found for slug "${creatorSlug}", skipping tracking`);
+      return NextResponse.json({ success: true, skipped: true });
+    }
 
     // Get client IP
     const forwarded = request.headers.get("x-forwarded-for");

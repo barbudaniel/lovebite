@@ -76,6 +76,21 @@ interface BioAnalytics {
   topReferrers: Array<{ referrer: string; count: number }>;
 }
 
+interface ModelBioStats {
+  creatorId: string;
+  username: string;
+  views: number;
+  clicks: number;
+  uniqueVisitors: number;
+}
+
+interface AggregatedBioStats {
+  totalViews: number;
+  totalClicks: number;
+  totalUniqueVisitors: number;
+  modelStats: ModelBioStats[];
+}
+
 // ============================================
 // CHART CONFIGS
 // ============================================
@@ -236,6 +251,7 @@ export default function StatisticsPage() {
   
   const [mediaStats, setMediaStats] = useState<CreatorStats | PlatformOverview | null>(null);
   const [bioAnalytics, setBioAnalytics] = useState<BioAnalytics | null>(null);
+  const [aggregatedBioStats, setAggregatedBioStats] = useState<AggregatedBioStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("30d");
   const [models, setModels] = useState<ModelOption[]>([]);
@@ -312,6 +328,9 @@ export default function StatisticsPage() {
 
       // Fetch bio analytics
       if (targetCreatorId) {
+        // Clear aggregated stats when viewing specific model
+        setAggregatedBioStats(null);
+        
         const { data: bioLink } = await supabase
           .from("bio_links")
           .select("id")
@@ -330,8 +349,15 @@ export default function StatisticsPage() {
           setBioAnalytics(null);
         }
       } else if (isAdminOrStudio) {
-        // Aggregate bio analytics for all models
-        setBioAnalytics(null); // Could aggregate here if needed
+        // Fetch aggregated bio analytics for all models
+        setBioAnalytics(null);
+        const aggResponse = await fetch(`/api/analytics/bio/models?period=${period}`);
+        if (aggResponse.ok) {
+          const aggData = await aggResponse.json();
+          setAggregatedBioStats(aggData);
+        } else {
+          setAggregatedBioStats(null);
+        }
       }
     } catch (err) {
       console.error("Error fetching stats:", err);
@@ -375,7 +401,7 @@ export default function StatisticsPage() {
       })) || []
     : [];
 
-  const totalViews = bioAnalytics?.summary.totalViews || 0;
+  const totalViews = bioAnalytics?.summary.totalViews || aggregatedBioStats?.totalViews || 0;
 
   if (isLoading) {
     return (
@@ -429,46 +455,16 @@ export default function StatisticsPage() {
         </div>
       </div>
       
-      {/* Admin/Studio Model Cards */}
-      {isAdminOrStudio && !selectedModelId && models.length > 0 && (
-        <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl border border-violet-100 p-6">
-          <h3 className="font-semibold text-violet-900 mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Quick Model Stats
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-            {models.slice(0, 6).map((model) => (
-              <button
-                key={model.id}
-                onClick={() => setSelectedModelId(model.id)}
-                className="p-4 bg-white rounded-xl border border-violet-100 hover:border-violet-300 hover:shadow-md transition-all text-left group"
-              >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-bold mb-3">
-                  {model.username.charAt(0).toUpperCase()}
-                </div>
-                <p className="font-medium text-slate-900 text-sm truncate group-hover:text-violet-600">
-                  {model.username}
-                </p>
-                <p className="text-xs text-slate-500">View stats →</p>
-              </button>
-            ))}
-            {models.length > 6 && (
-              <button
-                onClick={() => {}}
-                className="p-4 bg-white/50 rounded-xl border border-dashed border-violet-200 hover:border-violet-300 flex items-center justify-center"
-              >
-                <span className="text-sm text-violet-600">+{models.length - 6} more</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Overview Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Page Views"
-          value={bioAnalytics?.summary.totalViews || 0}
+          value={
+            bioAnalytics?.summary.totalViews ||
+            aggregatedBioStats?.totalViews ||
+            0
+          }
           change={"+12% from last period"}
           changeType="up"
           icon={Eye}
@@ -476,7 +472,11 @@ export default function StatisticsPage() {
         />
         <StatCard
           label="Unique Visitors"
-          value={bioAnalytics?.summary.uniqueVisitors || 0}
+          value={
+            bioAnalytics?.summary.uniqueVisitors ||
+            aggregatedBioStats?.totalUniqueVisitors ||
+            0
+          }
           change={"+8% from last period"}
           changeType="up"
           icon={Users}
@@ -484,7 +484,11 @@ export default function StatisticsPage() {
         />
         <StatCard
           label="Link Clicks"
-          value={bioAnalytics?.summary.totalClicks || 0}
+          value={
+            bioAnalytics?.summary.totalClicks ||
+            aggregatedBioStats?.totalClicks ||
+            0
+          }
           change={"+15% from last period"}
           changeType="up"
           icon={MousePointerClick}
@@ -492,11 +496,88 @@ export default function StatisticsPage() {
         />
         <StatCard
           label="Click Rate"
-          value={`${bioAnalytics?.summary.clickThroughRate || 0}%`}
+          value={`${
+            bioAnalytics?.summary.clickThroughRate ||
+            (aggregatedBioStats && aggregatedBioStats.totalViews > 0
+              ? ((aggregatedBioStats.totalClicks / aggregatedBioStats.totalViews) * 100).toFixed(1)
+              : 0)
+          }%`}
           icon={TrendingUp}
           iconBg="bg-orange-500"
         />
       </div>
+
+      {/* Model Bio Stats - Horizontal Bar Chart for Admin/Studio */}
+      {isAdminOrStudio && !selectedModelId && aggregatedBioStats && aggregatedBioStats.modelStats.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <SectionHeader 
+            title="Bio Link Performance by Model" 
+            subtitle="Views and clicks per model"
+          />
+          
+          <div className="space-y-3 mt-4">
+            {aggregatedBioStats.modelStats.slice(0, 10).map((model, idx) => {
+              const maxViews = Math.max(...aggregatedBioStats.modelStats.map(m => m.views));
+              const viewsPercentage = maxViews > 0 ? (model.views / maxViews) * 100 : 0;
+              const clicksPercentage = maxViews > 0 ? (model.clicks / maxViews) * 100 : 0;
+              
+              return (
+                <button
+                  key={model.creatorId}
+                  onClick={() => setSelectedModelId(model.creatorId)}
+                  className="w-full text-left group hover:bg-slate-50 rounded-lg p-3 -mx-3 transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-sm font-semibold">
+                        {model.username.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="font-medium text-slate-900 group-hover:text-violet-600 transition-colors">
+                        {model.username}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-slate-500">
+                        <Eye className="w-3.5 h-3.5 inline mr-1" />
+                        {model.views.toLocaleString()}
+                      </span>
+                      <span className="text-slate-500">
+                        <MousePointerClick className="w-3.5 h-3.5 inline mr-1" />
+                        {model.clicks.toLocaleString()}
+                      </span>
+                      <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-violet-500 transition-colors" />
+                    </div>
+                  </div>
+                  <div className="flex gap-1 h-2">
+                    <div 
+                      className="bg-blue-500 rounded-l transition-all duration-300"
+                      style={{ width: `${viewsPercentage}%` }}
+                      title={`${model.views} views`}
+                    />
+                    <div 
+                      className="bg-green-500 rounded-r transition-all duration-300"
+                      style={{ width: `${clicksPercentage}%` }}
+                      title={`${model.clicks} clicks`}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          
+          {/* Legend */}
+          <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-slate-100">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-blue-500" />
+              <span className="text-sm text-slate-600">Views</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-green-500" />
+              <span className="text-sm text-slate-600">Clicks</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -664,26 +745,35 @@ export default function StatisticsPage() {
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <SectionHeader title="Platform Overview" subtitle="Total content" />
             
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-blue-50 rounded-lg p-4 text-center">
-                <ImageIcon className="w-5 h-5 text-blue-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-blue-900">{(mediaStats as PlatformOverview).total_media?.photos || 0}</p>
-                <p className="text-xs text-blue-600">Photos</p>
+            <div className="space-y-4">
+              {/* Total Media - Highlighted */}
+              <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl p-4 text-center text-white">
+                <BarChart3 className="w-6 h-6 mx-auto mb-2 opacity-80" />
+                <p className="text-3xl font-bold">{((mediaStats as PlatformOverview).counts?.total_media || (mediaStats as PlatformOverview).all_time?.total || 0).toLocaleString()}</p>
+                <p className="text-sm opacity-80">Total Media Files</p>
               </div>
-              <div className="bg-purple-50 rounded-lg p-4 text-center">
-                <Video className="w-5 h-5 text-purple-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-purple-900">{(mediaStats as PlatformOverview).total_media?.videos || 0}</p>
-                <p className="text-xs text-purple-600">Videos</p>
-              </div>
-              <div className="bg-orange-50 rounded-lg p-4 text-center">
-                <Music className="w-5 h-5 text-orange-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-orange-900">{(mediaStats as PlatformOverview).total_media?.audios || 0}</p>
-                <p className="text-xs text-orange-600">Audio</p>
-              </div>
-              <div className="bg-slate-50 rounded-lg p-4 text-center">
-                <Users className="w-5 h-5 text-slate-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-slate-900">{(mediaStats as PlatformOverview).active_creators || 0}</p>
-                <p className="text-xs text-slate-600">Active Models</p>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-50 rounded-lg p-4 text-center">
+                  <ImageIcon className="w-5 h-5 text-blue-600 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-blue-900">{(mediaStats as PlatformOverview).all_time?.photos || 0}</p>
+                  <p className="text-xs text-blue-600">Photos</p>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-4 text-center">
+                  <Video className="w-5 h-5 text-purple-600 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-purple-900">{(mediaStats as PlatformOverview).all_time?.videos || 0}</p>
+                  <p className="text-xs text-purple-600">Videos</p>
+                </div>
+                <div className="bg-orange-50 rounded-lg p-4 text-center">
+                  <Music className="w-5 h-5 text-orange-600 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-orange-900">{(mediaStats as PlatformOverview).all_time?.audios || 0}</p>
+                  <p className="text-xs text-orange-600">Audio</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4 text-center">
+                  <Users className="w-5 h-5 text-slate-600 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-slate-900">{(mediaStats as PlatformOverview).counts?.creators || 0}</p>
+                  <p className="text-xs text-slate-600">Active Models</p>
+                </div>
               </div>
             </div>
           </div>

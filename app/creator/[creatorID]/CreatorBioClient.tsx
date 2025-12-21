@@ -165,14 +165,12 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
     // Track to Google Analytics
     trackBioPageView(creator.id);
     
-    // Track to our backend if we have a bioLinkId
-    if ((creator as any).bioLinkId) {
-      trackAnalytics({
-        type: 'page_view',
-        bioLinkId: (creator as any).bioLinkId,
-        creatorSlug: creator.id,
-      });
-    }
+    // Track to our backend (always track - API will resolve bioLinkId from slug if needed)
+    trackAnalytics({
+      type: 'page_view',
+      bioLinkId: (creator as any).bioLinkId,
+      creatorSlug: creator.id,
+    });
   }, [creator.id]);
 
   // 3D Card Effect
@@ -251,17 +249,15 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
     // Track to Google Analytics
     trackBioLinkClick(creator.id, link.label, link.href);
     
-    // Track to our backend if we have a bioLinkId
-    if ((creator as any).bioLinkId) {
-      trackAnalytics({
-        type: 'link_click',
-        bioLinkId: (creator as any).bioLinkId,
-        linkItemId: link.id,
-        linkLabel: link.label,
-        linkUrl: link.href,
-        creatorSlug: creator.id,
-      });
-    }
+    // Track to our backend (always track - API will resolve bioLinkId from slug if needed)
+    trackAnalytics({
+      type: 'link_click',
+      bioLinkId: (creator as any).bioLinkId,
+      linkItemId: link.id,
+      linkLabel: link.label,
+      linkUrl: link.href,
+      creatorSlug: creator.id,
+    });
     
     window.open(link.href, '_blank', 'noopener,noreferrer');
   };
@@ -684,6 +680,7 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
     </div>
 
     {/* Age Verification Overlay - Always in DOM, visibility controlled by CSS */}
+    {/* Using inert attribute instead of aria-hidden to properly prevent focus when hidden */}
     <div 
       className={cn(
         "fixed inset-0 z-[100] flex flex-col items-center justify-center px-4",
@@ -691,7 +688,11 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
           ? "opacity-0 pointer-events-none transition-opacity duration-300" 
           : "opacity-100"
       )}
-      aria-hidden={ageVerified}
+      // @ts-expect-error - inert is valid HTML attribute but not yet in React types
+      inert={ageVerified ? true : undefined}
+      aria-modal={!ageVerified}
+      role="dialog"
+      aria-labelledby="age-verify-title"
     >
       {/* Glass backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
@@ -704,7 +705,7 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
         </div>
         
         {/* Title */}
-        <h1 className="text-[22px] font-semibold text-white mb-3">
+        <h1 id="age-verify-title" className="text-[22px] font-semibold text-white mb-3">
           Sensitive Content
         </h1>
         

@@ -51,11 +51,32 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { data: dashboardUser } = await supabase
       .from("dashboard_users")
-      .select("role, creator_id")
+      .select("role, creator_id, studio_id")
       .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
       .single();
 
-    if (!dashboardUser || (dashboardUser.role !== "admin" && dashboardUser.creator_id !== bioLink.creator_id)) {
+    if (!dashboardUser) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    // Admin can access all
+    const isAdmin = dashboardUser.role === "admin";
+    // Model can access their own
+    const isOwnBioLink = dashboardUser.creator_id === bioLink.creator_id;
+    
+    // Studio can access their models' bio links
+    let isStudioModel = false;
+    if (dashboardUser.role === "studio" && dashboardUser.studio_id) {
+      // Check if the bio link's creator belongs to this studio
+      const { data: creator } = await supabase
+        .from("creators")
+        .select("studio_id")
+        .eq("id", bioLink.creator_id)
+        .single();
+      isStudioModel = creator?.studio_id === dashboardUser.studio_id;
+    }
+
+    if (!isAdmin && !isOwnBioLink && !isStudioModel) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

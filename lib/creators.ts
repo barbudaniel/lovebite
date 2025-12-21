@@ -1,8 +1,13 @@
 // ============================================
-// CREATOR PROFILES DATABASE & TYPES
+// CREATOR PROFILES LOCAL CACHE & TYPES
 // ============================================
-// This file contains all creator data and can be imported by both
-// server and client components.
+// NOTE: All creator data is now stored in Supabase (bio_links table).
+// This file serves as a local cache for:
+// 1. Custom domain routing in middleware (fast lookup without DB call)
+// 2. Fallback for legacy creators if not found in database
+// 
+// For new creators, add them to Supabase only. This file is kept for
+// backward compatibility with existing custom domain routing.
 
 export interface CreatorLink {
   id: string;

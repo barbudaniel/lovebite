@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, Reorder } from "motion/react";
 import { useDashboard } from "../layout";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -476,14 +476,249 @@ function LinkEditor({
 // SETTINGS MODAL
 // ============================================
 
+// ============================================
+// IMAGE UPLOADER COMPONENT
+// ============================================
+
+function ImageUploader({
+  label,
+  value,
+  onChange,
+  creatorId,
+  apiKey,
+  aspectHint,
+}: {
+  label: string;
+  value: string;
+  onChange: (url: string) => void;
+  creatorId: string;
+  apiKey: string | null;
+  aspectHint?: string;
+}) {
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [mediaLibrary, setMediaLibrary] = useState<MediaItem[]>([]);
+  const [isLoadingMedia, setIsLoadingMedia] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchMedia = async () => {
+    setIsLoadingMedia(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data } = await supabase
+        .from("media")
+        .select("id, storage_url, thumbnail_url, media_type, file_name")
+        .eq("creator_id", creatorId)
+        .eq("media_type", "image")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      setMediaLibrary(data || []);
+    } catch (err) {
+      console.error("Error fetching media:", err);
+    } finally {
+      setIsLoadingMedia(false);
+    }
+  };
+
+  const handleUpload = async (file: File) => {
+    if (!apiKey) {
+      toast.error("API key not configured for uploads");
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image must be less than 10MB");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const { createApiClient } = await import("@/lib/media-api");
+      const api = createApiClient(apiKey);
+      
+      const response = await api.uploadMedia({
+        file,
+        creator_id: creatorId,
+        category: "bio-link",
+        onProgress: setUploadProgress,
+      });
+
+      if (response.success && response.data) {
+        onChange(response.data.storage_url);
+        toast.success("Image uploaded and added to media library!");
+        setShowMediaPicker(false);
+      } else {
+        toast.error(response.error || "Failed to upload image");
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex items-start gap-4">
+        {value ? (
+          <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+            <img src={value} alt="" className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => { fetchMedia(); setShowMediaPicker(true); }}
+            className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center hover:border-violet-400 hover:bg-violet-50 transition-colors shrink-0"
+          >
+            <ImageIcon className="w-6 h-6 text-slate-400" />
+            <span className="text-xs text-slate-500 mt-1">Add Image</span>
+          </button>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-slate-600">Upload a new image or select from your media library</p>
+          {aspectHint && <p className="text-xs text-slate-400 mt-1">{aspectHint}</p>}
+          {value && (
+            <button
+              type="button"
+              onClick={() => { fetchMedia(); setShowMediaPicker(true); }}
+              className="text-xs text-violet-600 hover:text-violet-700 mt-2"
+            >
+              Change image
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Media Picker Modal */}
+      <AnimatePresence>
+        {showMediaPicker && (
+          <Dialog open onOpenChange={() => setShowMediaPicker(false)}>
+            <DialogContent size="xl">
+              <DialogHeader>
+                <DialogTitle>Select or Upload Image</DialogTitle>
+                <DialogDescription>Choose from your library or upload a new image</DialogDescription>
+              </DialogHeader>
+              <DialogBody>
+                {/* Upload Section */}
+                <div className="mb-6 p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleUpload(file);
+                    }}
+                    className="hidden"
+                  />
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+                      <Upload className="w-6 h-6 text-violet-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-slate-900">Upload New Image</p>
+                      <p className="text-sm text-slate-500">Image will be saved to your media library</p>
+                    </div>
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="bg-violet-600 hover:bg-violet-700"
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {uploadProgress}%
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex-1 h-px bg-slate-200" />
+                  <span className="text-sm text-slate-400">or select from library</span>
+                  <div className="flex-1 h-px bg-slate-200" />
+                </div>
+
+                {/* Media Library Grid */}
+                {isLoadingMedia ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
+                  </div>
+                ) : mediaLibrary.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FolderOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500">No images in your library yet</p>
+                    <p className="text-sm text-slate-400 mt-1">Upload your first image above</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-[350px] overflow-y-auto">
+                    {mediaLibrary.map((media) => (
+                      <button
+                        key={media.id}
+                        type="button"
+                        onClick={() => {
+                          onChange(media.storage_url);
+                          setShowMediaPicker(false);
+                        }}
+                        className="aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-violet-500 transition-colors"
+                      >
+                        <img
+                          src={media.thumbnail_url || media.storage_url}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </DialogBody>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function SettingsModal({
   bioLink,
   onSave,
   onClose,
+  creatorId,
+  apiKey,
 }: {
   bioLink: BioLink;
   onSave: (data: Partial<BioLink>) => Promise<void>;
   onClose: () => void;
+  creatorId: string;
+  apiKey: string | null;
 }) {
   const [form, setForm] = useState({
     name: bioLink.name || "",
@@ -493,6 +728,7 @@ function SettingsModal({
     welcome_title: bioLink.welcome_title || "",
     welcome_text: bioLink.welcome_text || "",
     profile_image_url: bioLink.profile_image_url || "",
+    gallery_image_url: bioLink.gallery_image_url || "",
     is_published: bioLink.is_published,
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -519,14 +755,24 @@ function SettingsModal({
           <DialogTitle>Bio Link Settings</DialogTitle>
           <DialogDescription>Customize your bio link page appearance</DialogDescription>
         </DialogHeader>
-        <DialogBody className="space-y-5">
-          {/* Profile Image */}
-          <div className="space-y-2">
-            <Label>Profile Image URL</Label>
-            <Input
+        <DialogBody className="space-y-5 max-h-[70vh] overflow-y-auto">
+          {/* Profile & Gallery Images */}
+          <div className="grid sm:grid-cols-2 gap-6">
+            <ImageUploader
+              label="Profile Picture"
               value={form.profile_image_url}
-              onChange={(e) => setForm({ ...form, profile_image_url: e.target.value })}
-              placeholder="https://..."
+              onChange={(url) => setForm({ ...form, profile_image_url: url })}
+              creatorId={creatorId}
+              apiKey={apiKey}
+              aspectHint="Square image recommended (400x400px)"
+            />
+            <ImageUploader
+              label="Gallery/Banner Image"
+              value={form.gallery_image_url}
+              onChange={(url) => setForm({ ...form, gallery_image_url: url })}
+              creatorId={creatorId}
+              apiKey={apiKey}
+              aspectHint="Landscape image recommended (800x600px)"
             />
           </div>
 
@@ -646,7 +892,7 @@ interface CreatorOption {
 // ============================================
 
 export default function BioLinksPage() {
-  const { user } = useDashboard();
+  const { user, apiKey } = useDashboard();
   const [bioLink, setBioLink] = useState<BioLink | null>(null);
   const [linkItems, setLinkItems] = useState<BioLinkItem[]>([]);
   const [socialLinks, setSocialLinks] = useState<BioSocialLink[]>([]);
@@ -1030,11 +1276,13 @@ export default function BioLinksPage() {
 
       {/* Modals */}
       <AnimatePresence>
-        {showSettings && bioLink && (
+        {showSettings && bioLink && effectiveCreatorId && (
           <SettingsModal
             bioLink={bioLink}
             onSave={handleSaveSettings}
             onClose={() => setShowSettings(false)}
+            creatorId={effectiveCreatorId}
+            apiKey={apiKey}
           />
         )}
       </AnimatePresence>

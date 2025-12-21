@@ -3,6 +3,45 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getCreatorByDomain } from '@/lib/creators';
 
+// Check Supabase for custom domain (with caching via edge runtime)
+async function getCreatorSlugByDomain(domain: string): Promise<string | null> {
+  // Remove www. prefix if present
+  const cleanDomain = domain.replace(/^www\./, "").toLowerCase();
+  
+  // First check local cache (instant, no network call)
+  const localCreator = getCreatorByDomain(cleanDomain);
+  if (localCreator) {
+    return localCreator.id;
+  }
+  
+  // Check Supabase for custom domains not in local cache
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/bio_links?custom_domain=ilike.${cleanDomain}&is_published=eq.true&select=slug`,
+      {
+        headers: {
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+        },
+        // Cache for 1 hour to reduce DB calls
+        next: { revalidate: 3600 },
+      }
+    );
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.length > 0 && data[0].slug) {
+        return data[0].slug;
+      }
+    }
+  } catch (e) {
+    // Silent fail - will fall through to normal routing
+    console.error('Error checking custom domain:', e);
+  }
+  
+  return null;
+}
+
 export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || '';
   const pathname = request.nextUrl.pathname;
@@ -11,12 +50,12 @@ export async function middleware(request: NextRequest) {
   // CUSTOM DOMAIN ROUTING
   // ============================================
 
-  // Check if this is a creator's custom domain
-  const creator = getCreatorByDomain(hostname);
-  if (creator) {
+  // Check if this is a creator's custom domain (local cache + Supabase)
+  const creatorSlug = await getCreatorSlugByDomain(hostname);
+  if (creatorSlug) {
     // Root path -> show creator profile
     if (pathname === '/') {
-      return NextResponse.rewrite(new URL(`/creator/${creator.id}`, request.url));
+      return NextResponse.rewrite(new URL(`/creator/${creatorSlug}`, request.url));
     }
     // Any other path -> redirect to root
     return NextResponse.redirect(new URL('/', request.url));
