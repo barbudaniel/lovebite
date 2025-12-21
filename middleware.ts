@@ -67,9 +67,14 @@ export async function middleware(request: NextRequest) {
     if (pathname === '/') {
       return NextResponse.redirect('https://lovebite.fans');
     }
-    // /:username -> rewrite to /creator/:username
+    
+    // Exclude system routes from username rewrite
+    const systemRoutes = ['/dashboard', '/api', '/admin', '/join', '/register', '/bio', '/creator', '/_next'];
+    const isSystemRoute = systemRoutes.some(route => pathname.startsWith(route));
+    
+    // /:username -> rewrite to /creator/:username (but not system routes)
     const username = pathname.slice(1); // Remove leading slash
-    if (username && !username.includes('/')) {
+    if (username && !username.includes('/') && !isSystemRoute) {
       return NextResponse.rewrite(new URL(`/creator/${username}`, request.url));
     }
   }
