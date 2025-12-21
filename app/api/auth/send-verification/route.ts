@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { getSupabaseServiceRoleClient } from "@/lib/supabase";
+import { getSupabaseAdminClient } from "@/lib/supabase-server";
 import { getEmailVerificationHtml } from "@/lib/email-templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const supabase = getSupabaseServiceRoleClient();
+const supabase = getSupabaseAdminClient();
 
 // Generate a 6-digit verification code
 function generateCode(): string {

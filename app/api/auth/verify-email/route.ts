@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { getSupabaseServiceRoleClient } from "@/lib/supabase";
+import { getSupabaseAdminClient } from "@/lib/supabase-server";
 import { getWelcomeHtml } from "@/lib/email-templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const supabase = getSupabaseServiceRoleClient();
+const supabase = getSupabaseAdminClient();
 
 export async function POST(request: NextRequest) {
   try {
