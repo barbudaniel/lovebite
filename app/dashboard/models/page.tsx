@@ -1814,7 +1814,7 @@ export default function ModelsPage() {
               }}
               onViewProfile={() => {
                 const bio = getBioLink(model.id);
-                window.open(`/${bio?.slug || model.username}`, "_blank");
+                window.open(`/creator/${bio?.slug || model.username}`, "_blank");
               }}
               onToggleActive={() => handleToggleActive(model)}
               onEditBioLink={() => {
