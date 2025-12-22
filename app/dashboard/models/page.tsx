@@ -729,15 +729,28 @@ function InviteModelModal({
       const supabase = getSupabaseBrowserClient();
       
       // Search for creators without a studio (independent models)
+      // Join with bio_links to get display_name and avatar
       const { data, error } = await supabase
         .from("creators")
-        .select("*")
+        .select(`
+          *,
+          bio_links!bio_links_creator_id_fkey(name, profile_image_url)
+        `)
         .is("studio_id", null)
-        .or(`username.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .eq("active", true)
+        .ilike("username", `%${searchQuery}%`)
         .limit(10);
 
       if (error) throw error;
-      setSearchResults(data || []);
+      
+      // Transform data to include display_name and avatar_url from bio_links
+      const transformedData = (data || []).map(creator => ({
+        ...creator,
+        display_name: creator.bio_links?.[0]?.name || null,
+        avatar_url: creator.bio_links?.[0]?.profile_image_url || null,
+      }));
+      
+      setSearchResults(transformedData);
     } catch (err) {
       console.error("Error searching creators:", err);
       toast.error("Failed to search creators");
