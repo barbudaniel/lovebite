@@ -32,3 +32,4 @@ ON public.bio_page_views (bio_link_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_bio_link_clicks_bio_link_id_created 
 ON public.bio_link_clicks (bio_link_id, created_at DESC);
 
+

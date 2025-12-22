@@ -15,20 +15,18 @@ import {
   Maximize,
   Minimize,
   Music,
-  RotateCw,
   Save,
   Trash2,
   ZoomIn,
   ZoomOut,
   X,
   Edit3,
-  Tag,
   Eye,
-  EyeOff,
-  Sparkles,
   RefreshCw,
   Check,
   AlertTriangle,
+  Sparkles,
+  MoreVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,6 +71,7 @@ interface MediaViewerProps {
   onNavigate?: (media: Media) => void;
   onCopyPermalink?: (id: string) => void;
   permalink?: string;
+  userRole?: "admin" | "business" | "independent";
 }
 
 // ============================================
@@ -111,6 +110,82 @@ const CATEGORY_OPTIONS = [
   "Selfie",
   "PPV",
 ];
+
+// ============================================
+// DRAGGABLE SCROLL COMPONENT
+// ============================================
+
+function DraggableScroll({ 
+  children, 
+  className 
+}: { 
+  children: React.ReactNode; 
+  className?: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - containerRef.current.offsetLeft);
+    setScrollLeft(containerRef.current.scrollLeft);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    containerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!containerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.touches[0].pageX - containerRef.current.offsetLeft);
+    setScrollLeft(containerRef.current.scrollLeft);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    const x = e.touches[0].pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    containerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onMouseMove={handleMouseMove}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleMouseUp}
+      onTouchMove={handleTouchMove}
+      style={{ 
+        userSelect: isDragging ? 'none' : 'auto',
+        scrollbarWidth: 'none', // Firefox
+        msOverflowStyle: 'none', // IE/Edge
+      }}
+    >
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+      {children}
+    </div>
+  );
+}
 
 // ============================================
 // TAG INPUT COMPONENT
@@ -154,17 +229,17 @@ function TagInput({
 
   return (
     <div className="space-y-2">
-      <Label className="text-xs text-slate-400">{label}</Label>
-      <div className="flex flex-wrap gap-1.5 p-2 bg-slate-700/50 rounded-lg min-h-[38px]">
+      <Label className="text-xs text-slate-500">{label}</Label>
+      <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-lg min-h-[38px]">
         {tags.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded text-xs"
+            className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-100 text-brand-700 rounded text-xs"
           >
             {tag}
             <button
               onClick={() => removeTag(tag)}
-              className="hover:text-blue-100"
+              className="hover:text-brand-900"
             >
               <X className="w-3 h-3" />
             </button>
@@ -176,7 +251,7 @@ function TagInput({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={tags.length === 0 ? placeholder : ""}
-          className="flex-1 min-w-[100px] bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+          className="flex-1 min-w-[100px] bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
         />
       </div>
       {suggestions && suggestions.length > 0 && (
@@ -188,7 +263,7 @@ function TagInput({
               <button
                 key={suggestion}
                 onClick={() => addTag(suggestion)}
-                className="px-2 py-0.5 text-xs bg-slate-700 text-slate-300 rounded hover:bg-slate-600 transition-colors"
+                className="px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded hover:bg-slate-200 transition-colors"
               >
                 + {suggestion}
               </button>
@@ -224,7 +299,7 @@ function MultiSelectPills({
 
   return (
     <div className="space-y-2">
-      <Label className="text-xs text-slate-400">{label}</Label>
+      <Label className="text-xs text-slate-500">{label}</Label>
       <div className="flex flex-wrap gap-1.5">
         {options.map((option) => (
           <button
@@ -232,8 +307,8 @@ function MultiSelectPills({
             onClick={() => toggle(option)}
             className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
               selected.includes(option)
-                ? "bg-blue-500 text-white"
-                : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                ? "bg-brand-500 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
             {option}
@@ -257,20 +332,52 @@ export default function MediaViewer({
   onNavigate,
   onCopyPermalink,
   permalink,
+  userRole = "independent",
 }: MediaViewerProps) {
-  const [showInfo, setShowInfo] = useState(true);
+  // Detect mobile for initial info panel state
+  const [isMobile, setIsMobile] = useState(false);
+  const [showInfo, setShowInfo] = useState(false); // Default to false
+  const [showMenu, setShowMenu] = useState(false);
   const [zoom, setZoom] = useState(100);
-  const [rotation, setRotation] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   
   // Pan/drag state
   const [isPanning, setIsPanning] = useState(false);
   const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Double-tap zoom state (mobile only)
+  const lastTapRef = useRef<number>(0);
+  
+  // Show username only for admin/business
+  const showUsername = userRole === "admin" || userRole === "business";
+  
+  // Initialize mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+  
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Metadata state
   const [metadata, setMetadata] = useState<MediaMetadata | null>(null);
@@ -283,6 +390,35 @@ export default function MediaViewer({
   const currentIndex = mediaList?.findIndex((m) => m.id === media.id) ?? -1;
   const canNavigatePrev = currentIndex > 0;
   const canNavigateNext = currentIndex >= 0 && currentIndex < (mediaList?.length ?? 0) - 1;
+
+  // Preload adjacent images (3 left, 3 right) for smooth navigation
+  useEffect(() => {
+    if (!mediaList || currentIndex < 0) return;
+    
+    const imagesToPreload: string[] = [];
+    
+    // Preload 3 images before
+    for (let i = 1; i <= 3; i++) {
+      const prevIndex = currentIndex - i;
+      if (prevIndex >= 0 && mediaList[prevIndex]?.media_type === "image") {
+        imagesToPreload.push(mediaList[prevIndex].storage_url);
+      }
+    }
+    
+    // Preload 3 images after
+    for (let i = 1; i <= 3; i++) {
+      const nextIndex = currentIndex + i;
+      if (nextIndex < mediaList.length && mediaList[nextIndex]?.media_type === "image") {
+        imagesToPreload.push(mediaList[nextIndex].storage_url);
+      }
+    }
+    
+    // Preload images
+    imagesToPreload.forEach((url) => {
+      const img = new Image();
+      img.src = url;
+    });
+  }, [currentIndex, mediaList]);
 
   // Fetch metadata on mount
   useEffect(() => {
@@ -389,10 +525,7 @@ export default function MediaViewer({
         setZoom((z) => Math.max(z - 25, 25));
       } else if (e.key === "0") {
         setZoom(100);
-        setRotation(0);
         setPanPosition({ x: 0, y: 0 });
-      } else if (e.key === "r" || e.key === "R") {
-        setRotation((r) => (r + 90) % 360);
       } else if (e.key === "i" || e.key === "I") {
         setShowInfo((s) => !s);
       }
@@ -401,6 +534,110 @@ export default function MediaViewer({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose, canNavigatePrev, canNavigateNext, currentIndex, mediaList, onNavigate, isEditing]);
+  
+  // Handle double-click to zoom (desktop)
+  const handleDoubleClickZoom = (e: React.MouseEvent) => {
+    // Only on desktop
+    if (isMobile) return;
+    
+    // Check if the click target is the image or the container, not buttons
+    const target = e.target as HTMLElement;
+    if (target.tagName === "BUTTON" || target.closest("button")) return;
+    
+    if (zoom === 100) {
+      setZoom(200);
+    } else {
+      setZoom(100);
+      setPanPosition({ x: 0, y: 0 });
+    }
+  };
+  
+  // Touch gesture state for mobile
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const initialPinchDistanceRef = useRef<number | null>(null);
+  const initialZoomRef = useRef<number>(100);
+  
+  // Handle double-tap to zoom (mobile only, images only)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isMobile || media.media_type !== "image") return;
+    
+    // Handle pinch-to-zoom start
+    if (e.touches.length === 2) {
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      initialPinchDistanceRef.current = distance;
+      initialZoomRef.current = zoom;
+      return;
+    }
+    
+    const now = Date.now();
+    const touch = e.touches[0];
+    const DOUBLE_TAP_DELAY = 300;
+    
+    // Check for double-tap
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      e.preventDefault();
+      if (zoom === 100) {
+        setZoom(200);
+      } else {
+        setZoom(100);
+        setPanPosition({ x: 0, y: 0 });
+      }
+      lastTapRef.current = 0; // Reset to prevent triple-tap
+      return;
+    }
+    
+    lastTapRef.current = now;
+    
+    // Store touch start for panning when zoomed
+    if (zoom > 100) {
+      touchStartRef.current = {
+        x: touch.clientX - panPosition.x,
+        y: touch.clientY - panPosition.y,
+        time: now,
+      };
+    }
+  };
+  
+  // Handle touch move for panning and pinch zoom (mobile only, images only)
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isMobile || media.media_type !== "image") return;
+    
+    // Handle pinch-to-zoom
+    if (e.touches.length === 2 && initialPinchDistanceRef.current !== null) {
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      const scale = distance / initialPinchDistanceRef.current;
+      const newZoom = Math.max(25, Math.min(300, initialZoomRef.current * scale));
+      setZoom(Math.round(newZoom));
+      return;
+    }
+    
+    // Handle panning when zoomed
+    if (zoom > 100 && touchStartRef.current && e.touches.length === 1) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      setPanPosition({
+        x: touch.clientX - touchStartRef.current.x,
+        y: touch.clientY - touchStartRef.current.y,
+      });
+    }
+  };
+  
+  // Handle touch end
+  const handleTouchEnd = () => {
+    touchStartRef.current = null;
+    initialPinchDistanceRef.current = null;
+  };
 
   // Reset pan when zoom changes
   useEffect(() => {
@@ -484,96 +721,55 @@ export default function MediaViewer({
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent size="full" className="bg-slate-900 border-none p-0 max-h-screen">
+      <DialogContent size="full" className="bg-white border-none p-0 max-h-screen">
         <VisuallyHidden>
-          <DialogTitle>Media Preview - {media.file_name}</DialogTitle>
+          <DialogTitle>Media Preview</DialogTitle>
         </VisuallyHidden>
 
         <div ref={containerRef} className="flex flex-col h-screen">
           {/* Top Toolbar */}
-          <div className="flex items-center justify-between px-4 py-3 bg-slate-800/90 backdrop-blur-sm border-b border-slate-700/50 shrink-0">
-            {/* Left: Back and filename */}
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 bg-white border-b border-slate-200 shrink-0 relative z-50">
+            {/* Left: Back and creator (only for admin/business) */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-slate-300" />
+                <ArrowLeft className="w-5 h-5 text-slate-600" />
               </button>
-              <div className="min-w-0">
-                <h3 className="font-medium text-white truncate max-w-[200px] sm:max-w-[300px]">
-                  {media.file_name}
-                </h3>
-                <p className="text-xs text-slate-400">@{media.creator?.username || "unknown"}</p>
-              </div>
+              {showUsername && (
+                <p className="text-sm text-slate-600">@{media.creator?.username || "unknown"}</p>
+              )}
             </div>
 
-            {/* Center: Zoom controls */}
+            {/* Center: Zoom controls (desktop only) */}
             {media.media_type === "image" && (
-              <div className="hidden md:flex items-center gap-1 bg-slate-700/50 rounded-lg px-2 py-1">
+              <div className="hidden md:flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
                 <button
                   onClick={() => setZoom((z) => Math.max(z - 25, 25))}
-                  className="p-1.5 hover:bg-slate-600 rounded transition-colors"
+                  className="p-1.5 hover:bg-slate-200 rounded transition-colors"
                 >
-                  <ZoomOut className="w-4 h-4 text-slate-300" />
+                  <ZoomOut className="w-4 h-4 text-slate-600" />
                 </button>
-                <span className="text-xs text-slate-300 w-12 text-center font-mono">{zoom}%</span>
+                <span className="text-xs text-slate-600 w-12 text-center font-mono">{zoom}%</span>
                 <button
                   onClick={() => setZoom((z) => Math.min(z + 25, 300))}
-                  className="p-1.5 hover:bg-slate-600 rounded transition-colors"
+                  className="p-1.5 hover:bg-slate-200 rounded transition-colors"
                 >
-                  <ZoomIn className="w-4 h-4 text-slate-300" />
-                </button>
-                <div className="w-px h-4 bg-slate-600 mx-1" />
-                <button
-                  onClick={() => setRotation((r) => (r + 90) % 360)}
-                  className="p-1.5 hover:bg-slate-600 rounded transition-colors"
-                >
-                  <RotateCw className="w-4 h-4 text-slate-300" />
+                  <ZoomIn className="w-4 h-4 text-slate-600" />
                 </button>
                 <button
-                  onClick={() => { setZoom(100); setRotation(0); setPanPosition({ x: 0, y: 0 }); }}
-                  className="px-2 py-1 text-xs text-slate-300 hover:bg-slate-600 rounded transition-colors"
+                  onClick={() => { setZoom(100); setPanPosition({ x: 0, y: 0 }); }}
+                  className="px-2 py-1 text-xs text-slate-600 hover:bg-slate-200 rounded transition-colors"
                 >
                   Reset
                 </button>
               </div>
             )}
 
-            {/* Right: Actions */}
+            {/* Right: Simplified Actions */}
             <div className="flex items-center gap-1">
-              {media.media_type === "image" && (
-                <button
-                  onClick={() => onCopy(media)}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-                  title="Copy image"
-                >
-                  <Copy className="w-5 h-5 text-slate-300" />
-                </button>
-              )}
-              {(onCopyPermalink || permalink) && (
-                <button
-                  onClick={handleCopyPermalink}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-                  title="Copy dashboard permalink"
-                >
-                  <ExternalLink className="w-5 h-5 text-slate-300" />
-                </button>
-              )}
-              <button
-                onClick={handleCopyLink}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-                title="Copy direct file link"
-              >
-                <Link className="w-5 h-5 text-slate-300" />
-              </button>
-              <button
-                onClick={() => window.open(media.storage_url, "_blank")}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-                title="Open in new tab"
-              >
-                <ExternalLink className="w-5 h-5 text-slate-300" />
-              </button>
+              {/* Download */}
               <button
                 onClick={() => {
                   const a = document.createElement("a");
@@ -581,83 +777,147 @@ export default function MediaViewer({
                   a.download = media.file_name;
                   a.click();
                 }}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
                 title="Download"
               >
-                <Download className="w-5 h-5 text-slate-300" />
+                <Download className="w-5 h-5 text-slate-600" />
               </button>
-              <button
-                onClick={toggleFullscreen}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors hidden sm:block"
-                title="Fullscreen"
-              >
-                {isFullscreen ? (
-                  <Minimize className="w-5 h-5 text-slate-300" />
-                ) : (
-                  <Maximize className="w-5 h-5 text-slate-300" />
-                )}
-              </button>
-              <div className="w-px h-6 bg-slate-700 mx-1" />
+              
+              {/* Info Toggle */}
               <button
                 onClick={() => setShowInfo((s) => !s)}
                 className={`p-2 rounded-lg transition-colors ${
-                  showInfo ? "bg-blue-600 text-white" : "hover:bg-slate-700 text-slate-300"
+                  showInfo ? "bg-brand-600 text-white" : "hover:bg-slate-100 text-slate-600"
                 }`}
                 title="Info panel"
               >
                 <Info className="w-5 h-5" />
               </button>
-              <button
-                onClick={() => {
-                  if (confirm("Delete this media? This cannot be undone.")) {
-                    onDelete(media.id);
-                    onClose();
-                  }
-                }}
-                className="p-2 hover:bg-red-600/20 rounded-lg transition-colors"
-                title="Delete"
-              >
-                <Trash2 className="w-5 h-5 text-red-400" />
-              </button>
+              
+              {/* More Actions Dropdown */}
+              <div className="relative" ref={menuRef}>
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  title="More actions"
+                >
+                  <MoreVertical className="w-5 h-5 text-slate-600" />
+                </button>
+                
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {showMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl border border-slate-200 shadow-xl py-1 z-[100]"
+                    >
+                      {media.media_type === "image" && (
+                        <button
+                          onClick={() => { onCopy(media); setShowMenu(false); }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <Copy className="w-4 h-4" />
+                          Copy image
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { handleCopyLink(); setShowMenu(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <Link className="w-4 h-4" />
+                        Copy direct link
+                      </button>
+                      {(onCopyPermalink || permalink) && (
+                        <button
+                          onClick={() => { handleCopyPermalink(); setShowMenu(false); }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Copy permalink
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { window.open(media.storage_url, "_blank"); setShowMenu(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Open in new tab
+                      </button>
+                      <button
+                        onClick={() => { toggleFullscreen(); setShowMenu(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                        {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                      </button>
+                      <div className="h-px bg-slate-200 my-1" />
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          if (confirm("Delete this media? This cannot be undone.")) {
+                            onDelete(media.id);
+                            onClose();
+                          }
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 flex overflow-hidden">
-            {/* Media Preview */}
+          <div className="flex-1 flex overflow-hidden relative">
+            {/* Media Preview - Full width on mobile */}
             <div 
               ref={imageContainerRef}
-              className={`flex-1 relative flex items-center justify-center bg-slate-950 overflow-hidden ${
-                zoom > 100 ? (isPanning ? "cursor-grabbing" : "cursor-grab") : "cursor-default"
+              className={`flex-1 relative flex items-center justify-center bg-slate-100 overflow-hidden ${
+                !isMobile && zoom > 100 ? (isPanning ? "cursor-grabbing" : "cursor-grab") : ""
               }`}
+              style={{
+                // Prevent browser's native zoom gestures on the container for images
+                touchAction: isMobile && media.media_type === "image" ? "none" : "auto",
+              }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
               onWheel={handleWheel}
+              onDoubleClick={handleDoubleClickZoom}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
               {/* Navigation arrows */}
               {canNavigatePrev && mediaList && onNavigate && (
                 <button
-                  onClick={() => onNavigate(mediaList[currentIndex - 1])}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-slate-800/80 hover:bg-slate-700 rounded-full z-10 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); onNavigate(mediaList[currentIndex - 1]); }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/90 hover:bg-white shadow-lg rounded-full z-10 transition-colors"
                 >
-                  <ChevronLeft className="w-6 h-6 text-white" />
+                  <ChevronLeft className="w-6 h-6 text-slate-700" />
                 </button>
               )}
               {canNavigateNext && mediaList && onNavigate && (
                 <button
-                  onClick={() => onNavigate(mediaList[currentIndex + 1])}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-slate-800/80 hover:bg-slate-700 rounded-full z-10 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); onNavigate(mediaList[currentIndex + 1]); }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/90 hover:bg-white shadow-lg rounded-full z-10 transition-colors"
                 >
-                  <ChevronRight className="w-6 h-6 text-white" />
+                  <ChevronRight className="w-6 h-6 text-slate-700" />
                 </button>
               )}
 
               {/* Loading spinner */}
               {isImageLoading && media.media_type === "image" && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+                  <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
                 </div>
               )}
 
@@ -668,7 +928,7 @@ export default function MediaViewer({
                   alt={media.file_name}
                   className="max-w-full max-h-full object-contain select-none"
                   style={{
-                    transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoom / 100}) rotate(${rotation}deg)`,
+                    transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoom / 100})`,
                     opacity: isImageLoading ? 0 : 1,
                     transition: isPanning ? "none" : "transform 0.2s ease-out",
                   }}
@@ -685,8 +945,8 @@ export default function MediaViewer({
                 />
               ) : (
                 <div className="flex flex-col items-center gap-6">
-                  <div className="w-32 h-32 bg-slate-800 rounded-2xl flex items-center justify-center">
-                    <Music className="w-16 h-16 text-orange-400" />
+                  <div className="w-32 h-32 bg-orange-100 rounded-2xl flex items-center justify-center">
+                    <Music className="w-16 h-16 text-orange-500" />
                   </div>
                   <audio src={media.storage_url} controls autoPlay className="w-full max-w-lg" />
                 </div>
@@ -694,51 +954,71 @@ export default function MediaViewer({
 
               {/* Counter */}
               {mediaList && mediaList.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800/80 rounded-full text-sm text-slate-300 font-mono">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white/90 backdrop-blur-sm shadow-sm rounded-full text-sm text-slate-600 font-mono">
                   {currentIndex + 1} / {mediaList.length}
                 </div>
               )}
               
               {/* Pan hint */}
-              {zoom > 100 && !isPanning && (
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800/80 rounded-full text-xs text-slate-400">
+              {zoom > 100 && !isPanning && !isMobile && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white/90 backdrop-blur-sm shadow-sm rounded-full text-xs text-slate-500">
                   Drag to pan • Ctrl+Scroll to zoom
+                </div>
+              )}
+              
+              {/* Desktop zoom hint */}
+              {zoom === 100 && media.media_type === "image" && !isMobile && (
+                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white/90 backdrop-blur-sm shadow-sm rounded-full text-xs text-slate-500">
+                  Double-click to zoom
+                </div>
+              )}
+              
+              {/* Mobile zoom hint */}
+              {zoom === 100 && media.media_type === "image" && isMobile && (
+                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white/90 backdrop-blur-sm shadow-sm rounded-full text-xs text-slate-500">
+                  Double-tap to zoom
                 </div>
               )}
             </div>
 
-            {/* Info Panel */}
+            {/* Info Panel - Glass sheet on mobile, sidebar on desktop */}
             <AnimatePresence>
               {showInfo && (
                 <motion.div
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 360, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="border-l border-slate-700/50 bg-slate-800/50 backdrop-blur-sm overflow-hidden shrink-0"
+                  initial={isMobile ? { y: "100%" } : { width: 0, opacity: 0 }}
+                  animate={isMobile ? { y: 0 } : { width: 360, opacity: 1 }}
+                  exit={isMobile ? { y: "100%" } : { width: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className={`overflow-hidden shrink-0 ${
+                    isMobile 
+                      ? "absolute bottom-0 left-0 right-0 z-20 rounded-t-2xl max-h-[70vh] bg-white/80 backdrop-blur-xl border-t border-slate-200 shadow-2xl" 
+                      : "border-l border-slate-200 bg-white"
+                  }`}
                 >
-                  <div className="w-[360px] h-full overflow-y-auto">
+                  <div className={`${isMobile ? "w-full" : "w-[360px]"} h-full overflow-y-auto`}>
+                    {/* Mobile Sheet Handle */}
+                    {isMobile && (
+                      <div className="flex justify-center py-2">
+                        <div className="w-10 h-1 bg-slate-300 rounded-full" />
+                      </div>
+                    )}
                     {/* Panel Header */}
-                    <div className="sticky top-0 bg-slate-800/90 backdrop-blur-sm border-b border-slate-700/50 p-4 flex items-center justify-between">
-                      <h4 className="font-semibold text-white">Details</h4>
+                    <div className={`sticky top-0 ${isMobile ? "bg-white/80 backdrop-blur-xl" : "bg-white"} border-b border-slate-200 p-4 flex items-center justify-between ${isMobile ? "pt-2" : ""}`}>
+                      <h4 className="font-semibold text-slate-900">Details</h4>
                       <div className="flex items-center gap-2">
+                        {isMobile && (
+                          <button
+                            onClick={() => setShowInfo(false)}
+                            className="p-1.5 hover:bg-slate-100 rounded transition-colors text-slate-500"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        )}
                         {!isEditing ? (
                           <>
                             <button
-                              onClick={syncFromPinecone}
-                              disabled={isSyncing}
-                              className="p-1.5 hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-slate-200"
-                              title="Sync from AI"
-                            >
-                              {isSyncing ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Sparkles className="w-4 h-4" />
-                              )}
-                            </button>
-                            <button
                               onClick={() => setIsEditing(true)}
-                              className="p-1.5 hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-slate-200"
+                              className="p-1.5 hover:bg-slate-100 rounded transition-colors text-slate-500 hover:text-slate-700"
                               title="Edit metadata"
                             >
                               <Edit3 className="w-4 h-4" />
@@ -751,14 +1031,14 @@ export default function MediaViewer({
                                 setIsEditing(false);
                                 setEditedMetadata(metadata || {});
                               }}
-                              className="p-1.5 hover:bg-slate-700 rounded transition-colors text-slate-400"
+                              className="p-1.5 hover:bg-slate-100 rounded transition-colors text-slate-500"
                             >
                               <X className="w-4 h-4" />
                             </button>
                             <button
                               onClick={saveMetadata}
                               disabled={isSaving}
-                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-sm text-white flex items-center gap-1.5"
+                              className="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 rounded text-sm text-white flex items-center gap-1.5"
                             >
                               {isSaving ? (
                                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -781,25 +1061,25 @@ export default function MediaViewer({
                         /* Edit Mode */
                         <>
                           {/* NSFW Toggle */}
-                          <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+                          <div className="flex items-center justify-between p-3 bg-slate-100 rounded-lg">
                             <div className="flex items-center gap-2">
                               {editedMetadata.is_nsfw ? (
-                                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                                <AlertTriangle className="w-4 h-4 text-amber-500" />
                               ) : (
-                                <Eye className="w-4 h-4 text-green-400" />
+                                <Eye className="w-4 h-4 text-green-500" />
                               )}
-                              <span className="text-sm text-white">NSFW Content</span>
+                              <span className="text-sm text-slate-700">NSFW Content</span>
                             </div>
                             <button
                               onClick={() =>
                                 setEditedMetadata((m) => ({ ...m, is_nsfw: !m.is_nsfw }))
                               }
                               className={`w-11 h-6 rounded-full transition-colors relative ${
-                                editedMetadata.is_nsfw ? "bg-amber-500" : "bg-slate-600"
+                                editedMetadata.is_nsfw ? "bg-amber-500" : "bg-slate-300"
                               }`}
                             >
                               <div
-                                className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                                className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${
                                   editedMetadata.is_nsfw ? "translate-x-6" : "translate-x-1"
                                 }`}
                               />
@@ -808,7 +1088,7 @@ export default function MediaViewer({
 
                           {/* Style */}
                           <div className="space-y-2">
-                            <Label className="text-xs text-slate-400">Style</Label>
+                            <Label className="text-xs text-slate-500">Style</Label>
                             <div className="flex flex-wrap gap-1.5">
                               {STYLE_OPTIONS.map((style) => (
                                 <button
@@ -821,8 +1101,8 @@ export default function MediaViewer({
                                   }
                                   className={`px-2.5 py-1 text-xs rounded-full capitalize transition-colors ${
                                     editedMetadata.style === style
-                                      ? "bg-blue-500 text-white"
-                                      : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                      ? "bg-brand-500 text-white"
+                                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                   }`}
                                 >
                                   {style}
@@ -864,7 +1144,7 @@ export default function MediaViewer({
 
                           {/* Description */}
                           <div className="space-y-2">
-                            <Label className="text-xs text-slate-400">AI Description</Label>
+                            <Label className="text-xs text-slate-500">AI Description</Label>
                             <textarea
                               value={editedMetadata.photo_description || ""}
                               onChange={(e) =>
@@ -873,7 +1153,7 @@ export default function MediaViewer({
                                   photo_description: e.target.value,
                                 }))
                               }
-                              className="w-full h-32 p-3 bg-slate-700/50 rounded-lg text-sm text-white placeholder:text-slate-500 resize-none"
+                              className="w-full h-32 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder:text-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-brand-500"
                               placeholder="Enter description..."
                             />
                           </div>
@@ -883,8 +1163,8 @@ export default function MediaViewer({
                         <>
                           {/* Sync Status */}
                           {metadata?.pinecone_synced_at && (
-                            <div className="flex items-center gap-2 p-2 bg-green-500/10 rounded-lg text-xs text-green-400">
-                              <Check className="w-3 h-3" />
+                            <div className="flex items-center gap-2 p-2.5 bg-green-500 rounded-lg text-xs text-white font-medium">
+                              <Check className="w-3.5 h-3.5" />
                               <span>
                                 AI synced {format(new Date(metadata.pinecone_synced_at), "MMM d, yyyy")}
                               </span>
@@ -893,25 +1173,25 @@ export default function MediaViewer({
 
                           {/* File Details */}
                           <div className="space-y-3">
-                            <h5 className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                            <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                               File Info
                             </h5>
                             <dl className="space-y-2.5">
                               <div className="flex justify-between">
-                                <dt className="text-sm text-slate-400">Type</dt>
-                                <dd className="text-sm text-white capitalize">{media.media_type}</dd>
+                                <dt className="text-sm text-slate-600">Type</dt>
+                                <dd className="text-sm text-black font-medium capitalize">{media.media_type}</dd>
                               </div>
                               <div className="flex justify-between">
-                                <dt className="text-sm text-slate-400">Size</dt>
-                                <dd className="text-sm text-white">{formatFileSize(media.file_size_bytes)}</dd>
+                                <dt className="text-sm text-slate-600">Size</dt>
+                                <dd className="text-sm text-black font-medium">{formatFileSize(media.file_size_bytes)}</dd>
                               </div>
                               <div className="flex justify-between">
-                                <dt className="text-sm text-slate-400">Category</dt>
-                                <dd className="text-sm text-white">{media.category || "—"}</dd>
+                                <dt className="text-sm text-slate-600">Category</dt>
+                                <dd className="text-sm text-black font-medium">{media.category || "—"}</dd>
                               </div>
                               <div className="flex justify-between">
-                                <dt className="text-sm text-slate-400">Created</dt>
-                                <dd className="text-sm text-white">
+                                <dt className="text-sm text-slate-600">Created</dt>
+                                <dd className="text-sm text-black font-medium">
                                   {format(new Date(media.created_at), "MMM d, yyyy")}
                                 </dd>
                               </div>
@@ -921,26 +1201,26 @@ export default function MediaViewer({
                           {/* AI Metadata */}
                           {metadata && (
                             <>
-                              <div className="h-px bg-slate-700/50" />
+                              <div className="h-px bg-slate-200" />
 
                               <div className="space-y-3">
-                                <h5 className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                                <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                                   AI Analysis
                                 </h5>
 
                                 {/* NSFW Badge */}
                                 <div className="flex items-center gap-2">
                                   {metadata.is_nsfw ? (
-                                    <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded text-xs font-medium">
+                                    <span className="px-2.5 py-1 bg-amber-500 text-white rounded-md text-xs font-semibold">
                                       NSFW
                                     </span>
                                   ) : (
-                                    <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs font-medium">
+                                    <span className="px-2.5 py-1 bg-green-500 text-white rounded-md text-xs font-semibold">
                                       SFW
                                     </span>
                                   )}
                                   {metadata.style && (
-                                    <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-xs font-medium capitalize">
+                                    <span className="px-2.5 py-1 bg-blue-500 text-white rounded-md text-xs font-semibold capitalize">
                                       {metadata.style}
                                     </span>
                                   )}
@@ -948,65 +1228,60 @@ export default function MediaViewer({
 
                                 {/* Categories */}
                                 {metadata.categories && metadata.categories.length > 0 && (
-                                  <div className="space-y-1.5">
-                                    <span className="text-xs text-slate-400">Categories</span>
-                                    <div className="flex flex-wrap gap-1.5">
+                                  <div className="space-y-2">
+                                    <span className="text-xs font-medium text-slate-600">Categories</span>
+                                    <DraggableScroll className="flex gap-1.5 overflow-x-auto cursor-grab active:cursor-grabbing pb-1">
                                       {metadata.categories.map((cat) => (
                                         <span
                                           key={cat}
-                                          className="px-2 py-0.5 bg-violet-500/20 text-violet-300 rounded text-xs"
+                                          className="px-2.5 py-1 bg-violet-500 text-white rounded-md text-xs font-medium whitespace-nowrap shrink-0"
                                         >
                                           {cat}
                                         </span>
                                       ))}
-                                    </div>
+                                    </DraggableScroll>
                                   </div>
                                 )}
 
                                 {/* Body Focus */}
                                 {metadata.body_focus && metadata.body_focus.length > 0 && (
-                                  <div className="space-y-1.5">
-                                    <span className="text-xs text-slate-400">Body Focus</span>
-                                    <div className="flex flex-wrap gap-1.5">
+                                  <div className="space-y-2">
+                                    <span className="text-xs font-medium text-slate-600">Body Focus</span>
+                                    <DraggableScroll className="flex gap-1.5 overflow-x-auto cursor-grab active:cursor-grabbing pb-1">
                                       {metadata.body_focus.map((focus) => (
                                         <span
                                           key={focus}
-                                          className="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded text-xs"
+                                          className="px-2.5 py-1 bg-cyan-500 text-white rounded-md text-xs font-medium whitespace-nowrap shrink-0"
                                         >
                                           {focus.replace("_", " ")}
                                         </span>
                                       ))}
-                                    </div>
+                                    </DraggableScroll>
                                   </div>
                                 )}
 
                                 {/* Tags */}
                                 {metadata.content_tags && metadata.content_tags.length > 0 && (
-                                  <div className="space-y-1.5">
-                                    <span className="text-xs text-slate-400">Tags</span>
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {metadata.content_tags.slice(0, 10).map((tag) => (
+                                  <div className="space-y-2">
+                                    <span className="text-xs font-medium text-slate-600">Tags</span>
+                                    <DraggableScroll className="flex gap-1.5 overflow-x-auto cursor-grab active:cursor-grabbing pb-1">
+                                      {metadata.content_tags.map((tag) => (
                                         <span
                                           key={tag}
-                                          className="px-2 py-0.5 bg-slate-600 text-slate-300 rounded text-xs"
+                                          className="px-2.5 py-1 bg-slate-700 text-white rounded-md text-xs font-medium whitespace-nowrap shrink-0"
                                         >
                                           {tag}
                                         </span>
                                       ))}
-                                      {metadata.content_tags.length > 10 && (
-                                        <span className="text-xs text-slate-500">
-                                          +{metadata.content_tags.length - 10} more
-                                        </span>
-                                      )}
-                                    </div>
+                                    </DraggableScroll>
                                   </div>
                                 )}
 
                                 {/* Description */}
                                 {metadata.photo_description && (
-                                  <div className="space-y-1.5">
-                                    <span className="text-xs text-slate-400">Description</span>
-                                    <p className="text-xs text-slate-300 leading-relaxed line-clamp-6">
+                                  <div className="space-y-2">
+                                    <span className="text-xs font-medium text-slate-600">Description</span>
+                                    <p className="text-sm text-black leading-relaxed line-clamp-6">
                                       {metadata.photo_description}
                                     </p>
                                   </div>
@@ -1018,14 +1293,14 @@ export default function MediaViewer({
                           {/* No Metadata */}
                           {!metadata && (
                             <div className="text-center py-6">
-                              <Sparkles className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                              <p className="text-sm text-slate-400 mb-3">No AI analysis yet</p>
+                              <Sparkles className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                              <p className="text-sm text-slate-500 mb-3">No AI analysis yet</p>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={syncFromPinecone}
                                 disabled={isSyncing}
-                                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                                className="border-slate-300 text-slate-600 hover:bg-slate-50"
                               >
                                 {isSyncing ? (
                                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1040,35 +1315,35 @@ export default function MediaViewer({
                       )}
 
                       {/* Keyboard Shortcuts */}
-                      {!isEditing && (
+                      {!isEditing && !isMobile && (
                         <>
-                          <div className="h-px bg-slate-700/50" />
+                          <div className="h-px bg-slate-200" />
                           <div className="space-y-2">
-                            <h5 className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                            <h5 className="text-xs font-medium text-slate-500 uppercase tracking-wider">
                               Shortcuts
                             </h5>
                             <div className="grid grid-cols-2 gap-2 text-xs">
-                              <div className="flex justify-between text-slate-400">
+                              <div className="flex justify-between text-slate-500">
                                 <span>Close</span>
-                                <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">Esc</kbd>
+                                <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">Esc</kbd>
                               </div>
-                              <div className="flex justify-between text-slate-400">
+                              <div className="flex justify-between text-slate-500">
                                 <span>Navigate</span>
                                 <span>
-                                  <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">←</kbd>{" "}
-                                  <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">→</kbd>
+                                  <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">←</kbd>{" "}
+                                  <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">→</kbd>
                                 </span>
                               </div>
-                              <div className="flex justify-between text-slate-400">
+                              <div className="flex justify-between text-slate-500">
                                 <span>Zoom</span>
                                 <span>
-                                  <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">+</kbd>{" "}
-                                  <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">-</kbd>
+                                  <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">+</kbd>{" "}
+                                  <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">-</kbd>
                                 </span>
                               </div>
-                              <div className="flex justify-between text-slate-400">
+                              <div className="flex justify-between text-slate-500">
                                 <span>Info</span>
-                                <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">I</kbd>
+                                <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">I</kbd>
                               </div>
                             </div>
                           </div>

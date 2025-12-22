@@ -161,3 +161,4 @@ COMMENT ON COLUMN public.whatsapp_groups.type IS 'Type of group: creator, studio
 COMMENT ON COLUMN public.creators.whatsapp_group_id IS 'Reference to the WhatsApp group for this creator';
 COMMENT ON COLUMN public.studios.whatsapp_group_id IS 'Reference to the WhatsApp group for this studio';
 
+

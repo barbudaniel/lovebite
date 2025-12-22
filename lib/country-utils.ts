@@ -343,3 +343,4 @@ export function hasValidCoordinates(countryName: string): boolean {
   return coords.lat !== 0 || coords.lng !== 0;
 }
 
+

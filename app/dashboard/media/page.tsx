@@ -11,8 +11,6 @@ import {
   Image as ImageIcon,
   Video,
   Music,
-  Search,
-  Filter,
   Grid,
   List,
   Trash2,
@@ -23,7 +21,6 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronRight,
-  ChevronLeft,
   Calendar,
   FileType,
   FolderOpen,
@@ -31,12 +28,9 @@ import {
   RefreshCw,
   CheckSquare,
   Square,
-  MoreVertical,
   Copy,
   Users,
-  LayoutGrid,
   Layers,
-  ArrowLeft,
   Home,
   Upload,
   Plus,
@@ -44,13 +38,8 @@ import {
   CheckCircle,
   XCircle,
   File,
-  Info,
-  Check,
-  SlidersHorizontal,
   Sparkles,
   Link2,
-  ExternalLink,
-  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,6 +111,75 @@ const CATEGORY_ICONS: Record<string, { icon: React.ComponentType<{ className?: s
 };
 
 // ============================================
+// DRAGGABLE SCROLL COMPONENT
+// ============================================
+
+function DraggableScroll({ 
+  children, 
+  className 
+}: { 
+  children: React.ReactNode; 
+  className?: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - containerRef.current.offsetLeft);
+    setScrollLeft(containerRef.current.scrollLeft);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    containerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!containerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.touches[0].pageX - containerRef.current.offsetLeft);
+    setScrollLeft(containerRef.current.scrollLeft);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    const x = e.touches[0].pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    containerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={`scrollbar-hide ${className || ''}`}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onMouseMove={handleMouseMove}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleMouseUp}
+      onTouchMove={handleTouchMove}
+      style={{ 
+        userSelect: isDragging ? 'none' : 'auto',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ============================================
 // SKELETON COMPONENTS
 // ============================================
 
@@ -144,9 +202,9 @@ function MediaSkeleton({ viewMode }: { viewMode: "grid" | "list" | "folders" }) 
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+    <div className="media-grid">
       {[...Array(18)].map((_, i) => (
-        <div key={i} className="aspect-square bg-white rounded-xl border border-slate-200 overflow-hidden animate-pulse">
+        <div key={i} className="aspect-square bg-white rounded-lg sm:rounded-xl border border-slate-200 overflow-hidden animate-pulse">
           <div className="w-full h-full bg-gradient-to-br from-slate-200 via-slate-100 to-slate-200 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skeleton-shimmer" />
           </div>
@@ -158,7 +216,7 @@ function MediaSkeleton({ viewMode }: { viewMode: "grid" | "list" | "folders" }) 
 
 function FolderSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="media-grid">
       {[...Array(8)].map((_, i) => (
         <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 animate-pulse">
           <div className="flex items-center gap-4">
@@ -366,85 +424,6 @@ function FolderCard({
   );
 }
 
-// ============================================
-// LABEL SIDEBAR COMPONENT (Vertical scrollable with sorting)
-// ============================================
-
-function LabelSidebar({
-  categories,
-  selectedCategories,
-  onToggle,
-}: {
-  categories: MediaCategory[];
-  selectedCategories: Set<string>;
-  onToggle: (category: string) => void;
-}) {
-  if (categories.length === 0) return null;
-
-  // Sort by count descending
-  const sortedCategories = [...categories].sort((a, b) => b.count - a.count);
-
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-      <div className="p-3 border-b border-slate-100 bg-slate-50">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className="w-4 h-4 text-slate-500" />
-          <span className="text-sm font-semibold text-slate-700">Labels</span>
-          {selectedCategories.size > 0 && (
-            <span className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full ml-auto">
-              {selectedCategories.size}
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="max-h-[400px] overflow-y-auto">
-        {sortedCategories.map((cat) => {
-          const isSelected = selectedCategories.has(cat.name);
-          const iconConfig = CATEGORY_ICONS[cat.name] || CATEGORY_ICONS["default"];
-          const IconComponent = iconConfig.icon;
-
-          return (
-            <button
-              key={cat.name}
-              onClick={() => onToggle(cat.name)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all border-l-2 ${
-                isSelected
-                  ? "bg-brand-50 border-l-brand-500 text-brand-700"
-                  : "border-l-transparent hover:bg-slate-50 text-slate-700"
-              }`}
-            >
-              <span className={`w-8 h-8 rounded-lg flex items-center justify-center ${isSelected ? "bg-brand-100" : iconConfig.bg}`}>
-                <IconComponent className="w-4 h-4" />
-              </span>
-              <span className="flex-1 text-sm font-medium truncate">{cat.name}</span>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                isSelected ? "bg-brand-200 text-brand-800" : "bg-slate-100 text-slate-600"
-              }`}>
-                {cat.count}
-              </span>
-              {isSelected && (
-                <Check className="w-4 h-4 text-brand-500 shrink-0" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-      {selectedCategories.size > 0 && (
-        <div className="p-2 border-t border-slate-100">
-          <button
-            onClick={() => {
-              // Clear all selected categories
-              selectedCategories.forEach(cat => onToggle(cat));
-            }}
-            className="w-full text-xs text-slate-500 hover:text-slate-700 py-1.5 rounded hover:bg-slate-50 transition-colors"
-          >
-            Clear all labels
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ============================================
 // CATEGORY BADGE COMPONENT (with Label Manager)
@@ -479,11 +458,11 @@ function CategoryBadge({
     <>
       <button
         onClick={() => setShowLabelManager(true)}
-        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-all hover:scale-105 hover:shadow-sm cursor-pointer ${iconConfig.bg} ${iconConfig.color}`}
+        className={`inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-medium transition-all hover:scale-105 hover:shadow-sm cursor-pointer max-w-full ${iconConfig.bg} ${iconConfig.color}`}
         title="Click to manage labels"
       >
-        <IconComponent className="w-3 h-3" />
-        <span>{category || "Add label"}</span>
+        <IconComponent className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+        <span className="truncate">{category || "Add label"}</span>
       </button>
 
       <LabelManager
@@ -520,7 +499,7 @@ function MediaTypeFilter({
   ];
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5 sm:gap-2">
       {types.map(({ type, icon: Icon, label, color, activeColor }) => {
         const isSelected = selectedTypes.has(type) || selectedTypes.size === 0;
         const count = counts[type];
@@ -529,13 +508,13 @@ function MediaTypeFilter({
           <button
             key={type}
             onClick={() => onToggle(type)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl font-medium transition-all ${
               isSelected ? activeColor + " shadow-md" : color
             }`}
           >
-            <Icon className="w-5 h-5" />
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
             <span className="hidden sm:inline">{label}</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+            <span className={`text-xs px-1 sm:px-1.5 py-0.5 rounded-full ${
               isSelected ? "bg-white/20" : "bg-black/10"
             }`}>
               {count}
@@ -718,10 +697,8 @@ function MediaCard({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className={`group relative bg-white rounded-xl border ${
+    <div
+      className={`group relative bg-white rounded-lg sm:rounded-xl border min-w-0 ${
         isSelected ? "border-brand-500 ring-2 ring-brand-200" : "border-slate-200"
       } overflow-hidden hover:shadow-lg transition-all`}
     >
@@ -750,76 +727,54 @@ function MediaCard({
           />
         ) : media.media_type === "video" ? (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-purple-50">
-            <Video className="w-12 h-12 text-purple-400" />
+            <Video className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-purple-400" />
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50">
-            <Music className="w-12 h-12 text-orange-400" />
+            <Music className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-orange-400" />
           </div>
         )}
 
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-          <div className="flex items-center gap-2">
+        {/* Hover overlay - hidden on mobile (tap to view), visible on desktop hover */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors hidden sm:flex items-center justify-center opacity-0 group-hover:opacity-100">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onView(media);
               }}
-              className="p-2 bg-white rounded-full shadow-lg hover:bg-slate-100 transition-colors"
+              className="p-1.5 bg-white rounded-full shadow-lg hover:bg-slate-100 transition-colors"
               title="View"
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-3.5 h-3.5" />
             </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onCopyPermalink(media.id);
-              }}
-              className="p-2 bg-white rounded-full shadow-lg hover:bg-slate-100 transition-colors"
-              title="Copy permalink"
-            >
-              <Link2 className="w-4 h-4" />
-            </button>
-            {media.media_type === "image" && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCopy(media);
-                }}
-                className="p-2 bg-white rounded-full shadow-lg hover:bg-slate-100 transition-colors"
-                title="Copy image"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
-            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 window.open(media.storage_url, "_blank");
               }}
-              className="p-2 bg-white rounded-full shadow-lg hover:bg-slate-100 transition-colors"
+              className="p-1.5 bg-white rounded-full shadow-lg hover:bg-slate-100 transition-colors"
               title="Download"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Info */}
-      <div className="p-2.5">
-        <div className="flex items-center justify-between gap-2">
+      <div className="p-1.5 sm:p-2.5">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2">
           <CategoryBadge
             category={media.category}
             mediaId={media.id}
             storageUrl={media.storage_url}
             onUpdate={(newCat) => onCategoryUpdate(media.id, newCat)}
           />
-          <TypeIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <TypeIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -1074,19 +1029,6 @@ function UploadModal({
             </div>
           )}
 
-          {/* Category Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">
-              Category (optional)
-            </label>
-            <Input
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g., photoshoot, behind-the-scenes"
-              disabled={isUploading}
-            />
-          </div>
-
           {/* Drop Zone */}
           <div
             onDragOver={handleDragOver}
@@ -1145,7 +1087,7 @@ function UploadModal({
               </div>
               
               {/* Grid view for visual files */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-72 overflow-y-auto p-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-72 overflow-y-auto p-1">
                 {files.map((uploadFile) => {
                   const FileIcon = getFileIcon(uploadFile.file);
                   const isImage = uploadFile.file.type.startsWith("image/");
@@ -1812,7 +1754,7 @@ export default function MediaPage() {
       let totalImage = 0, totalVideo = 0, totalAudio = 0;
 
       // Use server-side studio_id filtering for studios
-      const studioIdParam = user?.role === "business" ? user?.studio_id : undefined;
+      const studioIdParam = user?.role === "business" ? user?.studio_id || undefined : undefined;
       
       const allMediaResponse = await api.listMedia({ 
         limit: 5000,
@@ -2104,7 +2046,7 @@ export default function MediaPage() {
   }, [fetchMedia]);
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-6 relative overflow-x-hidden">
       {/* Global Drop Overlay */}
       <AnimatePresence>
         {isGlobalDragging && (
@@ -2128,41 +2070,15 @@ export default function MediaPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Media Library</h1>
           <p className="text-slate-500">
-            {pagination.total.toLocaleString()} items
+            {/* Use calculated totals for accuracy */}
+            {(currentPath.length > 0 && selectedCreator && creatorMediaCounts[selectedCreator]
+              ? creatorMediaCounts[selectedCreator].total
+              : globalCounts.total
+            ).toLocaleString()} items
             {selectedCreator && currentPath[0] && ` in ${currentPath[0].name}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                setIsSyncing(true);
-                try {
-                  const response = await fetch("/api/media/sync-pinecone", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ limit: 500 }),
-                  });
-                  const data = await response.json();
-                  if (data.success) {
-                    toast.success(`Synced ${data.synced} media with Pinecone`);
-                  } else {
-                    toast.error("Sync failed");
-                  }
-                } catch {
-                  toast.error("Sync failed");
-                } finally {
-                  setIsSyncing(false);
-                }
-              }}
-              disabled={isSyncing}
-            >
-              <Sparkles className={`w-4 h-4 mr-2 ${isSyncing ? "animate-pulse" : ""}`} />
-              {isSyncing ? "Syncing..." : "Sync AI"}
-            </Button>
-          )}
           <Button
             variant="outline"
             size="sm"
@@ -2373,7 +2289,7 @@ export default function MediaPage() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="media-grid">
             {folderItems.map((folder) => (
               <FolderCard
                 key={folder.id}
@@ -2407,59 +2323,58 @@ export default function MediaPage() {
           </div>
         </div>
       ) : (
-        <div className="flex gap-6">
-          {/* Label Sidebar */}
+        <div className="space-y-4 overflow-hidden">
+          {/* Horizontal Label Filter (scrollable with drag) */}
           {categories.length > 0 && (
-            <div className="hidden lg:block w-64 shrink-0">
-              <div className="sticky top-6">
-                <LabelSidebar
-                  categories={categories}
-                  selectedCategories={filters.categories}
-                  onToggle={toggleCategoryFilter}
-                />
-              </div>
+            <div className="-mx-4 px-4 sm:mx-0 sm:px-0">
+              <DraggableScroll className="overflow-x-auto pb-2 cursor-grab active:cursor-grabbing">
+                <div className="flex items-center gap-2 min-w-max">
+                {[...categories]
+                  .sort((a, b) => b.count - a.count)
+                  .map((cat) => {
+                    const isSelected = filters.categories.has(cat.name);
+                    const iconConfig = CATEGORY_ICONS[cat.name] || CATEGORY_ICONS["default"];
+                    const IconComponent = iconConfig.icon;
+                    return (
+                      <button
+                        key={cat.name}
+                        onClick={() => toggleCategoryFilter(cat.name)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                          isSelected
+                            ? "bg-brand-500 text-white shadow-md"
+                            : `${iconConfig.bg} ${iconConfig.color}`
+                        }`}
+                      >
+                        <IconComponent className="w-4 h-4" />
+                        <span>{cat.name}</span>
+                        <span className={`text-xs ${isSelected ? "opacity-70" : "opacity-60"}`}>
+                          {cat.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                {filters.categories.size > 0 && (
+                  <button
+                    onClick={() => setFilters({ ...filters, categories: new Set() })}
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all whitespace-nowrap"
+                  >
+                    <X className="w-4 h-4" />
+                    Clear
+                  </button>
+                )}
+                </div>
+              </DraggableScroll>
             </div>
           )}
 
-          {/* Main Content */}
-          <div className="flex-1 min-w-0 space-y-4">
-            {/* Mobile Label Filter (horizontal scroll) */}
-            {categories.length > 0 && (
-              <div className="lg:hidden overflow-x-auto pb-2 -mx-4 px-4">
-                <div className="flex items-center gap-2 min-w-max">
-                  {[...categories]
-                    .sort((a, b) => b.count - a.count)
-                    .map((cat) => {
-                      const isSelected = filters.categories.has(cat.name);
-                      const iconConfig = CATEGORY_ICONS[cat.name] || CATEGORY_ICONS["default"];
-                      const IconComponent = iconConfig.icon;
-                      return (
-                        <button
-                          key={cat.name}
-                          onClick={() => toggleCategoryFilter(cat.name)}
-                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                            isSelected
-                              ? "bg-brand-500 text-white shadow-md"
-                              : `${iconConfig.bg} ${iconConfig.color}`
-                          }`}
-                        >
-                          <IconComponent className="w-4 h-4" />
-                          <span>{cat.name}</span>
-                          <span className={`text-xs ${isSelected ? "opacity-70" : "opacity-60"}`}>
-                            {cat.count}
-                          </span>
-                        </button>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
+          {currentPath.length > 0 && (
+            <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">
+              Media Files
+            </h3>
+          )}
 
-            {currentPath.length > 0 && (
-              <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">
-                Media Files
-              </h3>
-            )}
+          {/* Main Content - Full Width */}
+          <div className="min-w-0 w-full overflow-hidden">
             {viewMode === "list" || (viewMode === "folders" && currentPath.length > 0) ? (
               <div className="space-y-2">
                 {media.map((item) => (
@@ -2479,7 +2394,7 @@ export default function MediaPage() {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <div className="media-grid w-full">
                 {media.map((item) => (
                   <MediaCard
                     key={item.id}
@@ -2498,12 +2413,12 @@ export default function MediaPage() {
               </div>
             )}
 
-            {/* Infinite Scroll Trigger */}
-            <InfiniteScrollTrigger
-              onTrigger={handleLoadMore}
-              isLoading={isLoadingMore}
-              hasMore={pagination.hasMore}
-            />
+          {/* Infinite Scroll Trigger */}
+          <InfiniteScrollTrigger
+            onTrigger={handleLoadMore}
+            isLoading={isLoadingMore}
+            hasMore={pagination.hasMore}
+          />
           </div>
         </div>
       )}
@@ -2520,6 +2435,7 @@ export default function MediaPage() {
             onNavigate={openMediaViewer}
             onCopyPermalink={copyPermalink}
             permalink={getMediaPermalink(viewingMedia.id)}
+            userRole={user?.role as "admin" | "business" | "independent" | undefined}
           />
         )}
       </AnimatePresence>
@@ -2543,5 +2459,6 @@ export default function MediaPage() {
     </div>
   );
 }
+
 
 
