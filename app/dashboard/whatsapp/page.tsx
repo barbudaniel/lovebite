@@ -39,6 +39,16 @@ import {
   Database,
   Hash,
   ChevronRight,
+  LayoutTemplate,
+  Plus,
+  Trash2,
+  Edit,
+  Copy,
+  Save,
+  Megaphone,
+  Bell,
+  Star,
+  Tag,
 } from "lucide-react";
 import {
   Dialog,
@@ -84,6 +94,26 @@ interface Group {
   participants: number;
 }
 
+interface WhatsAppGroup {
+  id: string;
+  whatsapp_id: string;
+  name: string;
+  type: 'creator' | 'studio' | 'admin';
+  participant_count: number;
+}
+
+interface MessageTemplate {
+  id: string;
+  name: string;
+  content: string;
+  category: 'general' | 'announcement' | 'reminder' | 'promotion' | 'urgent';
+  variables: string[];
+  is_active: boolean;
+  use_count: number;
+  created_at: string;
+  creator?: { display_name: string; email: string };
+}
+
 interface AnalyticsData {
   totalMessages: number;
   totalMedia: number;
@@ -93,6 +123,14 @@ interface AnalyticsData {
   customs: number;
   activeCreators: number;
 }
+
+const CATEGORY_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  general: { label: 'General', color: 'bg-slate-100 text-slate-700', icon: MessageSquare },
+  announcement: { label: 'Announcement', color: 'bg-blue-100 text-blue-700', icon: Megaphone },
+  reminder: { label: 'Reminder', color: 'bg-amber-100 text-amber-700', icon: Bell },
+  promotion: { label: 'Promotion', color: 'bg-green-100 text-green-700', icon: Star },
+  urgent: { label: 'Urgent', color: 'bg-red-100 text-red-700', icon: AlertCircle },
+};
 
 // WhatsApp Bot API URL - use local proxy to avoid mixed content (HTTPS -> HTTP) issues
 // The proxy forwards requests to the actual bot API on port 3001
@@ -567,6 +605,601 @@ function AnalyticsModal({
 }
 
 // ============================================
+// SEND MESSAGE MODAL
+// ============================================
+
+function SendMessageModal({
+  onClose,
+  groups,
+  templates,
+  onRefreshGroups,
+}: {
+  onClose: () => void;
+  groups: WhatsAppGroup[];
+  templates: MessageTemplate[];
+  onRefreshGroups: () => void;
+}) {
+  const [selectedGroup, setSelectedGroup] = useState<string>("");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [message, setMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(false);
+
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    const template = templates.find((t) => t.id === templateId);
+    if (template) {
+      setMessage(template.content);
+    }
+  };
+
+  const handleRefreshGroups = async () => {
+    setIsLoadingGroups(true);
+    await onRefreshGroups();
+    setIsLoadingGroups(false);
+  };
+
+  const handleSend = async () => {
+    if (!selectedGroup || !message.trim()) {
+      toast.error("Please select a group and enter a message");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const response = await fetch("/api/whatsapp/send-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          groupId: selectedGroup,
+          message: message.trim(),
+          templateId: selectedTemplate || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send message");
+      }
+
+      toast.success(`Message sent to ${data.groupName}`);
+      onClose();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to send message");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const selectedGroupInfo = groups.find((g) => g.id === selectedGroup);
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent size="lg">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Send className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <DialogTitle>Send Message to Group</DialogTitle>
+              <DialogDescription>
+                Choose a group and compose your message
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <DialogBody>
+          <div className="space-y-6">
+            {/* Group Selection */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Select Group</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRefreshGroups}
+                  disabled={isLoadingGroups}
+                >
+                  <RefreshCw className={`w-4 h-4 mr-1 ${isLoadingGroups ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+              </div>
+              {groups.length === 0 ? (
+                <div className="bg-slate-50 rounded-lg p-4 text-center">
+                  <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-slate-500 text-sm">No groups available</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+                  {groups.map((group) => (
+                    <button
+                      key={group.id}
+                      onClick={() => setSelectedGroup(group.id)}
+                      className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
+                        selectedGroup === group.id
+                          ? "border-green-500 bg-green-50"
+                          : "border-slate-200 hover:border-slate-300 bg-white"
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        group.type === 'admin' ? 'bg-purple-100' :
+                        group.type === 'studio' ? 'bg-blue-100' : 'bg-green-100'
+                      }`}>
+                        <Users className={`w-5 h-5 ${
+                          group.type === 'admin' ? 'text-purple-600' :
+                          group.type === 'studio' ? 'text-blue-600' : 'text-green-600'
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-slate-900 truncate">{group.name || 'Unnamed Group'}</p>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            group.type === 'admin' ? 'bg-purple-100 text-purple-700' :
+                            group.type === 'studio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                          }`}>
+                            {group.type}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {group.participant_count || 0} members
+                          </span>
+                        </div>
+                      </div>
+                      {selectedGroup === group.id && (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Template Selection */}
+            {templates.length > 0 && (
+              <div className="space-y-2">
+                <Label>Use Template (Optional)</Label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => {
+                      setSelectedTemplate("");
+                      setMessage("");
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                      !selectedTemplate
+                        ? "bg-slate-900 text-white"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    Custom Message
+                  </button>
+                  {templates.map((template) => {
+                    const config = CATEGORY_CONFIG[template.category] || CATEGORY_CONFIG.general;
+                    return (
+                      <button
+                        key={template.id}
+                        onClick={() => handleTemplateSelect(template.id)}
+                        className={`px-3 py-1.5 rounded-full text-sm transition-all flex items-center gap-1 ${
+                          selectedTemplate === template.id
+                            ? "bg-green-600 text-white"
+                            : `${config.color} hover:opacity-80`
+                        }`}
+                      >
+                        <config.icon className="w-3 h-3" />
+                        {template.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Message Input */}
+            <div className="space-y-2">
+              <Label>Message</Label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={5}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-green-500 text-slate-900"
+                placeholder="Type your message here..."
+              />
+              <p className="text-xs text-slate-500">
+                {message.length} characters • Emojis and formatting supported
+              </p>
+            </div>
+
+            {/* Preview */}
+            {selectedGroupInfo && message && (
+              <div className="bg-slate-50 rounded-lg p-4">
+                <p className="text-xs text-slate-500 mb-2">Preview</p>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shrink-0">
+                    <Bot className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm max-w-sm">
+                    <p className="text-sm text-slate-900 whitespace-pre-wrap">{message}</p>
+                    <p className="text-xs text-slate-400 mt-1">To: {selectedGroupInfo.name}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogBody>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSend}
+            disabled={isSending || !selectedGroup || !message.trim()}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isSending ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Send className="w-4 h-4 mr-2" />
+            )}
+            Send Message
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
+// TEMPLATES MODAL
+// ============================================
+
+function TemplatesModal({
+  onClose,
+  templates,
+  onRefresh,
+  isAdmin,
+}: {
+  onClose: () => void;
+  templates: MessageTemplate[];
+  onRefresh: () => void;
+  isAdmin: boolean;
+}) {
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    content: "",
+    category: "general" as MessageTemplate['category'],
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleCreate = async () => {
+    if (!formData.name || !formData.content) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/whatsapp/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to create template");
+      }
+
+      toast.success("Template created!");
+      setIsCreating(false);
+      setFormData({ name: "", content: "", category: "general" });
+      onRefresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create template");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editingId || !formData.name || !formData.content) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/whatsapp/templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingId, ...formData }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update template");
+      }
+
+      toast.success("Template updated!");
+      setEditingId(null);
+      setFormData({ name: "", content: "", category: "general" });
+      onRefresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update template");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this template?")) return;
+
+    try {
+      const response = await fetch(`/api/whatsapp/templates?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete template");
+      }
+
+      toast.success("Template deleted!");
+      onRefresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete template");
+    }
+  };
+
+  const handleToggleActive = async (template: MessageTemplate) => {
+    try {
+      const response = await fetch("/api/whatsapp/templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: template.id, is_active: !template.is_active }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update template");
+      }
+
+      toast.success(template.is_active ? "Template disabled" : "Template enabled");
+      onRefresh();
+    } catch (error) {
+      toast.error("Failed to update template");
+    }
+  };
+
+  const startEditing = (template: MessageTemplate) => {
+    setEditingId(template.id);
+    setFormData({
+      name: template.name,
+      content: template.content,
+      category: template.category,
+    });
+    setIsCreating(false);
+  };
+
+  const copyToClipboard = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast.success("Copied to clipboard!");
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent size="xl">
+        <DialogHeader>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-violet-100 rounded-lg">
+                <LayoutTemplate className="w-5 h-5 text-violet-600" />
+              </div>
+              <div>
+                <DialogTitle>Message Templates</DialogTitle>
+                <DialogDescription>
+                  Create and manage reusable message templates
+                </DialogDescription>
+              </div>
+            </div>
+            {isAdmin && !isCreating && !editingId && (
+              <Button
+                onClick={() => {
+                  setIsCreating(true);
+                  setFormData({ name: "", content: "", category: "general" });
+                }}
+                size="sm"
+                className="bg-violet-600 hover:bg-violet-700"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                New Template
+              </Button>
+            )}
+          </div>
+        </DialogHeader>
+
+        <DialogBody>
+          {/* Create/Edit Form */}
+          {(isCreating || editingId) && isAdmin && (
+            <div className="bg-slate-50 rounded-xl p-4 mb-4 space-y-4">
+              <h4 className="font-medium text-slate-900">
+                {isCreating ? "Create New Template" : "Edit Template"}
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Template Name</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g., Weekly Reminder"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value as MessageTemplate['category'] })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  >
+                    {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
+                      <option key={key} value={key}>{config.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Message Content</Label>
+                <textarea
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 text-slate-900"
+                  placeholder="Enter your message template..."
+                />
+                <p className="text-xs text-slate-500">
+                  Tip: Use variables like {"{{name}}"} or {"{{date}}"} for dynamic content
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsCreating(false);
+                    setEditingId(null);
+                    setFormData({ name: "", content: "", category: "general" });
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={editingId ? handleUpdate : handleCreate}
+                  disabled={isSaving}
+                  className="bg-violet-600 hover:bg-violet-700"
+                >
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  {editingId ? "Update" : "Create"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Templates List */}
+          {templates.length === 0 ? (
+            <div className="bg-slate-50 rounded-xl p-8 text-center">
+              <LayoutTemplate className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 mb-2">No templates yet</p>
+              {isAdmin && (
+                <Button
+                  onClick={() => setIsCreating(true)}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Create your first template
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {templates.map((template) => {
+                const config = CATEGORY_CONFIG[template.category] || CATEGORY_CONFIG.general;
+                return (
+                  <div
+                    key={template.id}
+                    className={`border rounded-xl p-4 transition-all ${
+                      template.is_active
+                        ? "border-slate-200 bg-white"
+                        : "border-slate-100 bg-slate-50 opacity-60"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-medium text-slate-900">{template.name}</h4>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${config.color}`}>
+                            {config.label}
+                          </span>
+                          {!template.is_active && (
+                            <span className="px-2 py-0.5 rounded-full text-xs bg-slate-200 text-slate-600">
+                              Disabled
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-slate-600 whitespace-pre-wrap line-clamp-3">
+                          {template.content}
+                        </p>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
+                          <span>Used {template.use_count} times</span>
+                          <span>Created {new Date(template.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => copyToClipboard(template.content)}
+                          className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                          title="Copy content"
+                        >
+                          <Copy className="w-4 h-4 text-slate-400" />
+                        </button>
+                        {isAdmin && (
+                          <>
+                            <button
+                              onClick={() => startEditing(template)}
+                              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4 text-slate-400" />
+                            </button>
+                            <button
+                              onClick={() => handleToggleActive(template)}
+                              className={`p-2 rounded-lg transition-colors ${
+                                template.is_active
+                                  ? "hover:bg-amber-50"
+                                  : "hover:bg-green-50"
+                              }`}
+                              title={template.is_active ? "Disable" : "Enable"}
+                            >
+                              {template.is_active ? (
+                                <XCircle className="w-4 h-4 text-amber-500" />
+                              ) : (
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleDelete(template.id)}
+                              className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-400" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DialogBody>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
 // SETTINGS MODAL
 // ============================================
 
@@ -728,10 +1361,53 @@ export default function WhatsAppBotPage() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showGroupsModal, setShowGroupsModal] = useState(false);
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
+  const [showSendMessageModal, setShowSendMessageModal] = useState(false);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [isReloadingCreators, setIsReloadingCreators] = useState(false);
+  
+  // Groups and templates from database
+  const [dbGroups, setDbGroups] = useState<WhatsAppGroup[]>([]);
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [isLoadingDbData, setIsLoadingDbData] = useState(false);
 
   // Track if connection toast has been shown to prevent duplicates
   const connectionNotifiedRef = useRef(false);
+
+  // Fetch groups from database
+  const fetchDbGroups = useCallback(async () => {
+    try {
+      const response = await fetch("/api/whatsapp/groups");
+      if (response.ok) {
+        const data = await response.json();
+        setDbGroups(data.groups || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch groups:", error);
+    }
+  }, []);
+
+  // Fetch templates
+  const fetchTemplates = useCallback(async () => {
+    try {
+      const response = await fetch("/api/whatsapp/templates");
+      if (response.ok) {
+        const data = await response.json();
+        setTemplates(data.templates || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch templates:", error);
+    }
+  }, []);
+
+  // Load DB data on mount
+  useEffect(() => {
+    const loadDbData = async () => {
+      setIsLoadingDbData(true);
+      await Promise.all([fetchDbGroups(), fetchTemplates()]);
+      setIsLoadingDbData(false);
+    };
+    loadDbData();
+  }, [fetchDbGroups, fetchTemplates]);
 
   // Fetch bot status
   const fetchStatus = useCallback(async () => {
@@ -866,6 +1542,15 @@ export default function WhatsAppBotPage() {
 
         <div className="flex items-center gap-2">
           <Button
+            size="sm"
+            onClick={() => setShowSendMessageModal(true)}
+            disabled={!isConnected}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Send className="w-4 h-4 mr-2" />
+            Send Message
+          </Button>
+          <Button
             variant="outline"
             size="sm"
             onClick={() => {
@@ -983,6 +1668,28 @@ export default function WhatsAppBotPage() {
               <Button
                 variant="outline"
                 className="w-full justify-start"
+                onClick={() => setShowSendMessageModal(true)}
+                disabled={!isConnected}
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Send Message
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setShowTemplatesModal(true)}
+              >
+                <LayoutTemplate className="w-4 h-4 mr-2" />
+                Message Templates
+                {templates.length > 0 && (
+                  <span className="ml-auto text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">
+                    {templates.length}
+                  </span>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
                 onClick={handleReloadCreators}
                 disabled={isReloadingCreators}
               >
@@ -1000,6 +1707,11 @@ export default function WhatsAppBotPage() {
               >
                 <Users className="w-4 h-4 mr-2" />
                 View Groups
+                {dbGroups.length > 0 && (
+                  <span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                    {dbGroups.length}
+                  </span>
+                )}
               </Button>
               <Button
                 variant="outline"
@@ -1051,6 +1763,24 @@ export default function WhatsAppBotPage() {
         <AnalyticsModal
           onClose={() => setShowAnalyticsModal(false)}
           queueStats={queueStats}
+        />
+      )}
+
+      {showSendMessageModal && (
+        <SendMessageModal
+          onClose={() => setShowSendMessageModal(false)}
+          groups={dbGroups}
+          templates={templates.filter(t => t.is_active)}
+          onRefreshGroups={fetchDbGroups}
+        />
+      )}
+
+      {showTemplatesModal && (
+        <TemplatesModal
+          onClose={() => setShowTemplatesModal(false)}
+          templates={templates}
+          onRefresh={fetchTemplates}
+          isAdmin={user?.role === 'admin'}
         />
       )}
     </div>
