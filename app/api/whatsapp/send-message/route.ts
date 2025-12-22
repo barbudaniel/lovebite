@@ -53,10 +53,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the WhatsApp group details
+    // groupId can be either UUID or WhatsApp JID (e.g., "120363405507077425@g.us")
+    const isWhatsAppJid = groupId.includes("@g.us");
+    
     const { data: group, error: groupError } = await supabase
       .from("whatsapp_groups")
       .select("id, whatsapp_id, name, type")
-      .eq("id", groupId)
+      .eq(isWhatsAppJid ? "whatsapp_id" : "id", groupId)
       .single();
 
     if (groupError || !group) {
@@ -69,11 +72,12 @@ export async function POST(request: NextRequest) {
     // For business users, verify they have access to this group
     if (dashboardUser.role === "business") {
       // Check if the group belongs to their studio or one of their creators
+      // Use the database UUID for access checks
       const { data: hasAccess } = await supabase
         .from("studios")
         .select("id")
         .eq("id", dashboardUser.studio_id)
-        .eq("whatsapp_group_id", groupId)
+        .eq("whatsapp_group_id", group.id)
         .single();
 
       if (!hasAccess) {
@@ -81,7 +85,7 @@ export async function POST(request: NextRequest) {
           .from("creators")
           .select("id")
           .eq("studio_id", dashboardUser.studio_id)
-          .eq("whatsapp_group_id", groupId)
+          .eq("whatsapp_group_id", group.id)
           .limit(1);
 
         if (!creatorAccess || creatorAccess.length === 0) {
@@ -132,7 +136,7 @@ export async function POST(request: NextRequest) {
       .from("whatsapp_message_history")
       .insert({
         template_id: templateId || null,
-        group_id: groupId,
+        group_id: group.id, // Use the UUID from database
         whatsapp_group_id: group.whatsapp_id,
         sent_by: dashboardUser.id,
         message_content: message,
