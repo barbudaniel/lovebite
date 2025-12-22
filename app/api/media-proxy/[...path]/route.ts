@@ -59,10 +59,22 @@ export async function POST(
 ) {
   const { path } = await params;
   const pathString = path.join("/");
+  const targetUrl = `${MEDIA_API_URL}/${pathString}`;
   
   // Get API key from request headers
   const apiKey = request.headers.get("X-API-Key");
   const contentType = request.headers.get("content-type") || "";
+  
+  // Validate the target URL
+  try {
+    new URL(targetUrl);
+  } catch {
+    console.error(`Invalid proxy target URL: ${targetUrl}`);
+    return NextResponse.json(
+      { error: `Invalid proxy target URL. MEDIA_API_URL: ${MEDIA_API_URL}`, success: false },
+      { status: 500 }
+    );
+  }
   
   try {
     const headers: HeadersInit = {};
@@ -85,7 +97,9 @@ export async function POST(
       body = await request.text();
     }
 
-    const response = await fetch(`${MEDIA_API_URL}/${pathString}`, {
+    console.log(`Proxy POST to: ${targetUrl}`);
+    
+    const response = await fetch(targetUrl, {
       method: "POST",
       headers,
       body,
@@ -93,8 +107,9 @@ export async function POST(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error(`Media API error [POST ${pathString}]:`, response.status, errorData);
       return NextResponse.json(
-        { error: errorData.error || "Media API error", success: false },
+        { error: errorData.error || errorData.message || "Media API error", success: false },
         { status: response.status }
       );
     }

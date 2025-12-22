@@ -125,6 +125,7 @@ export async function GET(request: NextRequest) {
       
       apiKey = apiUser?.api_key || null;
     } else if (dashboardUser.role === "independent" && dashboardUser.creator_id) {
+      // First try to get API key for the creator's own creator_id
       const { data: apiUser } = await supabaseAdmin
         .from("api_users")
         .select("api_key")
@@ -135,16 +136,22 @@ export async function GET(request: NextRequest) {
       
       if (apiUser?.api_key) {
         apiKey = apiUser.api_key;
-      } else if (dashboardUser.studio_id) {
-        const { data: studioApiUser } = await supabaseAdmin
-          .from("api_users")
-          .select("api_key")
-          .eq("studio_id", dashboardUser.studio_id)
-          .eq("enabled", true)
-          .limit(1)
-          .maybeSingle();
+      } else {
+        // Fallback: try to get studio's API key
+        // First check creator.studio_id (from creator record), then dashboardUser.studio_id
+        const studioId = creator?.studio_id || dashboardUser.studio_id;
         
-        apiKey = studioApiUser?.api_key || null;
+        if (studioId) {
+          const { data: studioApiUser } = await supabaseAdmin
+            .from("api_users")
+            .select("api_key")
+            .eq("studio_id", studioId)
+            .eq("enabled", true)
+            .limit(1)
+            .maybeSingle();
+          
+          apiKey = studioApiUser?.api_key || null;
+        }
       }
     } else if (dashboardUser.role === "business" && dashboardUser.studio_id) {
       const { data: apiUser } = await supabaseAdmin

@@ -2155,7 +2155,13 @@ export default function MediaPage() {
           </Button>
           <Button
             size="sm"
-            onClick={() => setShowUploadModal(true)}
+            onClick={() => {
+              if (!apiKey) {
+                toast.error("Upload not available. Please contact support to set up your account.");
+                return;
+              }
+              setShowUploadModal(true);
+            }}
             className="bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm"
           >
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
@@ -2348,7 +2354,16 @@ export default function MediaPage() {
             <FolderOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
             <h3 className="font-semibold text-slate-700 mb-2">No models found</h3>
             <p className="text-slate-500 text-sm mb-4">Add models to see their media here</p>
-            <Button onClick={() => setShowUploadModal(true)} className="bg-brand-600 hover:bg-brand-700">
+            <Button 
+              onClick={() => {
+                if (!apiKey) {
+                  toast.error("Upload not available. Please contact support to set up your account.");
+                  return;
+                }
+                setShowUploadModal(true);
+              }} 
+              className="bg-brand-600 hover:bg-brand-700"
+            >
               <Upload className="w-4 h-4 mr-2" />
               Upload Media
             </Button>
@@ -2381,7 +2396,16 @@ export default function MediaPage() {
                 Clear Filters
               </Button>
             )}
-            <Button onClick={() => setShowUploadModal(true)} className="bg-brand-600 hover:bg-brand-700">
+            <Button 
+              onClick={() => {
+                if (!apiKey) {
+                  toast.error("Upload not available. Please contact support to set up your account.");
+                  return;
+                }
+                setShowUploadModal(true);
+              }} 
+              className="bg-brand-600 hover:bg-brand-700"
+            >
               <Upload className="w-4 h-4 mr-2" />
               Upload Media
             </Button>
