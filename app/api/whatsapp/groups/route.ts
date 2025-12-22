@@ -47,47 +47,9 @@ export async function GET() {
       participant_count: number;
     }
     let groups: WhatsAppGroup[] = [];
-    let botOnline = false;
-    let botError: string | null = null;
-
-    // Try to fetch live groups from the WhatsApp bot first
-    try {
-      console.log(`Fetching groups from bot at ${BOT_API_URL}/groups`);
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000); // Increased timeout
-      
-      const botResponse = await fetch(`${BOT_API_URL}/groups`, {
-        signal: controller.signal,
-        cache: "no-store",
-      });
-      clearTimeout(timeout);
-      
-      console.log(`Bot response status: ${botResponse.status}`);
-      
-      if (botResponse.ok) {
-        const botData = await botResponse.json();
-        console.log(`Bot returned ${botData.groups?.length || 0} groups`);
-        botOnline = true;
-        
-        // Transform bot groups to our format
-        if (botData.groups && Array.isArray(botData.groups)) {
-          groups = botData.groups.map((g: { id: string; name?: string; type?: string; participants?: number; participantCount?: number }) => ({
-            id: g.id, // Use the WhatsApp JID as the ID for sending messages
-            whatsapp_id: g.id,
-            name: g.name || "Unnamed Group",
-            type: g.type || "creator",
-            participant_count: g.participants || g.participantCount || 0,
-          }));
-        }
-      } else {
-        const errorText = await botResponse.text();
-        console.log(`Bot error response: ${errorText}`);
-        botError = errorText;
-      }
-    } catch (err) {
-      console.log("Bot offline or error, falling back to database:", err);
-      botError = err instanceof Error ? err.message : "Unknown error";
-    }
+    // Skip bot call from Vercel servers (HTTP to external IP often fails)
+    // Always use database for now
+    const botOnline = false;
 
     // If bot is offline, fetch from database
     if (!botOnline) {
@@ -138,38 +100,6 @@ export async function GET() {
         participant_count: g.participant_count || 0,
         id: g.whatsapp_id, // Use whatsapp_id for sending messages
       }));
-    }
-
-    // For business users with bot online, filter to their groups
-    if (botOnline && dashboardUser.role === "business" && dashboardUser.studio_id) {
-      // Get allowed group IDs from database
-      const { data: studioGroups } = await supabase
-        .from("studios")
-        .select("whatsapp_group_id")
-        .eq("id", dashboardUser.studio_id)
-        .single();
-
-      const { data: creatorGroups } = await supabase
-        .from("creators")
-        .select("whatsapp_group_id")
-        .eq("studio_id", dashboardUser.studio_id)
-        .not("whatsapp_group_id", "is", null);
-
-      // Get the whatsapp_id values for allowed groups
-      const allowedGroupDbIds = [
-        studioGroups?.whatsapp_group_id,
-        ...(creatorGroups?.map((c: { whatsapp_group_id: string | null }) => c.whatsapp_group_id) || []),
-      ].filter(Boolean);
-
-      // Get the actual whatsapp_ids from the database
-      const { data: allowedGroups } = await supabase
-        .from("whatsapp_groups")
-        .select("whatsapp_id")
-        .in("id", allowedGroupDbIds);
-
-      const allowedWhatsAppIds = new Set(allowedGroups?.map((g: { whatsapp_id: string }) => g.whatsapp_id) || []);
-      
-      groups = groups.filter((g) => allowedWhatsAppIds.has(g.whatsapp_id));
     }
 
     return NextResponse.json({ 
