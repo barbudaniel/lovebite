@@ -114,23 +114,190 @@ function getTimeRemaining(): number {
 }
 
 // ============================================
-// PLATFORM DEFINITIONS
+// PLATFORM DEFINITIONS WITH FAVICON ICONS
 // ============================================
 
 const PLATFORMS = [
-  { id: "onlyfans", name: "OnlyFans", color: "bg-sky-500", icon: "🔥", url: "https://onlyfans.com" },
-  { id: "fansly", name: "Fansly", color: "bg-blue-600", icon: "💙", url: "https://fansly.com" },
-  { id: "loyalfans", name: "LoyalFans", color: "bg-rose-500", icon: "❤️", url: "https://loyalfans.com" },
-  { id: "feetfinder", name: "FeetFinder", color: "bg-pink-500", icon: "👣", url: "https://feetfinder.com" },
-  { id: "reddit", name: "Reddit", color: "bg-orange-500", icon: "🔴", url: "https://reddit.com" },
-  { id: "instagram", name: "Instagram", color: "bg-gradient-to-br from-purple-500 to-pink-500", icon: "📸", url: "https://instagram.com" },
-  { id: "x", name: "X (Twitter)", color: "bg-slate-900", icon: "𝕏", url: "https://x.com" },
-  { id: "redgifs", name: "RedGifs", color: "bg-red-600", icon: "🎬", url: "https://redgifs.com" },
-  { id: "chaturbate", name: "Chaturbate", color: "bg-orange-600", icon: "🎥", url: "https://chaturbate.com" },
-  { id: "stripchat", name: "Stripchat", color: "bg-purple-600", icon: "💜", url: "https://stripchat.com" },
+  { 
+    id: "onlyfans", 
+    name: "OnlyFans", 
+    color: "bg-[#00AFF0]", 
+    favicon: "https://www.google.com/s2/favicons?domain=onlyfans.com&sz=64",
+    url: "https://onlyfans.com" 
+  },
+  { 
+    id: "fansly", 
+    name: "Fansly", 
+    color: "bg-[#0088FA]", 
+    favicon: "https://www.google.com/s2/favicons?domain=fansly.com&sz=64",
+    url: "https://fansly.com" 
+  },
+  { 
+    id: "loyalfans", 
+    name: "LoyalFans", 
+    color: "bg-[#FF385C]", 
+    favicon: "https://www.google.com/s2/favicons?domain=loyalfans.com&sz=64",
+    url: "https://loyalfans.com" 
+  },
+  { 
+    id: "feetfinder", 
+    name: "FeetFinder", 
+    color: "bg-[#E91E63]", 
+    favicon: "https://www.google.com/s2/favicons?domain=feetfinder.com&sz=64",
+    url: "https://feetfinder.com" 
+  },
+  { 
+    id: "reddit", 
+    name: "Reddit", 
+    color: "bg-[#FF4500]", 
+    favicon: "https://www.google.com/s2/favicons?domain=reddit.com&sz=64",
+    url: "https://reddit.com" 
+  },
+  { 
+    id: "instagram", 
+    name: "Instagram", 
+    color: "bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#F77737]", 
+    favicon: "https://www.google.com/s2/favicons?domain=instagram.com&sz=64",
+    url: "https://instagram.com" 
+  },
+  { 
+    id: "x", 
+    name: "X (Twitter)", 
+    color: "bg-black", 
+    favicon: "https://www.google.com/s2/favicons?domain=x.com&sz=64",
+    url: "https://x.com" 
+  },
+  { 
+    id: "tiktok", 
+    name: "TikTok", 
+    color: "bg-black", 
+    favicon: "https://www.google.com/s2/favicons?domain=tiktok.com&sz=64",
+    url: "https://tiktok.com" 
+  },
+  { 
+    id: "redgifs", 
+    name: "RedGifs", 
+    color: "bg-[#CC1100]", 
+    favicon: "https://www.google.com/s2/favicons?domain=redgifs.com&sz=64",
+    url: "https://redgifs.com" 
+  },
+  { 
+    id: "chaturbate", 
+    name: "Chaturbate", 
+    color: "bg-[#F6921E]", 
+    favicon: "https://www.google.com/s2/favicons?domain=chaturbate.com&sz=64",
+    url: "https://chaturbate.com" 
+  },
+  { 
+    id: "stripchat", 
+    name: "Stripchat", 
+    color: "bg-[#9B59B6]", 
+    favicon: "https://www.google.com/s2/favicons?domain=stripchat.com&sz=64",
+    url: "https://stripchat.com" 
+  },
+  { 
+    id: "pornhub", 
+    name: "Pornhub", 
+    color: "bg-[#FFA31A]", 
+    favicon: "https://www.google.com/s2/favicons?domain=pornhub.com&sz=64",
+    url: "https://pornhub.com" 
+  },
+  { 
+    id: "manyvids", 
+    name: "ManyVids", 
+    color: "bg-[#FF1493]", 
+    favicon: "https://www.google.com/s2/favicons?domain=manyvids.com&sz=64",
+    url: "https://manyvids.com" 
+  },
+  { 
+    id: "patreon", 
+    name: "Patreon", 
+    color: "bg-[#FF424D]", 
+    favicon: "https://www.google.com/s2/favicons?domain=patreon.com&sz=64",
+    url: "https://patreon.com" 
+  },
+  { 
+    id: "twitch", 
+    name: "Twitch", 
+    color: "bg-[#9146FF]", 
+    favicon: "https://www.google.com/s2/favicons?domain=twitch.tv&sz=64",
+    url: "https://twitch.tv" 
+  },
+  { 
+    id: "snapchat", 
+    name: "Snapchat", 
+    color: "bg-[#FFFC00]", 
+    favicon: "https://www.google.com/s2/favicons?domain=snapchat.com&sz=64",
+    url: "https://snapchat.com" 
+  },
+  { 
+    id: "telegram", 
+    name: "Telegram", 
+    color: "bg-[#0088CC]", 
+    favicon: "https://www.google.com/s2/favicons?domain=telegram.org&sz=64",
+    url: "https://telegram.org" 
+  },
+  { 
+    id: "discord", 
+    name: "Discord", 
+    color: "bg-[#5865F2]", 
+    favicon: "https://www.google.com/s2/favicons?domain=discord.com&sz=64",
+    url: "https://discord.com" 
+  },
+  { 
+    id: "other", 
+    name: "Other", 
+    color: "bg-slate-500", 
+    favicon: null,
+    url: null 
+  },
 ] as const;
 
 type PlatformId = (typeof PLATFORMS)[number]["id"];
+
+// ============================================
+// PLATFORM ICON COMPONENT
+// ============================================
+
+function PlatformIcon({ 
+  platform, 
+  size = "md" 
+}: { 
+  platform: (typeof PLATFORMS)[number]; 
+  size?: "sm" | "md" | "lg";
+}) {
+  const sizeClasses = {
+    sm: "w-6 h-6",
+    md: "w-10 h-10",
+    lg: "w-12 h-12",
+  };
+  
+  const imgSizeClasses = {
+    sm: "w-4 h-4",
+    md: "w-6 h-6",
+    lg: "w-7 h-7",
+  };
+
+  return (
+    <div className={`${sizeClasses[size]} ${platform.color} rounded-xl flex items-center justify-center shrink-0`}>
+      {platform.favicon ? (
+        <img 
+          src={platform.favicon} 
+          alt={platform.name}
+          className={`${imgSizeClasses[size]} rounded-sm`}
+          onError={(e) => {
+            // Fallback to first letter if favicon fails
+            (e.target as HTMLImageElement).style.display = 'none';
+            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+          }}
+        />
+      ) : null}
+      <span className={`text-white font-bold ${platform.favicon ? 'hidden' : ''}`}>
+        {platform.name.charAt(0)}
+      </span>
+    </div>
+  );
+}
 
 // ============================================
 // TYPES
@@ -281,9 +448,7 @@ function AccountCard({
       className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-all group"
     >
       <div className="flex items-start gap-4">
-        <div className={`w-12 h-12 ${platform.color} rounded-xl flex items-center justify-center text-xl shrink-0`}>
-          {platform.icon}
-        </div>
+        <PlatformIcon platform={platform} size="lg" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-semibold text-slate-900">{platform.name}</h3>
@@ -393,6 +558,8 @@ function AccountEditor({
   const [showPassword, setShowPassword] = useState(false);
   const [show2FASecret, setShow2FASecret] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [testingTOTP, setTestingTOTP] = useState(false);
+  const [testTOTPResult, setTestTOTPResult] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     label: account?.label || "",
     email: account?.email || "",
@@ -452,26 +619,42 @@ function AccountEditor({
     }
   };
 
+  const handleTestTOTP = async () => {
+    if (!formData.two_factor_secret) {
+      toast.error("Please enter a TOTP secret first");
+      return;
+    }
+    
+    setTestingTOTP(true);
+    try {
+      const code = await generateTOTP(formData.two_factor_secret);
+      setTestTOTPResult(code);
+      toast.success("TOTP secret is valid!");
+    } catch (err) {
+      console.error("TOTP test error:", err);
+      toast.error("Invalid TOTP secret. Please check the format.");
+      setTestTOTPResult(null);
+    } finally {
+      setTestingTOTP(false);
+    }
+  };
+
   const currentPlatform = PLATFORMS.find((p) => p.id === selectedPlatform);
 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {currentPlatform && (
-              <span className={`w-8 h-8 ${currentPlatform.color} rounded-lg flex items-center justify-center text-lg`}>
-                {currentPlatform.icon}
-              </span>
-            )}
+          <DialogTitle className="flex items-center gap-3">
+            {currentPlatform && <PlatformIcon platform={currentPlatform} size="md" />}
             {account ? "Edit Account" : "Add Account"}
           </DialogTitle>
           <DialogDescription>
             {account ? "Update your account credentials" : "Add a new platform account"}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <DialogBody className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+          <DialogBody className="space-y-4 overflow-y-auto">
             {/* Platform Selection */}
             {!account && (
               <div className="space-y-2">
@@ -480,11 +663,17 @@ function AccountEditor({
                   <SelectTrigger>
                     <SelectValue placeholder="Select a platform..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[300px]">
                     {PLATFORMS.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         <span className="flex items-center gap-2">
-                          <span>{p.icon}</span>
+                          <span className={`w-5 h-5 ${p.color} rounded flex items-center justify-center`}>
+                            {p.favicon ? (
+                              <img src={p.favicon} alt="" className="w-4 h-4 rounded-sm" />
+                            ) : (
+                              <span className="text-white text-xs font-bold">{p.name.charAt(0)}</span>
+                            )}
+                          </span>
                           <span>{p.name}</span>
                         </span>
                       </SelectItem>
@@ -570,29 +759,69 @@ function AccountEditor({
               </div>
 
               {formData.two_factor_enabled && (
-                <div className="space-y-2">
-                  <Label htmlFor="two_factor_secret">TOTP Secret (from authenticator setup)</Label>
-                  <div className="relative">
-                    <Input
-                      id="two_factor_secret"
-                      type={show2FASecret ? "text" : "password"}
-                      value={formData.two_factor_secret}
-                      onChange={(e) => setFormData({ ...formData, two_factor_secret: e.target.value.toUpperCase().replace(/\s/g, "") })}
-                      placeholder="JBSWY3DPEHPK3PXP"
-                      className="pr-10 font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShow2FASecret(!show2FASecret)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {show2FASecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="two_factor_secret">TOTP Secret Key</Label>
+                    <div className="relative">
+                      <Input
+                        id="two_factor_secret"
+                        type={show2FASecret ? "text" : "password"}
+                        value={formData.two_factor_secret}
+                        onChange={(e) => {
+                          setFormData({ ...formData, two_factor_secret: e.target.value.toUpperCase().replace(/\s/g, "") });
+                          setTestTOTPResult(null);
+                        }}
+                        placeholder="JBSWY3DPEHPK3PXP"
+                        className="pr-10 font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShow2FASecret(!show2FASecret)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {show2FASecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Enter the Base32 secret key from your authenticator app setup. This is usually shown 
+                      as "Manual entry key" or when you click "Can't scan QR code?".
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Enter the secret key from your 2FA setup (usually shown when scanning the QR code).
-                    This allows us to generate codes for you like 1Password.
-                  </p>
+                  
+                  {/* Test TOTP Button */}
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTestTOTP}
+                      disabled={testingTOTP || !formData.two_factor_secret}
+                      className="text-xs"
+                    >
+                      {testingTOTP ? (
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      ) : (
+                        <ShieldCheck className="w-3 h-3 mr-1" />
+                      )}
+                      Test Secret
+                    </Button>
+                    {testTOTPResult && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 rounded-lg">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="font-mono text-green-700 font-medium">{testTOTPResult}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700">
+                    <strong className="font-medium">How to get the secret:</strong>
+                    <ol className="mt-1 ml-4 list-decimal space-y-0.5">
+                      <li>Go to the platform's 2FA setup page</li>
+                      <li>Look for "Can't scan?" or "Manual entry" option</li>
+                      <li>Copy the secret key (letters and numbers)</li>
+                      <li>Paste it here - we'll generate codes for you</li>
+                    </ol>
+                  </div>
                 </div>
               )}
             </div>
@@ -815,7 +1044,7 @@ export default function AccountsPage() {
       )}
 
       {/* Platform Filter */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
         <button
           onClick={() => setFilter("all")}
           className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
@@ -839,7 +1068,13 @@ export default function AccountsPage() {
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
-              <span>{platform.icon}</span>
+              <span className={`w-5 h-5 ${platform.color} rounded flex items-center justify-center`}>
+                {platform.favicon ? (
+                  <img src={platform.favicon} alt="" className="w-4 h-4 rounded-sm" />
+                ) : (
+                  <span className="text-white text-xs font-bold">{platform.name.charAt(0)}</span>
+                )}
+              </span>
               {platform.name} ({count})
             </button>
           );
@@ -883,9 +1118,7 @@ export default function AccountsPage() {
             return (
               <div key={platformId}>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-8 h-8 ${platform.color} rounded-lg flex items-center justify-center text-lg`}>
-                    {platform.icon}
-                  </div>
+                  <PlatformIcon platform={platform} size="md" />
                   <h2 className="font-semibold text-slate-900">{platform.name}</h2>
                   <span className="text-sm text-slate-400">({platformAccounts.length})</span>
                   <Button
