@@ -60,7 +60,14 @@ function SetupContent() {
 
         if (response.status === 200) {
           // User already exists - redirect to dashboard
-          console.log("Setup - User exists, redirecting to dashboard");
+          const data = await response.json();
+          console.log("Setup - User exists:", data.user?.role, "- redirecting to dashboard");
+          
+          // Admin users should NEVER see setup, always redirect
+          if (data.user?.role === "admin") {
+            console.log("Setup - Admin user detected, redirecting immediately");
+          }
+          
           router.push("/dashboard");
           return;
         }

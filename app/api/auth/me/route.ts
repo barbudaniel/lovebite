@@ -43,28 +43,47 @@ export async function GET(request: NextRequest) {
     }
 
     // Use service role to fetch user profile (bypasses RLS)
-    const { data: dashboardUser, error: dbError } = await supabaseAdmin
+    // First try by auth_user_id
+    let dashboardUser = null;
+    
+    const { data: userByAuthId, error: authIdError } = await supabaseAdmin
       .from("dashboard_users")
       .select("*")
-      .or(`auth_user_id.eq.${authUser.id},email.eq.${authUser.email}`)
+      .eq("auth_user_id", authUser.id)
       .maybeSingle();
 
-    if (dbError) {
-      console.error("Error fetching dashboard user:", dbError);
-      return NextResponse.json(
-        { error: "Database error", details: dbError.message },
-        { status: 500 }
-      );
+    if (userByAuthId) {
+      dashboardUser = userByAuthId;
+    } else {
+      // Fallback: try by email
+      const { data: userByEmail, error: emailError } = await supabaseAdmin
+        .from("dashboard_users")
+        .select("*")
+        .eq("email", authUser.email)
+        .maybeSingle();
+
+      if (emailError) {
+        console.error("Error fetching dashboard user by email:", emailError);
+      }
+      
+      if (userByEmail) {
+        dashboardUser = userByEmail;
+        // Link auth_user_id if found by email
+        await supabaseAdmin
+          .from("dashboard_users")
+          .update({ auth_user_id: authUser.id })
+          .eq("id", userByEmail.id);
+        
+        dashboardUser.auth_user_id = authUser.id;
+      }
     }
 
-    // If user found by email but not auth_user_id, update the link
-    if (dashboardUser && dashboardUser.auth_user_id !== authUser.id) {
-      await supabaseAdmin
-        .from("dashboard_users")
-        .update({ auth_user_id: authUser.id })
-        .eq("id", dashboardUser.id);
-      
-      dashboardUser.auth_user_id = authUser.id;
+    if (authIdError && !dashboardUser) {
+      console.error("Error fetching dashboard user:", authIdError);
+      return NextResponse.json(
+        { error: "Database error", details: authIdError.message },
+        { status: 500 }
+      );
     }
 
     if (!dashboardUser) {
