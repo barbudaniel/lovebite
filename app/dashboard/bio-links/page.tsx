@@ -974,7 +974,15 @@ function OnboardingWizard({
   onAddLink: () => void;
   onPublish: () => void;
 }) {
-  const hasProfile = Boolean(bioLink.profile_image_url || bioLink.tagline);
+  // Profile is considered set up if user has customized any profile field
+  const hasProfile = Boolean(
+    bioLink.profile_image_url || 
+    bioLink.tagline || 
+    bioLink.subtitle ||
+    bioLink.gallery_image_url ||
+    bioLink.welcome_title ||
+    bioLink.welcome_text
+  );
   const hasLinks = linkItems.length > 0;
   const isPublished = bioLink.is_published;
 
@@ -1414,7 +1422,12 @@ export default function BioLinksPage() {
         .eq("id", bioLink.id);
 
       if (error) throw error;
+      
+      // Optimistically update local state immediately
+      setBioLink({ ...bioLink, ...data });
       toast.success("Settings saved");
+      
+      // Also refresh from server to ensure consistency
       fetchBioLink();
     } catch (err) {
       console.error("Error saving settings:", err);
@@ -1464,7 +1477,15 @@ export default function BioLinksPage() {
   }
 
   // Determine if we should show onboarding
-  const hasProfile = Boolean(bioLink?.profile_image_url || bioLink?.tagline);
+  // Profile is considered set up if user has customized any profile field
+  const hasProfile = Boolean(
+    bioLink?.profile_image_url || 
+    bioLink?.tagline || 
+    bioLink?.subtitle ||
+    bioLink?.gallery_image_url ||
+    bioLink?.welcome_title ||
+    bioLink?.welcome_text
+  );
   const hasLinks = linkItems.length > 0;
   const showOnboarding = bioLink && (!hasProfile || !hasLinks || !bioLink.is_published);
 
@@ -1473,8 +1494,13 @@ export default function BioLinksPage() {
     try {
       const supabase = getSupabaseBrowserClient();
       await supabase.from("bio_links").update({ is_published: true }).eq("id", bioLink.id);
-      fetchBioLink();
+      
+      // Optimistically update local state
+      setBioLink({ ...bioLink, is_published: true });
       toast.success("Your bio link is now live! 🎉");
+      
+      // Also refresh from server
+      fetchBioLink();
     } catch (err) {
       toast.error("Failed to publish");
     }
