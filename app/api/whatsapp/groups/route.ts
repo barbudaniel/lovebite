@@ -48,11 +48,13 @@ export async function GET() {
     }
     let groups: WhatsAppGroup[] = [];
     let botOnline = false;
+    let botError: string | null = null;
 
     // Try to fetch live groups from the WhatsApp bot first
     try {
+      console.log(`Fetching groups from bot at ${BOT_API_URL}/groups`);
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
+      const timeout = setTimeout(() => controller.abort(), 8000); // Increased timeout
       
       const botResponse = await fetch(`${BOT_API_URL}/groups`, {
         signal: controller.signal,
@@ -60,8 +62,11 @@ export async function GET() {
       });
       clearTimeout(timeout);
       
+      console.log(`Bot response status: ${botResponse.status}`);
+      
       if (botResponse.ok) {
         const botData = await botResponse.json();
+        console.log(`Bot returned ${botData.groups?.length || 0} groups`);
         botOnline = true;
         
         // Transform bot groups to our format
@@ -74,9 +79,14 @@ export async function GET() {
             participant_count: g.participants || g.participantCount || 0,
           }));
         }
+      } else {
+        const errorText = await botResponse.text();
+        console.log(`Bot error response: ${errorText}`);
+        botError = errorText;
       }
-    } catch (botError) {
-      console.log("Bot offline, falling back to database:", botError);
+    } catch (err) {
+      console.log("Bot offline or error, falling back to database:", err);
+      botError = err instanceof Error ? err.message : "Unknown error";
     }
 
     // If bot is offline, fetch from database

@@ -45,8 +45,7 @@ export async function GET(request: NextRequest) {
         use_count,
         created_by,
         created_at,
-        updated_at,
-        creator:dashboard_users!created_by(display_name, email)
+        updated_at
       `)
       .order("created_at", { ascending: false });
 
