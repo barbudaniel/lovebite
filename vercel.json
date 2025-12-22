@@ -2,8 +2,7 @@
   "crons": [
     {
       "path": "/api/whatsapp/cron",
-      "schedule": "* * * * *"
+      "schedule": "0 9 * * *"
     }
   ]
 }
-
