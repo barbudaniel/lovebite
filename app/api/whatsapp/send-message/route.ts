@@ -56,21 +56,26 @@ export async function POST(request: NextRequest) {
     // groupId can be either UUID or WhatsApp JID (e.g., "120363405507077425@g.us")
     const isWhatsAppJid = groupId.includes("@g.us");
     
-    const { data: group, error: groupError } = await supabase
+    // Try to find in database first
+    const { data: group } = await supabase
       .from("whatsapp_groups")
       .select("id, whatsapp_id, name, type")
       .eq(isWhatsAppJid ? "whatsapp_id" : "id", groupId)
       .single();
 
-    if (groupError || !group) {
+    // If not in database, allow sending if it's a valid WhatsApp JID
+    // This handles cases where groups haven't been synced yet
+    const whatsappId = group?.whatsapp_id || (isWhatsAppJid ? groupId : null);
+    
+    if (!whatsappId) {
       return NextResponse.json(
-        { error: "Group not found" },
-        { status: 404 }
+        { error: "Invalid group ID. Must be a valid WhatsApp group ID (e.g., 123456789@g.us) or a synced group UUID." },
+        { status: 400 }
       );
     }
 
-    // For business users, verify they have access to this group
-    if (dashboardUser.role === "business") {
+    // For business users, verify they have access to this group (only if group is in database)
+    if (dashboardUser.role === "business" && group) {
       // Check if the group belongs to their studio or one of their creators
       // Use the database UUID for access checks
       const { data: hasAccess } = await supabase
@@ -105,7 +110,7 @@ export async function POST(request: NextRequest) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          groupId: group.whatsapp_id, // WhatsApp JID like "123456789@g.us"
+          groupId: whatsappId, // WhatsApp JID like "123456789@g.us"
           message: message,
         }),
       });
@@ -116,7 +121,7 @@ export async function POST(request: NextRequest) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            groupId: group.whatsapp_id,
+            groupId: whatsappId,
             message: message,
           }),
         });
@@ -131,25 +136,27 @@ export async function POST(request: NextRequest) {
 
     const botResult = await botResponse.json();
 
-    // Log the message in history
-    const { error: historyError } = await supabase
-      .from("whatsapp_message_history")
-      .insert({
-        template_id: templateId || null,
-        group_id: group.id, // Use the UUID from database
-        whatsapp_group_id: group.whatsapp_id,
-        sent_by: dashboardUser.id,
-        message_content: message,
-        status: botResponse.ok ? "sent" : "failed",
-        error_message: botResponse.ok ? null : botResult.error,
-        metadata: {
-          group_name: group.name,
-          group_type: group.type,
-        },
-      });
+    // Log the message in history (only if we have a group record)
+    if (group) {
+      const { error: historyError } = await supabase
+        .from("whatsapp_message_history")
+        .insert({
+          template_id: templateId || null,
+          group_id: group.id, // Use the UUID from database
+          whatsapp_group_id: group.whatsapp_id,
+          sent_by: dashboardUser.id,
+          message_content: message,
+          status: botResponse.ok ? "sent" : "failed",
+          error_message: botResponse.ok ? null : botResult.error,
+          metadata: {
+            group_name: group.name,
+            group_type: group.type,
+          },
+        });
 
-    if (historyError) {
-      console.error("Failed to log message history:", historyError);
+      if (historyError) {
+        console.error("Failed to log message history:", historyError);
+      }
     }
 
     // Update template use count if a template was used
@@ -167,7 +174,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Message sent successfully",
-      groupName: group.name,
+      groupName: group?.name || whatsappId,
     });
   } catch (error) {
     console.error("Error sending WhatsApp message:", error);
