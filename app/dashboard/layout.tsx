@@ -922,12 +922,12 @@ export default function DashboardLayout({
     >
       <TooltipProvider delayDuration={0}>
         <SidebarProvider>
-          <div className="flex min-h-screen w-full">
+          <div className="flex min-h-screen w-full overflow-x-hidden">
             <AppSidebar user={user} onLogout={handleLogout} />
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
               <Header user={user} dashboardUserId={user?.id} />
-              <main className="flex-1 p-4 sm:p-6 lg:p-8">
-                <div className="mx-auto max-w-6xl">{children}</div>
+              <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-x-hidden">
+                <div className="mx-auto max-w-6xl w-full">{children}</div>
               </main>
             </div>
           </div>

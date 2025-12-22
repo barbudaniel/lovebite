@@ -186,15 +186,15 @@ function DraggableScroll({
 function MediaSkeleton({ viewMode }: { viewMode: "grid" | "list" | "folders" }) {
   if (viewMode === "list") {
     return (
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {[...Array(8)].map((_, i) => (
-          <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4 animate-pulse">
-            <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-slate-200 to-slate-100" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 bg-slate-200 rounded w-1/3" />
-              <div className="h-3 bg-slate-100 rounded w-1/2" />
+          <div key={i} className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 flex items-center gap-3 sm:gap-4 animate-pulse">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-gradient-to-br from-slate-200 to-slate-100 flex-shrink-0" />
+            <div className="flex-1 space-y-2 min-w-0">
+              <div className="h-3 sm:h-4 bg-slate-200 rounded w-2/3 sm:w-1/3" />
+              <div className="h-2.5 sm:h-3 bg-slate-100 rounded w-1/2" />
             </div>
-            <div className="h-3 bg-slate-100 rounded w-20" />
+            <div className="hidden sm:block h-3 bg-slate-100 rounded w-20" />
           </div>
         ))}
       </div>
@@ -218,14 +218,14 @@ function FolderSkeleton() {
   return (
     <div className="media-grid">
       {[...Array(8)].map((_, i) => (
-        <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 animate-pulse">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 bg-slate-200 rounded w-2/3" />
-              <div className="flex gap-4">
-                <div className="h-3 bg-slate-100 rounded w-16" />
-                <div className="h-3 bg-slate-100 rounded w-16" />
+        <div key={i} className="bg-white rounded-lg sm:rounded-xl border border-slate-200 p-3 sm:p-5 animate-pulse">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 flex-shrink-0" />
+            <div className="flex-1 space-y-2 min-w-0">
+              <div className="h-3 sm:h-4 bg-slate-200 rounded w-2/3" />
+              <div className="flex gap-2 sm:gap-4">
+                <div className="h-2.5 sm:h-3 bg-slate-100 rounded w-12 sm:w-16" />
+                <div className="h-2.5 sm:h-3 bg-slate-100 rounded w-12 sm:w-16" />
               </div>
             </div>
           </div>
@@ -367,10 +367,10 @@ function FolderCard({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       onClick={onClick}
-      className="group bg-white rounded-xl border border-slate-200 p-4 hover:shadow-lg hover:border-brand-300 transition-all text-left w-full"
+      className="group bg-white rounded-lg sm:rounded-xl border border-slate-200 p-3 sm:p-4 hover:shadow-lg hover:border-brand-300 transition-all text-left w-full"
     >
-      <div className="flex items-start gap-4">
-        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center shrink-0 group-hover:from-brand-100 group-hover:to-brand-50 transition-all overflow-hidden">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center shrink-0 group-hover:from-brand-100 group-hover:to-brand-50 transition-all overflow-hidden">
           {folder.thumbnail ? (
             <img
               src={folder.thumbnail}
@@ -378,47 +378,47 @@ function FolderCard({
               className="w-full h-full object-cover"
             />
           ) : (
-            <FolderClosed className="w-7 h-7 text-amber-500 group-hover:text-brand-500 transition-colors" />
+            <FolderClosed className="w-5 h-5 sm:w-7 sm:h-7 text-amber-500 group-hover:text-brand-500 transition-colors" />
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 truncate group-hover:text-brand-600 transition-colors">
+          <p className="font-semibold text-sm sm:text-base text-slate-900 truncate group-hover:text-brand-600 transition-colors">
             {folder.name}
           </p>
           
           {/* Media type counts */}
-          <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex items-center gap-2 sm:gap-3 mt-1 sm:mt-1.5 flex-wrap">
             {folder.photoCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs text-blue-600">
-                <ImageIcon className="w-3.5 h-3.5" />
+              <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-blue-600">
+                <ImageIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 {folder.photoCount}
               </span>
             )}
             {folder.videoCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs text-purple-600">
-                <Video className="w-3.5 h-3.5" />
+              <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-purple-600">
+                <Video className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 {folder.videoCount}
               </span>
             )}
             {folder.audioCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs text-orange-600">
-                <Music className="w-3.5 h-3.5" />
+              <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-orange-600">
+                <Music className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 {folder.audioCount}
               </span>
             )}
             {!hasContent && (
-              <span className="text-xs text-slate-400">No media</span>
+              <span className="text-[10px] sm:text-xs text-slate-400">No media</span>
             )}
           </div>
 
           {folder.type === "creator" && (
-            <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 bg-slate-100 rounded-full text-xs text-slate-600">
+            <span className="hidden sm:inline-flex items-center gap-1 mt-2 px-2 py-0.5 bg-slate-100 rounded-full text-xs text-slate-600">
               <Users className="w-3 h-3" />
               Model
             </span>
           )}
         </div>
-        <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-1 transition-all shrink-0" />
+        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-1 transition-all shrink-0" />
       </div>
     </motion.button>
   );
@@ -499,7 +499,7 @@ function MediaTypeFilter({
   ];
 
   return (
-    <div className="flex items-center gap-1.5 sm:gap-2">
+    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
       {types.map(({ type, icon: Icon, label, color, activeColor }) => {
         const isSelected = selectedTypes.has(type) || selectedTypes.size === 0;
         const count = counts[type];
@@ -508,13 +508,12 @@ function MediaTypeFilter({
           <button
             key={type}
             onClick={() => onToggle(type)}
-            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl font-medium transition-all ${
+            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-medium transition-all text-sm sm:text-base ${
               isSelected ? activeColor + " shadow-md" : color
             }`}
           >
-            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="hidden sm:inline">{label}</span>
-            <span className={`text-xs px-1 sm:px-1.5 py-0.5 rounded-full ${
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <span className={`text-xs sm:text-sm px-1 sm:px-1.5 py-0.5 rounded-full ${
               isSelected ? "bg-white/20" : "bg-black/10"
             }`}>
               {count}
@@ -538,20 +537,20 @@ function Breadcrumb({
   onNavigate: (index: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-1 text-sm overflow-x-auto pb-2">
+    <div className="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm overflow-x-auto pb-2 scrollbar-hide">
       <button
         onClick={() => onNavigate(-1)}
-        className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors shrink-0"
+        className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-1 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors shrink-0"
       >
-        <Home className="w-4 h-4" />
+        <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         <span>All</span>
       </button>
       {path.map((item, index) => (
         <div key={item.id} className="flex items-center shrink-0">
-          <ChevronRight className="w-4 h-4 text-slate-300" />
+          <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300" />
           <button
             onClick={() => onNavigate(index)}
-            className={`px-2 py-1 rounded-lg transition-colors ${
+            className={`px-1.5 sm:px-2 py-1 rounded-lg transition-colors truncate max-w-[100px] sm:max-w-none ${
               index === path.length - 1
                 ? "bg-brand-100 text-brand-700 font-medium"
                 : "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
@@ -619,78 +618,143 @@ function MediaCard({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className={`flex items-center gap-4 p-4 bg-white rounded-lg border ${
+        className={`bg-white rounded-lg border ${
           isSelected ? "border-brand-500 bg-brand-50" : "border-slate-200"
-        } hover:shadow-sm transition-all`}
+        } hover:shadow-sm transition-all overflow-hidden`}
       >
-        <button onClick={() => onSelect(media.id)} className="shrink-0">
-          {isSelected ? (
-            <CheckSquare className="w-5 h-5 text-brand-600" />
-          ) : (
-            <Square className="w-5 h-5 text-slate-400" />
-          )}
-        </button>
+        {/* Mobile Layout */}
+        <div className="sm:hidden">
+          <div className="flex items-center gap-3 p-3">
+            <button onClick={() => onSelect(media.id)} className="shrink-0">
+              {isSelected ? (
+                <CheckSquare className="w-5 h-5 text-brand-600" />
+              ) : (
+                <Square className="w-5 h-5 text-slate-400" />
+              )}
+            </button>
 
-        <div
-          className="w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0 cursor-pointer relative"
-          onClick={() => onView(media)}
-        >
-          {media.media_type === "image" ? (
-            <LazyImage
-              src={media.storage_url}
-              alt={media.file_name}
-              className="w-full h-full relative"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <TypeIcon className="w-6 h-6 text-slate-400" />
+            <div
+              className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden shrink-0 cursor-pointer relative"
+              onClick={() => onView(media)}
+            >
+              {media.media_type === "image" ? (
+                <LazyImage
+                  src={media.storage_url}
+                  alt={media.file_name}
+                  className="w-full h-full relative"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <TypeIcon className="w-5 h-5 text-slate-400" />
+                </div>
+              )}
             </div>
-          )}
+
+            <div className="flex-1 min-w-0" onClick={() => onView(media)}>
+              <p className="font-medium text-sm text-slate-900 truncate">{media.category || "Uncategorized"}</p>
+              <p className="text-xs text-slate-500">
+                {formatFileSize(media.file_size_bytes)} • {format(new Date(media.created_at), "MMM d")}
+              </p>
+            </div>
+
+            {/* Mobile action buttons - only essential ones */}
+            <div className="flex items-center gap-0.5 shrink-0">
+              <button
+                onClick={() => onView(media)}
+                className="p-2 text-slate-500 hover:text-slate-700"
+                title="View"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => window.open(media.storage_url, "_blank")}
+                className="p-2 text-slate-500 hover:text-slate-700"
+                title="Download"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(media.id)}
+                className="p-2 text-red-500 hover:text-red-700"
+                title="Delete"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-slate-900 truncate">{media.category || "Uncategorized"}</p>
+        {/* Desktop Layout */}
+        <div className="hidden sm:flex items-center gap-4 p-4">
+          <button onClick={() => onSelect(media.id)} className="shrink-0">
+            {isSelected ? (
+              <CheckSquare className="w-5 h-5 text-brand-600" />
+            ) : (
+              <Square className="w-5 h-5 text-slate-400" />
+            )}
+          </button>
+
+          <div
+            className="w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0 cursor-pointer relative"
+            onClick={() => onView(media)}
+          >
+            {media.media_type === "image" ? (
+              <LazyImage
+                src={media.storage_url}
+                alt={media.file_name}
+                className="w-full h-full relative"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <TypeIcon className="w-6 h-6 text-slate-400" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-slate-900 truncate">{media.category || "Uncategorized"}</p>
+            <p className="text-sm text-slate-500">
+              {formatFileSize(media.file_size_bytes)} • {format(new Date(media.created_at), "MMM d")}
+            </p>
+            {media.creator && (
+              <p className="text-xs text-slate-400">by @{media.creator.username}</p>
+            )}
+          </div>
+
           <p className="text-sm text-slate-500">
-            {formatFileSize(media.file_size_bytes)} • {format(new Date(media.created_at), "MMM d")}
+            {format(new Date(media.created_at), "MMM d, yyyy")}
           </p>
-          {media.creator && (
-            <p className="text-xs text-slate-400">by @{media.creator.username}</p>
-          )}
-        </div>
 
-        <p className="text-sm text-slate-500 hidden sm:block">
-          {format(new Date(media.created_at), "MMM d, yyyy")}
-        </p>
-
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => onView(media)} title="View">
-            <Eye className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => onCopyPermalink(media.id)} title="Copy permalink">
-            <Link2 className="w-4 h-4" />
-          </Button>
-          {media.media_type === "image" && (
-            <Button variant="ghost" size="sm" onClick={() => onCopy(media)} title="Copy image">
-              <Copy className="w-4 h-4" />
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => onView(media)} title="View">
+              <Eye className="w-4 h-4" />
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => window.open(media.storage_url, "_blank")}
-            title="Download"
-          >
-            <Download className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(media.id)}
-            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-            title="Delete"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+            <Button variant="ghost" size="sm" onClick={() => onCopyPermalink(media.id)} title="Copy permalink">
+              <Link2 className="w-4 h-4" />
+            </Button>
+            {media.media_type === "image" && (
+              <Button variant="ghost" size="sm" onClick={() => onCopy(media)} title="Copy image">
+                <Copy className="w-4 h-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.open(media.storage_url, "_blank")}
+              title="Download"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(media.id)}
+              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </motion.div>
     );
@@ -2046,7 +2110,7 @@ export default function MediaPage() {
   }, [fetchMedia]);
 
   return (
-    <div className="space-y-6 relative overflow-x-hidden">
+    <div className="space-y-4 sm:space-y-6 relative overflow-x-hidden w-full max-w-full">
       {/* Global Drop Overlay */}
       <AnimatePresence>
         {isGlobalDragging && (
@@ -2066,10 +2130,10 @@ export default function MediaPage() {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Media Library</h1>
-          <p className="text-slate-500">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Media Library</h1>
+          <p className="text-sm sm:text-base text-slate-500">
             {/* Use calculated totals for accuracy */}
             {(currentPath.length > 0 && selectedCreator && creatorMediaCounts[selectedCreator]
               ? creatorMediaCounts[selectedCreator].total
@@ -2084,16 +2148,17 @@ export default function MediaPage() {
             size="sm"
             onClick={() => fetchMedia(true)}
             disabled={isLoading}
+            className="text-xs sm:text-sm"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 ${isLoading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
           <Button
             size="sm"
             onClick={() => setShowUploadModal(true)}
-            className="bg-brand-600 hover:bg-brand-700 text-white"
+            className="bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
             Upload
           </Button>
         </div>
@@ -2101,7 +2166,7 @@ export default function MediaPage() {
 
       {/* Breadcrumb */}
       {(currentPath.length > 0 || selectedCreator) && (
-        <div className="bg-white rounded-xl border border-slate-200 p-3">
+        <div className="bg-white rounded-lg sm:rounded-xl border border-slate-200 p-2 sm:p-3">
           <Breadcrumb path={currentPath} onNavigate={handleBreadcrumbNavigate} />
         </div>
       )}
@@ -2109,7 +2174,7 @@ export default function MediaPage() {
       {/* Toolbar */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         {/* Top row: Media type filters + View toggle */}
-        <div className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="p-3 sm:p-4 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
           {/* Media Type Filter */}
           <MediaTypeFilter
             selectedTypes={filters.types}
@@ -2121,18 +2186,18 @@ export default function MediaPage() {
           />
 
           {/* Right side controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
             {/* Date Filter Toggle */}
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
-              className={showFilters ? "bg-slate-100" : ""}
+              className={`text-xs sm:text-sm ${showFilters ? "bg-slate-100" : ""}`}
             >
-              <Calendar className="w-4 h-4 mr-2" />
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Date
               <ChevronDown
-                className={`w-4 h-4 ml-1 transition-transform ${showFilters ? "rotate-180" : ""}`}
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ml-0.5 sm:ml-1 transition-transform ${showFilters ? "rotate-180" : ""}`}
               />
             </Button>
 
@@ -2142,19 +2207,19 @@ export default function MediaPage() {
                 variant="outline"
                 size="sm"
                 onClick={clearFilters}
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                className="text-xs sm:text-sm text-red-600 border-red-200 hover:bg-red-50"
               >
-                <X className="w-4 h-4 mr-1" />
-                Clear
+                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
+                <span className="hidden xs:inline">Clear</span>
               </Button>
             )}
 
             {/* View Toggle */}
-            <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden">
+            <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden flex-shrink-0">
               {isAdminOrBusiness && (
                 <button
                   onClick={() => setViewMode("folders")}
-                  className={`p-2 ${
+                  className={`p-1.5 sm:p-2 ${
                     viewMode === "folders"
                       ? "bg-slate-100 text-slate-900"
                       : "text-slate-500 hover:bg-slate-50"
@@ -2166,7 +2231,7 @@ export default function MediaPage() {
               )}
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-2 ${
+                className={`p-1.5 sm:p-2 ${
                   viewMode === "grid"
                     ? "bg-slate-100 text-slate-900"
                     : "text-slate-500 hover:bg-slate-50"
@@ -2177,7 +2242,7 @@ export default function MediaPage() {
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-2 ${
+                className={`p-1.5 sm:p-2 ${
                   viewMode === "list"
                     ? "bg-slate-100 text-slate-900"
                     : "text-slate-500 hover:bg-slate-50"
@@ -2199,27 +2264,27 @@ export default function MediaPage() {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden border-t border-slate-200"
             >
-              <div className="p-4 flex flex-wrap items-center gap-4 bg-slate-50">
-                <span className="text-sm font-medium text-slate-600">Date range:</span>
-                <div className="flex items-center gap-2">
+              <div className="p-3 sm:p-4 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-4 bg-slate-50">
+                <span className="text-xs sm:text-sm font-medium text-slate-600">Date range:</span>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Input
                     type="date"
                     value={filters.dateFrom}
                     onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                    className="w-auto bg-white"
+                    className="flex-1 sm:flex-none sm:w-auto bg-white text-xs sm:text-sm"
                   />
-                  <span className="text-slate-400">→</span>
+                  <span className="text-slate-400 text-xs sm:text-sm">→</span>
                   <Input
                     type="date"
                     value={filters.dateTo}
                     onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                    className="w-auto bg-white"
+                    className="flex-1 sm:flex-none sm:w-auto bg-white text-xs sm:text-sm"
                   />
                 </div>
                 {(filters.dateFrom || filters.dateTo) && (
                   <button
                     onClick={() => setFilters({ ...filters, dateFrom: "", dateTo: "" })}
-                    className="text-sm text-slate-500 hover:text-slate-700"
+                    className="text-xs sm:text-sm text-slate-500 hover:text-slate-700"
                   >
                     Clear dates
                   </button>
@@ -2323,12 +2388,14 @@ export default function MediaPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-4 overflow-hidden">
+        <div className="space-y-3 sm:space-y-4 overflow-hidden">
           {/* Horizontal Label Filter (scrollable with drag) */}
           {categories.length > 0 && (
-            <div className="-mx-4 px-4 sm:mx-0 sm:px-0">
-              <DraggableScroll className="overflow-x-auto pb-2 cursor-grab active:cursor-grabbing">
-                <div className="flex items-center gap-2 min-w-max">
+            <div className="relative -mx-3 sm:-mx-4 md:mx-0">
+              {/* Fade indicator on right edge for mobile */}
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10 sm:hidden" />
+              <DraggableScroll className="overflow-x-auto pb-2 px-3 sm:px-4 md:px-0 cursor-grab active:cursor-grabbing scrollbar-hide">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                 {[...categories]
                   .sort((a, b) => b.count - a.count)
                   .map((cat) => {
@@ -2339,15 +2406,15 @@ export default function MediaPage() {
                       <button
                         key={cat.name}
                         onClick={() => toggleCategoryFilter(cat.name)}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                           isSelected
                             ? "bg-brand-500 text-white shadow-md"
                             : `${iconConfig.bg} ${iconConfig.color}`
                         }`}
                       >
-                        <IconComponent className="w-4 h-4" />
+                        <IconComponent className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         <span>{cat.name}</span>
-                        <span className={`text-xs ${isSelected ? "opacity-70" : "opacity-60"}`}>
+                        <span className={`text-[10px] sm:text-xs ${isSelected ? "opacity-70" : "opacity-60"}`}>
                           {cat.count}
                         </span>
                       </button>
@@ -2356,9 +2423,9 @@ export default function MediaPage() {
                 {filters.categories.size > 0 && (
                   <button
                     onClick={() => setFilters({ ...filters, categories: new Set() })}
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all whitespace-nowrap"
+                    className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all whitespace-nowrap flex-shrink-0"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     Clear
                   </button>
                 )}
