@@ -1461,7 +1461,7 @@ export default function MediaPage() {
 
   // Fetch creators and their media counts for folder view
   const fetchCreators = useCallback(async () => {
-    if (!apiKey || !isAdminOrStudio || !permissionsLoaded) return;
+    if (!apiKey || !isAdminOrBusiness || !permissionsLoaded) return;
 
     try {
       const api = createApiClient(apiKey);
@@ -1526,7 +1526,7 @@ export default function MediaPage() {
     } catch (err) {
       console.error("Error fetching creators:", err);
     }
-  }, [apiKey, isAdminOrStudio, user, creatorMediaCounts, permissionsLoaded]);
+  }, [apiKey, isAdminOrBusiness, user, creatorMediaCounts, permissionsLoaded]);
 
   // Fetch studio creators for permission filtering
   useEffect(() => {
@@ -1798,7 +1798,7 @@ export default function MediaPage() {
 
   // Force refresh counts
   const refreshCounts = useCallback(async () => {
-    if (!apiKey || !isAdminOrStudio || !permissionsLoaded) return;
+    if (!apiKey || !isAdminOrBusiness || !permissionsLoaded) return;
 
     try {
       const api = createApiClient(apiKey);
@@ -1847,7 +1847,7 @@ export default function MediaPage() {
     } catch (err) {
       console.error("Error refreshing counts:", err);
     }
-  }, [apiKey, isAdminOrStudio, user, studioCreatorIds, permissionsLoaded]);
+  }, [apiKey, isAdminOrBusiness, user, studioCreatorIds, permissionsLoaded]);
 
   useEffect(() => {
     // Only fetch creators once permissions are loaded
@@ -1866,7 +1866,7 @@ export default function MediaPage() {
 
   // Generate folder items for the folder view
   const folderItems = useMemo<FolderItem[]>(() => {
-    if (currentPath.length === 0 && isAdminOrStudio) {
+    if (currentPath.length === 0 && isAdminOrBusiness) {
       // Root level - show creators as folders with media counts
       return creators.map((creator) => {
         const counts = creatorMediaCounts[creator.id] || { image: 0, video: 0, audio: 0, total: 0 };
@@ -1893,7 +1893,7 @@ export default function MediaPage() {
       videoCount: 0,
       audioCount: 0,
     }));
-  }, [creators, categories, currentPath, isAdminOrStudio, creatorMediaCounts]);
+  }, [creators, categories, currentPath, isAdminOrBusiness, creatorMediaCounts]);
 
   const handleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -2229,7 +2229,7 @@ export default function MediaPage() {
 
             {/* View Toggle */}
             <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden">
-              {isAdminOrStudio && (
+              {isAdminOrBusiness && (
                 <button
                   onClick={() => setViewMode("folders")}
                   className={`p-2 ${
@@ -2340,7 +2340,7 @@ export default function MediaPage() {
 
       {/* Content */}
       {isLoading && media.length === 0 && !error ? (
-        viewMode === "folders" && currentPath.length === 0 && isAdminOrStudio ? (
+        viewMode === "folders" && currentPath.length === 0 && isAdminOrBusiness ? (
           <FolderSkeleton />
         ) : (
           <MediaSkeleton viewMode={viewMode} />
@@ -2354,7 +2354,7 @@ export default function MediaPage() {
             Retry
           </Button>
         </div>
-      ) : viewMode === "folders" && currentPath.length === 0 && isAdminOrStudio ? (
+      ) : viewMode === "folders" && currentPath.length === 0 && isAdminOrBusiness ? (
         // Folder view at root
         folderItems.length === 0 ? (
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-12 text-center">

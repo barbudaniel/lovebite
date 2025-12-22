@@ -348,7 +348,7 @@ export default function StatisticsPage() {
         } else {
           setBioAnalytics(null);
         }
-      } else if (isAdminOrStudio) {
+      } else if (isAdminOrBusiness) {
         // Fetch aggregated bio analytics for all models
         setBioAnalytics(null);
         const aggResponse = await fetch(`/api/analytics/bio/models?period=${period}`);
@@ -424,7 +424,7 @@ export default function StatisticsPage() {
           <p className="text-slate-500">
             {selectedModelId && displayName
               ? `Stats for ${displayName}`
-              : isAdminOrStudio
+              : isAdminOrBusiness
               ? "Platform overview & model statistics"
               : "Track your content performance"}
           </p>
@@ -432,7 +432,7 @@ export default function StatisticsPage() {
         
         <div className="flex items-center gap-3">
           {/* Model Selector for Admin/Studio */}
-          {isAdminOrStudio && models.length > 0 && (
+          {isAdminOrBusiness && models.length > 0 && (
             <ModelSelector
               models={models}
               selectedId={selectedModelId}
@@ -508,7 +508,7 @@ export default function StatisticsPage() {
       </div>
 
       {/* Model Bio Stats - Horizontal Bar Chart for Admin/Studio */}
-      {isAdminOrStudio && !selectedModelId && aggregatedBioStats && aggregatedBioStats.modelStats.length > 0 && (
+      {isAdminOrBusiness && !selectedModelId && aggregatedBioStats && aggregatedBioStats.modelStats.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <SectionHeader 
             title="Bio Link Performance by Model" 
@@ -741,7 +741,7 @@ export default function StatisticsPage() {
               </div>
             </div>
           </div>
-        ) : mediaStats && !isCreatorStats(mediaStats) && isAdminOrStudio && !selectedModelId ? (
+        ) : mediaStats && !isCreatorStats(mediaStats) && isAdminOrBusiness && !selectedModelId ? (
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <SectionHeader title="Platform Overview" subtitle="Total content" />
             

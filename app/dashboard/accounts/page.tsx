@@ -673,10 +673,10 @@ export default function AccountsPage() {
   const [showTOTP, setShowTOTP] = useState<SocialAccount | null>(null);
   const [filter, setFilter] = useState<string>("all");
 
-  const activeCreatorId = isAdminOrStudio ? selectedCreatorId : user?.creator_id;
+  const activeCreatorId = isAdminOrBusiness ? selectedCreatorId : user?.creator_id;
 
   useEffect(() => {
-    if (isAdminOrStudio) {
+    if (isAdminOrBusiness) {
       fetchCreators();
     } else if (user?.creator_id) {
       setSelectedCreatorId(user.creator_id);
@@ -684,7 +684,7 @@ export default function AccountsPage() {
     } else {
       setIsLoading(false);
     }
-  }, [user, isAdminOrStudio]);
+  }, [user, isAdminOrBusiness]);
 
   useEffect(() => {
     if (selectedCreatorId) {
@@ -773,7 +773,7 @@ export default function AccountsPage() {
     );
   }
 
-  if (!isAdminOrStudio && !user?.creator_id) {
+  if (!isAdminOrBusiness && !user?.creator_id) {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-3">
         <AlertCircle className="w-5 h-5 text-amber-500" />
@@ -806,7 +806,7 @@ export default function AccountsPage() {
       </div>
 
       {/* Creator Selector for Admin/Studio */}
-      {isAdminOrStudio && (
+      {isAdminOrBusiness && (
         <CreatorSelector
           creators={creators}
           selectedId={selectedCreatorId}

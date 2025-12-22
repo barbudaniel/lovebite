@@ -919,11 +919,11 @@ export default function BioLinksPage() {
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   
   const isAdminOrBusiness = user?.role === "admin" || user?.role === "business";
-  const effectiveCreatorId = isAdminOrStudio ? selectedCreatorId : user?.creator_id;
+  const effectiveCreatorId = isAdminOrBusiness ? selectedCreatorId : user?.creator_id;
 
   // Fetch creators list for admin/studio
   useEffect(() => {
-    if (!isAdminOrStudio) return;
+    if (!isAdminOrBusiness) return;
     
     const fetchCreators = async () => {
       const supabase = getSupabaseBrowserClient();
@@ -947,12 +947,12 @@ export default function BioLinksPage() {
     };
     
     fetchCreators();
-  }, [isAdminOrStudio, user?.studio_id, user?.role]);
+  }, [isAdminOrBusiness, user?.studio_id, user?.role]);
 
   useEffect(() => {
     if (effectiveCreatorId) {
       fetchBioLink();
-    } else if (!isAdminOrStudio && !user?.creator_id) {
+    } else if (!isAdminOrBusiness && !user?.creator_id) {
       setIsLoading(false);
     }
   }, [effectiveCreatorId, user]);
@@ -1108,7 +1108,7 @@ export default function BioLinksPage() {
   }
 
   // Show message only for non-admin/studio users without creator profile
-  if (!isAdminOrStudio && !user?.creator_id) {
+  if (!isAdminOrBusiness && !user?.creator_id) {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-3">
         <AlertCircle className="w-5 h-5 text-amber-500" />
@@ -1120,7 +1120,7 @@ export default function BioLinksPage() {
   }
   
   // Admin/Studio with no creators
-  if (isAdminOrStudio && creators.length === 0) {
+  if (isAdminOrBusiness && creators.length === 0) {
     return (
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-center">
         <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-3" />
@@ -1133,7 +1133,7 @@ export default function BioLinksPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Admin/Studio Creator Selector */}
-      {isAdminOrStudio && creators.length > 0 && (
+      {isAdminOrBusiness && creators.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <Label className="text-sm font-medium text-slate-700 mb-2 block">
             Select Creator to Edit
@@ -1157,7 +1157,7 @@ export default function BioLinksPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Bio Links</h1>
           <p className="text-slate-500">
-            {isAdminOrStudio && selectedCreatorId 
+            {isAdminOrBusiness && selectedCreatorId 
               ? `Managing @${creators.find(c => c.id === selectedCreatorId)?.username}'s bio link`
               : "Manage your bio link page"
             }

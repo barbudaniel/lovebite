@@ -767,12 +767,12 @@ export default function ScenariosPage() {
   const [showMediaSelector, setShowMediaSelector] = useState(false);
 
   const isAdminOrBusiness = user?.role === "admin" || user?.role === "business";
-  const activeCreatorId = isAdminOrStudio ? selectedCreatorId : user?.creator_id;
+  const activeCreatorId = isAdminOrBusiness ? selectedCreatorId : user?.creator_id;
 
   // Fetch creators for admin/studio
   useEffect(() => {
     const fetchCreators = async () => {
-      if (!isAdminOrStudio || !apiKey) return;
+      if (!isAdminOrBusiness || !apiKey) return;
       
       try {
         const api = createApiClient(apiKey);
@@ -795,14 +795,14 @@ export default function ScenariosPage() {
       }
     };
     fetchCreators();
-  }, [isAdminOrStudio, apiKey, user]);
+  }, [isAdminOrBusiness, apiKey, user]);
 
   // Auto-select self for models
   useEffect(() => {
-    if (!isAdminOrStudio && user?.creator_id) {
+    if (!isAdminOrBusiness && user?.creator_id) {
       setSelectedCreatorId(user.creator_id);
     }
-  }, [isAdminOrStudio, user?.creator_id]);
+  }, [isAdminOrBusiness, user?.creator_id]);
 
   // Fetch scenarios
   const fetchScenarios = useCallback(async () => {
@@ -963,7 +963,7 @@ export default function ScenariosPage() {
 
   const selectedCreator = creators.find((c) => c.id === activeCreatorId);
 
-  if (!activeCreatorId && !isAdminOrStudio) {
+  if (!activeCreatorId && !isAdminOrBusiness) {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-3">
         <AlertCircle className="w-5 h-5 text-amber-500" />
@@ -1001,7 +1001,7 @@ export default function ScenariosPage() {
       </div>
 
       {/* Creator selector for admin/studio */}
-      {isAdminOrStudio && (
+      {isAdminOrBusiness && (
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
