@@ -366,9 +366,12 @@ export class MediaApiClient {
     return this.request<MediaAlbum[]>(`/api/v1/media/albums${query ? `?${query}` : ''}`);
   }
 
-  async getMediaCategories(creatorId?: string): Promise<ApiResponse<MediaCategory[]>> {
-    const query = creatorId ? `?creator_id=${creatorId}` : '';
-    return this.request<MediaCategory[]>(`/api/v1/media/categories${query}`);
+  async getMediaCategories(params?: { creator_id?: string; studio_id?: string }): Promise<ApiResponse<MediaCategory[]>> {
+    const searchParams = new URLSearchParams();
+    if (params?.creator_id) searchParams.set('creator_id', params.creator_id);
+    if (params?.studio_id) searchParams.set('studio_id', params.studio_id);
+    const query = searchParams.toString();
+    return this.request<MediaCategory[]>(`/api/v1/media/categories${query ? `?${query}` : ''}`);
   }
 
   async searchMedia(query: string, params?: {

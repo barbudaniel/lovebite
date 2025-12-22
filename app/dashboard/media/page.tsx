@@ -58,6 +58,22 @@ import {
 } from "@/components/ui/dialog-centered";
 
 // ============================================
+// UTILITIES
+// ============================================
+
+/**
+ * Convert snake_case or underscore-separated strings to Title Case
+ * e.g., "full_body" -> "Full Body", "soft_dom" -> "Soft Dom"
+ */
+function toTitleCase(str: string): string {
+  if (!str) return str;
+  return str
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+// ============================================
 // TYPES
 // ============================================
 
@@ -103,26 +119,65 @@ const CATEGORY_ICONS: Record<string, { icon: React.ComponentType<{ className?: s
 };
 
 // ============================================
-// DRAGGABLE SCROLL COMPONENT
+// DRAGGABLE SCROLL COMPONENT WITH ARROW BUTTONS
 // ============================================
 
 function DraggableScroll({ 
   children, 
-  className 
+  className,
+  showArrows = true,
 }: { 
   children: React.ReactNode; 
   className?: string;
+  showArrows?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const [scrollLeftPos, setScrollLeftPos] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // Check scroll status
+  const updateScrollStatus = useCallback(() => {
+    if (!containerRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = containerRef.current;
+    setCanScrollLeft(scrollLeft > 0);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+  }, []);
+
+  // Update scroll status on mount and resize
+  useEffect(() => {
+    updateScrollStatus();
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver(updateScrollStatus);
+    resizeObserver.observe(container);
+    
+    return () => resizeObserver.disconnect();
+  }, [updateScrollStatus]);
+
+  // Also update when children change
+  useEffect(() => {
+    updateScrollStatus();
+  }, [children, updateScrollStatus]);
+
+  const handleScroll = () => {
+    updateScrollStatus();
+  };
+
+  const scrollBy = (direction: 'left' | 'right') => {
+    if (!containerRef.current) return;
+    const scrollAmount = direction === 'left' ? -200 : 200;
+    containerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
     setIsDragging(true);
     setStartX(e.pageX - containerRef.current.offsetLeft);
-    setScrollLeft(containerRef.current.scrollLeft);
+    setScrollLeftPos(containerRef.current.scrollLeft);
   };
 
   const handleMouseUp = () => {
@@ -134,39 +189,69 @@ function DraggableScroll({
     e.preventDefault();
     const x = e.pageX - containerRef.current.offsetLeft;
     const walk = (x - startX) * 1.5;
-    containerRef.current.scrollLeft = scrollLeft - walk;
+    containerRef.current.scrollLeft = scrollLeftPos - walk;
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!containerRef.current) return;
     setIsDragging(true);
     setStartX(e.touches[0].pageX - containerRef.current.offsetLeft);
-    setScrollLeft(containerRef.current.scrollLeft);
+    setScrollLeftPos(containerRef.current.scrollLeft);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || !containerRef.current) return;
     const x = e.touches[0].pageX - containerRef.current.offsetLeft;
     const walk = (x - startX) * 1.5;
-    containerRef.current.scrollLeft = scrollLeft - walk;
+    containerRef.current.scrollLeft = scrollLeftPos - walk;
   };
 
   return (
-    <div
-      ref={containerRef}
-      className={`scrollbar-hide ${className || ''}`}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onMouseMove={handleMouseMove}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleMouseUp}
-      onTouchMove={handleTouchMove}
-      style={{ 
-        userSelect: isDragging ? 'none' : 'auto',
-      }}
-    >
-      {children}
+    <div className="relative flex items-center gap-1">
+      {/* Left Arrow */}
+      {showArrows && (
+        <button
+          onClick={() => scrollBy('left')}
+          className={`hidden sm:flex items-center justify-center w-7 h-7 rounded-full bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all flex-shrink-0 ${
+            canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          aria-label="Scroll left"
+        >
+          <ChevronRight className="w-4 h-4 text-slate-600 rotate-180" />
+        </button>
+      )}
+
+      {/* Scrollable Container */}
+      <div
+        ref={containerRef}
+        className={`scrollbar-hide flex-1 ${className || ''}`}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleMouseUp}
+        onTouchMove={handleTouchMove}
+        onScroll={handleScroll}
+        style={{ 
+          userSelect: isDragging ? 'none' : 'auto',
+        }}
+      >
+        {children}
+      </div>
+
+      {/* Right Arrow */}
+      {showArrows && (
+        <button
+          onClick={() => scrollBy('right')}
+          className={`hidden sm:flex items-center justify-center w-7 h-7 rounded-full bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all flex-shrink-0 ${
+            canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          aria-label="Scroll right"
+        >
+          <ChevronRight className="w-4 h-4 text-slate-600" />
+        </button>
+      )}
     </div>
   );
 }
@@ -454,7 +539,7 @@ function CategoryBadge({
         title="Click to manage labels"
       >
         <IconComponent className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
-        <span className="truncate">{category || "Add label"}</span>
+        <span className="truncate">{category ? toTitleCase(category) : "Add label"}</span>
       </button>
 
       <LabelManager
@@ -643,7 +728,7 @@ function MediaCard({
             </div>
 
             <div className="flex-1 min-w-0" onClick={() => onView(media)}>
-              <p className="font-medium text-sm text-slate-900 truncate">{media.category || "Uncategorized"}</p>
+              <p className="font-medium text-sm text-slate-900 truncate">{toTitleCase(media.category || "uncategorized")}</p>
               <p className="text-xs text-slate-500">
                 {formatFileSize(media.file_size_bytes)} • {format(new Date(media.created_at), "MMM d")}
               </p>
@@ -704,7 +789,7 @@ function MediaCard({
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-slate-900 truncate">{media.category || "Uncategorized"}</p>
+            <p className="font-medium text-slate-900 truncate">{toTitleCase(media.category || "uncategorized")}</p>
             <p className="text-sm text-slate-500">
               {formatFileSize(media.file_size_bytes)} • {format(new Date(media.created_at), "MMM d")}
             </p>
@@ -1884,8 +1969,10 @@ export default function MediaPage() {
         }
 
         // Fetch categories (filter by creator or studio)
-        let categoryCreatorId = creatorIdFilter;
-        const catResponse = await api.getMediaCategories(categoryCreatorId);
+        const catResponse = await api.getMediaCategories({
+          creator_id: creatorIdFilter,
+          studio_id: studioIdFilter,
+        });
         if (catResponse.success && catResponse.data) {
           setCategories(catResponse.data);
         }
@@ -2034,7 +2121,7 @@ export default function MediaPage() {
     // Show categories as folders when inside a creator folder
     return categories.map((cat) => ({
       id: cat.name,
-      name: cat.name,
+      name: toTitleCase(cat.name),  // Convert snake_case to Title Case
       type: "category" as const,
       count: cat.count,
       photoCount: 0, // Categories don't have per-type counts from API
@@ -2571,11 +2658,9 @@ export default function MediaPage() {
         </div>
       ) : (
         <div className="space-y-3 sm:space-y-4 overflow-hidden">
-          {/* Horizontal Label Filter (scrollable with drag) */}
+          {/* Horizontal Label Filter (scrollable with drag & arrow buttons) */}
           {categories.length > 0 && (
-            <div className="relative -mx-3 sm:-mx-4 md:mx-0">
-              {/* Fade indicator on right edge for mobile */}
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10 sm:hidden" />
+            <div className="-mx-3 sm:-mx-4 md:mx-0">
               <DraggableScroll className="overflow-x-auto pb-2 px-3 sm:px-4 md:px-0 cursor-grab active:cursor-grabbing scrollbar-hide">
                 <div className="flex items-center gap-1.5 sm:gap-2">
                 {[...categories]
@@ -2595,7 +2680,7 @@ export default function MediaPage() {
                         }`}
                       >
                         <IconComponent className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span>{cat.name}</span>
+                        <span>{toTitleCase(cat.name)}</span>
                         <span className={`text-[10px] sm:text-xs ${isSelected ? "opacity-70" : "opacity-60"}`}>
                           {cat.count}
                         </span>
