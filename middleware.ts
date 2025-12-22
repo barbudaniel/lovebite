@@ -3,18 +3,18 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getCreatorByDomain } from '@/lib/creators';
 
-// Check Supabase for custom domain (with caching via edge runtime)
+// Check Supabase for custom domain (no caching - real-time data)
 async function getCreatorSlugByDomain(domain: string): Promise<string | null> {
   // Remove www. prefix if present
   const cleanDomain = domain.replace(/^www\./, "").toLowerCase();
   
-  // First check local cache (instant, no network call)
+  // First check local cache (instant, no network call) - fallback only
   const localCreator = getCreatorByDomain(cleanDomain);
   if (localCreator) {
     return localCreator.id;
   }
   
-  // Check Supabase for custom domains not in local cache
+  // Check Supabase for custom domains - no caching for real-time data
   try {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/bio_links?custom_domain=ilike.${cleanDomain}&is_published=eq.true&select=slug`,
@@ -23,8 +23,7 @@ async function getCreatorSlugByDomain(domain: string): Promise<string | null> {
           'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
           'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
         },
-        // Cache for 1 hour to reduce DB calls
-        next: { revalidate: 3600 },
+        cache: 'no-store',
       }
     );
     

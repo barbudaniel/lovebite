@@ -466,6 +466,9 @@ function ModelModal({
       const supabase = getSupabaseBrowserClient();
 
       if (mode === "add") {
+        // Generate storage folder from username (lowercase, alphanumeric with dashes)
+        const storageFolder = formData.username.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        
         const { data: newCreator, error: creatorError } = await supabase
           .from("creators")
           .insert({
@@ -475,6 +478,7 @@ function ModelModal({
             phone: formData.phone || null,
             bio: formData.bio || null,
             group_id: crypto.randomUUID(),
+            storage_folder: storageFolder,
             studio_id: studioId,
             active: formData.active,
             enabled: true,

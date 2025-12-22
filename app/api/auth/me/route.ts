@@ -3,6 +3,10 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
+// Disable caching for this route - always fetch fresh user data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Service role client for bypassing RLS
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -165,11 +169,17 @@ export async function GET(request: NextRequest) {
       apiKey = apiUser?.api_key || null;
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: dashboardUser,
       creator,
       apiKey,
     });
+    
+    // Ensure no caching for user data
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    
+    return response;
   } catch (err) {
     console.error("Error in /api/auth/me:", err);
     return NextResponse.json(

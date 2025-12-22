@@ -812,7 +812,19 @@ function SettingsModal({
 
     setIsSaving(true);
     try {
-      await onSave(form);
+      // Convert empty strings to null for database consistency
+      const dataToSave = {
+        name: form.name.trim(),
+        slug: form.slug.trim(),
+        tagline: form.tagline.trim() || null,
+        subtitle: form.subtitle.trim() || null,
+        welcome_title: form.welcome_title.trim() || null,
+        welcome_text: form.welcome_text.trim() || null,
+        profile_image_url: form.profile_image_url.trim() || null,
+        gallery_image_url: form.gallery_image_url.trim() || null,
+        is_published: form.is_published,
+      };
+      await onSave(dataToSave);
       onClose();
     } finally {
       setIsSaving(false);
@@ -975,13 +987,14 @@ function OnboardingWizard({
   onPublish: () => void;
 }) {
   // Profile is considered set up if user has customized any profile field
+  // Check for non-empty strings (handles both null and "")
   const hasProfile = Boolean(
-    bioLink.profile_image_url || 
-    bioLink.tagline || 
-    bioLink.subtitle ||
-    bioLink.gallery_image_url ||
-    bioLink.welcome_title ||
-    bioLink.welcome_text
+    (bioLink.profile_image_url && bioLink.profile_image_url.trim()) || 
+    (bioLink.tagline && bioLink.tagline.trim()) || 
+    (bioLink.subtitle && bioLink.subtitle.trim()) ||
+    (bioLink.gallery_image_url && bioLink.gallery_image_url.trim()) ||
+    (bioLink.welcome_title && bioLink.welcome_title.trim()) ||
+    (bioLink.welcome_text && bioLink.welcome_text.trim())
   );
   const hasLinks = linkItems.length > 0;
   const isPublished = bioLink.is_published;
@@ -1478,13 +1491,14 @@ export default function BioLinksPage() {
 
   // Determine if we should show onboarding
   // Profile is considered set up if user has customized any profile field
+  // Check for non-empty strings (handles both null and "")
   const hasProfile = Boolean(
-    bioLink?.profile_image_url || 
-    bioLink?.tagline || 
-    bioLink?.subtitle ||
-    bioLink?.gallery_image_url ||
-    bioLink?.welcome_title ||
-    bioLink?.welcome_text
+    (bioLink?.profile_image_url && bioLink.profile_image_url.trim()) || 
+    (bioLink?.tagline && bioLink.tagline.trim()) || 
+    (bioLink?.subtitle && bioLink.subtitle.trim()) ||
+    (bioLink?.gallery_image_url && bioLink.gallery_image_url.trim()) ||
+    (bioLink?.welcome_title && bioLink.welcome_title.trim()) ||
+    (bioLink?.welcome_text && bioLink.welcome_text.trim())
   );
   const hasLinks = linkItems.length > 0;
   const showOnboarding = bioLink && (!hasProfile || !hasLinks || !bioLink.is_published);
