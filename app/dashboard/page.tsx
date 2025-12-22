@@ -227,6 +227,116 @@ function EmptyState() {
 }
 
 // ============================================
+// SKELETON COMPONENTS
+// ============================================
+
+function SkeletonPulse({ className }: { className?: string }) {
+  return (
+    <div className={`animate-pulse bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] rounded ${className}`} />
+  );
+}
+
+function GradientStatCardSkeleton({ gradient }: { gradient: string }) {
+  return (
+    <div className={`rounded-2xl p-5 ${gradient} relative overflow-hidden`}>
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/20" />
+      </div>
+      <div className="relative">
+        <div className="h-4 w-16 bg-white/30 rounded animate-pulse mb-3" />
+        <div className="h-9 w-20 bg-white/40 rounded animate-pulse mb-2" />
+        <div className="h-3 w-24 bg-white/20 rounded animate-pulse" />
+      </div>
+      <div className="absolute top-5 right-5 w-10 h-10 rounded-xl bg-white/20 animate-pulse" />
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Header Skeleton */}
+      <div className="flex items-center justify-between">
+        <div>
+          <SkeletonPulse className="h-8 w-64 mb-2" />
+          <SkeletonPulse className="h-4 w-48" />
+        </div>
+        <SkeletonPulse className="h-9 w-32 rounded-md" />
+      </div>
+
+      {/* Stats Grid Skeleton */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <GradientStatCardSkeleton gradient="bg-gradient-to-br from-violet-500 to-purple-600" />
+        <GradientStatCardSkeleton gradient="bg-gradient-to-br from-cyan-500 to-blue-600" />
+        <GradientStatCardSkeleton gradient="bg-gradient-to-br from-amber-500 to-orange-600" />
+        <GradientStatCardSkeleton gradient="bg-gradient-to-br from-emerald-500 to-teal-600" />
+      </div>
+
+      {/* Main Content Grid Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Chart Skeleton */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <SkeletonPulse className="h-5 w-32 mb-1" />
+              <SkeletonPulse className="h-4 w-24" />
+            </div>
+            <SkeletonPulse className="h-8 w-24 rounded-md" />
+          </div>
+          <div className="h-[200px] flex items-end gap-1">
+            {[...Array(7)].map((_, i) => (
+              <div
+                key={i}
+                className="flex-1 bg-gradient-to-t from-violet-100 to-violet-50 rounded-t animate-pulse"
+                style={{ 
+                  height: `${40 + Math.sin(i) * 30 + Math.random() * 20}%`,
+                  animationDelay: `${i * 100}ms`
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Activity Feed Skeleton */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <SkeletonPulse className="h-5 w-32" />
+            <SkeletonPulse className="h-8 w-20 rounded-md" />
+          </div>
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-start gap-3 py-2">
+                <SkeletonPulse className="w-8 h-8 rounded-full flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <SkeletonPulse className="h-4 w-full mb-1" />
+                  <SkeletonPulse className="h-3 w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions Skeleton */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <SkeletonPulse className="h-5 w-28 mb-4" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="p-4 rounded-xl bg-slate-50 flex items-center gap-3">
+              <SkeletonPulse className="w-10 h-10 rounded-lg" />
+              <div className="flex-1">
+                <SkeletonPulse className="h-4 w-20 mb-1" />
+                <SkeletonPulse className="h-3 w-16" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
 // MAIN PAGE
 // ============================================
 
@@ -238,70 +348,84 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
-    fetchActivity();
-  }, [apiKey, user]);
-  
-  const fetchActivity = async () => {
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase
-        .from("activity_logs")
-        .select(`
-          id, action, description, source, created_at,
-          user:dashboard_users(display_name),
-          creator:creators(username)
-        `)
-        .order("created_at", { ascending: false })
-        .limit(5);
-      
-      setRecentActivity(data || []);
-    } catch (err) {
-      console.error("Error fetching activity:", err);
-    }
-  };
+    fetchAllData();
+  }, [apiKey, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchData = async () => {
+  const fetchAllData = async () => {
     setIsLoading(true);
-    try {
-      // Fetch media stats
-      if (apiKey) {
-        const api = createApiClient(apiKey);
-        if (user?.role === "admin") {
-          const response = await api.getPlatformOverview();
-          if (response.success && response.data) {
-            setMediaStats(response.data);
+    
+    const supabase = getSupabaseBrowserClient();
+    
+    // Create all promises for parallel fetching
+    const promises: Promise<void>[] = [];
+    
+    // 1. Fetch activity logs (always)
+    const activityPromise = supabase
+      .from("activity_logs")
+      .select(`
+        id, action, description, source, created_at,
+        user:dashboard_users(display_name),
+        creator:creators(username)
+      `)
+      .order("created_at", { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        setRecentActivity(data || []);
+      })
+      .catch((err) => console.error("Error fetching activity:", err));
+    
+    promises.push(activityPromise);
+    
+    // 2. Fetch media stats (if API key)
+    if (apiKey) {
+      const api = createApiClient(apiKey);
+      const mediaPromise = (async () => {
+        try {
+          if (user?.role === "admin") {
+            const response = await api.getPlatformOverview();
+            if (response.success && response.data) {
+              setMediaStats(response.data);
+            }
+          } else if (user?.creator_id) {
+            const response = await api.getCreatorStats(user.creator_id, 12);
+            if (response.success && response.data) {
+              setMediaStats(response.data);
+            }
           }
-        } else if (user?.creator_id) {
-          const response = await api.getCreatorStats(user.creator_id, 12);
-          if (response.success && response.data) {
-            setMediaStats(response.data);
-          }
+        } catch (err) {
+          console.error("Error fetching media stats:", err);
         }
-      }
-
-      // Fetch bio analytics
-      if (user?.creator_id) {
-        const supabase = getSupabaseBrowserClient();
-        const { data: bioLink } = await supabase
-          .from("bio_links")
-          .select("id")
-          .eq("creator_id", user.creator_id)
-          .maybeSingle();
-
-        if (bioLink?.id) {
-          const response = await fetch(`/api/analytics/bio/${bioLink.id}?period=7d`);
-          if (response.ok) {
-            const data = await response.json();
-            setBioAnalytics(data);
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching data:", err);
-    } finally {
-      setIsLoading(false);
+      })();
+      promises.push(mediaPromise);
     }
+
+    // 3. Fetch bio analytics (if creator)
+    if (user?.creator_id) {
+      const bioPromise = (async () => {
+        try {
+          const { data: bioLink } = await supabase
+            .from("bio_links")
+            .select("id")
+            .eq("creator_id", user.creator_id)
+            .maybeSingle();
+
+          if (bioLink?.id) {
+            const response = await fetch(`/api/analytics/bio/${bioLink.id}?period=7d`);
+            if (response.ok) {
+              const data = await response.json();
+              setBioAnalytics(data);
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching bio analytics:", err);
+        }
+      })();
+      promises.push(bioPromise);
+    }
+    
+    // Wait for all promises to complete
+    await Promise.all(promises);
+    setIsLoading(false);
   };
 
   const isCreatorStats = (s: CreatorStats | PlatformOverview): s is CreatorStats => {
@@ -329,11 +453,7 @@ export default function DashboardPage() {
   const hasData = mediaStats || (bioAnalytics && bioAnalytics.summary.totalViews > 0);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

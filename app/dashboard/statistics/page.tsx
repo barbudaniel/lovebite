@@ -541,6 +541,131 @@ function ModelSelector({
 }
 
 // ============================================
+// SKELETON COMPONENTS
+// ============================================
+
+function SkeletonPulse({ className }: { className?: string }) {
+  return (
+    <div className={`animate-pulse bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%] rounded ${className}`} />
+  );
+}
+
+function StatCardSkeleton({ gradient }: { gradient: string }) {
+  return (
+    <div className={`rounded-2xl p-5 ${gradient} relative overflow-hidden`}>
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/20" />
+      </div>
+      <div className="relative flex items-start justify-between">
+        <div className="space-y-2">
+          <div className="h-4 w-20 bg-white/30 rounded animate-pulse" />
+          <div className="h-8 w-24 bg-white/40 rounded animate-pulse" />
+          <div className="h-3 w-28 bg-white/20 rounded animate-pulse mt-2" />
+        </div>
+        <div className="w-12 h-12 rounded-xl bg-white/20 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+function StatisticsPageSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Header Skeleton */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <SkeletonPulse className="h-8 w-32 mb-2" />
+          <SkeletonPulse className="h-4 w-56" />
+        </div>
+        <div className="flex items-center gap-3">
+          <SkeletonPulse className="h-10 w-[200px] rounded-md" />
+          <SkeletonPulse className="h-10 w-[140px] rounded-md" />
+        </div>
+      </div>
+
+      {/* Stats Grid Skeleton */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCardSkeleton gradient="bg-gradient-to-br from-violet-500 to-purple-600" />
+        <StatCardSkeleton gradient="bg-gradient-to-br from-cyan-500 to-blue-600" />
+        <StatCardSkeleton gradient="bg-gradient-to-br from-emerald-500 to-green-600" />
+        <StatCardSkeleton gradient="bg-gradient-to-br from-orange-500 to-amber-500" />
+      </div>
+
+      {/* Main Grid Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Traffic Chart Skeleton */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6">
+          <div className="mb-4">
+            <SkeletonPulse className="h-5 w-36 mb-1" />
+            <SkeletonPulse className="h-4 w-24" />
+          </div>
+          <div className="h-[300px] flex items-end gap-2 pt-8">
+            {[...Array(14)].map((_, i) => (
+              <div
+                key={i}
+                className="flex-1 bg-gradient-to-t from-violet-100 to-violet-50 rounded-t animate-pulse"
+                style={{ height: `${30 + Math.random() * 60}%`, animationDelay: `${i * 50}ms` }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Globe Skeleton */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 overflow-hidden">
+          <div className="mb-4">
+            <SkeletonPulse className="h-5 w-28 mb-1" />
+            <SkeletonPulse className="h-4 w-36" />
+          </div>
+          <div className="w-full max-w-[280px] mx-auto aspect-square relative">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 animate-pulse" />
+            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-slate-50 to-slate-100 animate-pulse" style={{ animationDelay: "150ms" }} />
+            <div className="absolute inset-8 rounded-full bg-gradient-to-br from-white to-slate-50 animate-pulse" style={{ animationDelay: "300ms" }} />
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+            <SkeletonPulse className="h-4 w-32 mb-3" />
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+                <SkeletonPulse className="h-6 w-6 rounded" />
+                <div className="flex-1">
+                  <SkeletonPulse className="h-4 w-28 mb-1" />
+                  <SkeletonPulse className="h-3 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Second Row Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6">
+            <div className="mb-4">
+              <SkeletonPulse className="h-5 w-28 mb-1" />
+              <SkeletonPulse className="h-4 w-20" />
+            </div>
+            <div className="space-y-3">
+              {[...Array(4)].map((_, j) => (
+                <div key={j} className="flex items-center gap-3 py-2">
+                  <SkeletonPulse className="h-6 w-6 rounded" />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <SkeletonPulse className="h-4 w-24" />
+                      <SkeletonPulse className="h-4 w-12" />
+                    </div>
+                    <SkeletonPulse className="h-1.5 w-full rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
 // MAIN PAGE
 // ============================================
 
@@ -679,96 +804,123 @@ export default function StatisticsPage() {
 
   const fetchAllData = async () => {
     setIsLoading(true);
-    try {
-      const api = apiKey ? createApiClient(apiKey) : null;
-      const supabase = getSupabaseBrowserClient();
+    
+    const api = apiKey ? createApiClient(apiKey) : null;
+    const supabase = getSupabaseBrowserClient();
+    const promises: Promise<void>[] = [];
 
-      let targetCreatorId: string | null = null;
-      
-      if (user?.role === "independent") {
-        targetCreatorId = user?.creator_id || null;
-      } else if (isAdminOrBusiness && selectedModelId) {
-        targetCreatorId = selectedModelId;
-      }
+    let targetCreatorId: string | null = null;
+    
+    if (user?.role === "independent") {
+      targetCreatorId = user?.creator_id || null;
+    } else if (isAdminOrBusiness && selectedModelId) {
+      targetCreatorId = selectedModelId;
+    }
 
-      // Fetch media stats
-      if (api) {
-        if (targetCreatorId) {
-          const response = await api.getCreatorStats(targetCreatorId, 12);
-          if (response.success && response.data) {
-            setMediaStats(response.data);
+    // 1. Fetch media stats (parallel)
+    if (api) {
+      const mediaPromise = (async () => {
+        try {
+          if (targetCreatorId) {
+            const response = await api.getCreatorStats(targetCreatorId, 12);
+            if (response.success && response.data) {
+              setMediaStats(response.data);
+            }
+          } else if (isAdminOrBusiness) {
+            const response = await api.getPlatformOverview();
+            if (response.success && response.data) {
+              setMediaStats(response.data);
+            }
           }
-        } else if (isAdminOrBusiness) {
-          const response = await api.getPlatformOverview();
-          if (response.success && response.data) {
-            setMediaStats(response.data);
-          }
+        } catch (err) {
+          console.error("Error fetching media stats:", err);
         }
-      }
+      })();
+      promises.push(mediaPromise);
+    }
 
-      // Fetch bio analytics
-      if (targetCreatorId) {
-        setAggregatedBioStats(null);
-        
-        const { data: bioLink } = await supabase
-          .from("bio_links")
-          .select("id")
-          .eq("creator_id", targetCreatorId)
-          .maybeSingle();
+    // 2. Fetch bio analytics (parallel)
+    if (targetCreatorId) {
+      setAggregatedBioStats(null);
+      
+      const bioPromise = (async () => {
+        try {
+          const { data: bioLink } = await supabase
+            .from("bio_links")
+            .select("id")
+            .eq("creator_id", targetCreatorId)
+            .maybeSingle();
 
-        if (bioLink?.id) {
-          setBioLinkIds([bioLink.id]); // Single bio link for specific model
-          const response = await fetch(`/api/analytics/bio/${bioLink.id}?period=${period}`);
-          if (response.ok) {
-            const data = await response.json();
-            setBioAnalytics(data);
+          if (bioLink?.id) {
+            setBioLinkIds([bioLink.id]);
+            const response = await fetch(`/api/analytics/bio/${bioLink.id}?period=${period}`);
+            if (response.ok) {
+              const data = await response.json();
+              setBioAnalytics(data);
+            } else {
+              setBioAnalytics(null);
+            }
           } else {
+            setBioLinkIds([]);
             setBioAnalytics(null);
           }
-        } else {
-          setBioLinkIds([]);
-          setBioAnalytics(null);
+        } catch (err) {
+          console.error("Error fetching bio analytics:", err);
         }
-      } else if (isAdminOrBusiness) {
-        setBioAnalytics(null);
-        
-        // For "All Models" view, fetch all bio link IDs for realtime tracking
-        let bioLinksQuery = supabase.from("bio_links").select("id, creator_id");
-        
-        // If business user, filter by studio
-        if (user?.role === "business" && user?.studio_id) {
-          const { data: studioCreators } = await supabase
-            .from("creators")
-            .select("id")
-            .eq("studio_id", user.studio_id)
-            .eq("enabled", true);
+      })();
+      promises.push(bioPromise);
+    } else if (isAdminOrBusiness) {
+      setBioAnalytics(null);
+      
+      const aggPromise = (async () => {
+        try {
+          // Fetch bio link IDs for realtime tracking
+          let bioLinksQuery = supabase.from("bio_links").select("id, creator_id");
           
-          if (studioCreators && studioCreators.length > 0) {
-            const creatorIds = studioCreators.map((c: { id: string }) => c.id);
-            bioLinksQuery = bioLinksQuery.in("creator_id", creatorIds);
+          if (user?.role === "business" && user?.studio_id) {
+            const { data: studioCreators } = await supabase
+              .from("creators")
+              .select("id")
+              .eq("studio_id", user.studio_id)
+              .eq("enabled", true);
+            
+            if (studioCreators && studioCreators.length > 0) {
+              const creatorIds = studioCreators.map((c: { id: string }) => c.id);
+              bioLinksQuery = bioLinksQuery.in("creator_id", creatorIds);
+            }
           }
+          
+          const { data: allBioLinks } = await bioLinksQuery;
+          if (allBioLinks && allBioLinks.length > 0) {
+            setBioLinkIds(allBioLinks.map((b: { id: string }) => b.id));
+          } else {
+            setBioLinkIds([]);
+          }
+        } catch (err) {
+          console.error("Error fetching bio links:", err);
         }
-        
-        const { data: allBioLinks } = await bioLinksQuery;
-        if (allBioLinks && allBioLinks.length > 0) {
-          setBioLinkIds(allBioLinks.map((b: { id: string }) => b.id)); // All bio links for overview
-        } else {
-          setBioLinkIds([]);
+      })();
+      
+      const modelsPromise = (async () => {
+        try {
+          const aggResponse = await fetch(`/api/analytics/bio/models?period=${period}`);
+          if (aggResponse.ok) {
+            const aggData = await aggResponse.json();
+            setAggregatedBioStats(aggData);
+          } else {
+            setAggregatedBioStats(null);
+          }
+        } catch (err) {
+          console.error("Error fetching aggregated stats:", err);
         }
-        
-        const aggResponse = await fetch(`/api/analytics/bio/models?period=${period}`);
-        if (aggResponse.ok) {
-          const aggData = await aggResponse.json();
-          setAggregatedBioStats(aggData);
-        } else {
-          setAggregatedBioStats(null);
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching stats:", err);
-    } finally {
-      setIsLoading(false);
+      })();
+      
+      promises.push(aggPromise, modelsPromise);
     }
+    
+    // Wait for all promises to complete in parallel
+    await Promise.all(promises);
+    setIsLoading(false);
   };
 
   const isCreatorStats = (s: CreatorStats | PlatformOverview): s is CreatorStats => {
@@ -813,11 +965,7 @@ export default function StatisticsPage() {
   const totalViews = bioAnalytics?.summary.totalViews || aggregatedBioStats?.totalViews || 0;
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
-      </div>
-    );
+    return <StatisticsPageSkeleton />;
   }
 
   const selectedModel = models.find(m => m.id === selectedModelId);
