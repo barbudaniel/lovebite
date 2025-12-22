@@ -50,31 +50,38 @@ function SetupContent() {
       const user = session.user;
       console.log("Setup - Auth user:", { id: user.id, email: user.email });
 
-      // Check if user already has a profile (by auth_user_id OR email)
-      const { data: existingUser, error: existingError } = await supabase
-        .from("dashboard_users")
-        .select("id, auth_user_id, email")
-        .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
-        .maybeSingle();
+      // Check if user already has a profile via API (bypasses RLS issues)
+      try {
+        const response = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
 
-      console.log("Setup - Existing user check:", { existingUser, existingError });
+        console.log("Setup - API response status:", response.status);
 
-      if (existingUser) {
-        // User already exists - update auth_user_id if needed and redirect
-        if (existingUser.auth_user_id !== user.id) {
-          console.log("Setup - Updating auth_user_id for existing user");
-          await supabase
-            .from("dashboard_users")
-            .update({ auth_user_id: user.id })
-            .eq("id", existingUser.id);
+        if (response.status === 200) {
+          // User already exists - redirect to dashboard
+          console.log("Setup - User exists, redirecting to dashboard");
+          router.push("/dashboard");
+          return;
         }
-        router.push("/dashboard");
-        return;
-      }
 
-      // No existing user found - show setup form
-      setAuthUser({ id: user.id, email: user.email || "" });
-      setIsLoading(false);
+        if (response.status === 404) {
+          // User needs setup - this is expected on this page
+          console.log("Setup - No user found, showing setup form");
+          setAuthUser({ id: user.id, email: user.email || "" });
+          setIsLoading(false);
+          return;
+        }
+
+        // Other errors - show setup form anyway (fallback)
+        console.error("Setup - Unexpected API status:", response.status);
+        setAuthUser({ id: user.id, email: user.email || "" });
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Setup - API error:", err);
+        setAuthUser({ id: user.id, email: user.email || "" });
+        setIsLoading(false);
+      }
     };
 
     checkAuth();
@@ -93,11 +100,17 @@ function SetupContent() {
       const supabase = getSupabaseBrowserClient();
 
       // Check if user already exists (might have been created in another tab)
-      const { data: existingUser } = await supabase
+      const { data: existingUserById } = await supabase
         .from("dashboard_users")
         .select("id")
-        .or(`auth_user_id.eq.${authUser.id},email.eq.${authUser.email}`)
+        .eq("auth_user_id", authUser.id)
         .maybeSingle();
+      
+      const existingUser = existingUserById || (await supabase
+        .from("dashboard_users")
+        .select("id")
+        .eq("email", authUser.email)
+        .maybeSingle()).data;
 
       if (existingUser) {
         toast.success("Account already set up!");

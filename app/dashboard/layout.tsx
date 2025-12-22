@@ -253,27 +253,26 @@ function AppSidebar({ user, onLogout }: { user: DashboardUser | null; onLogout: 
 
   const getRoleBadge = () => {
     if (!user) return null;
-    const colors = {
+    const colors: Record<string, string> = {
       admin: "bg-red-500/10 text-red-600 border-red-500/20",
-      studio: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-      model: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+      business: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+      independent: "bg-purple-500/10 text-purple-600 border-purple-500/20",
     };
-    const icons = {
+    const icons: Record<string, typeof Shield> = {
       admin: Shield,
-      studio: Building2,
-      model: User,
+      business: Building2,
+      independent: User,
     };
-    // Display names for roles (internal role names stay the same)
-    const displayNames = {
+    const displayNames: Record<string, string> = {
       admin: "Admin",
-      studio: "Business",
-      model: "Independent",
+      business: "Business",
+      independent: "Independent",
     };
-    const Icon = icons[user.role];
+    const Icon = icons[user.role] || User;
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${colors[user.role]}`}>
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${colors[user.role] || colors.independent}`}>
         <Icon className="w-3 h-3" />
-        {!isCollapsed && displayNames[user.role]}
+        {!isCollapsed && (displayNames[user.role] || user.role)}
       </span>
     );
   };
@@ -817,149 +816,56 @@ export default function DashboardLayout({
         return;
       }
 
-      const authUser = session.user;
-      console.log("Layout - Auth user:", { id: authUser.id, email: authUser.email });
+      console.log("Layout - Auth user:", { id: session.user.id, email: session.user.email });
 
-      // Get dashboard user profile
-      const { data: dashboardUser, error } = await supabase
-        .from("dashboard_users")
-        .select("*")
-        .or(`auth_user_id.eq.${authUser.id},email.eq.${authUser.email}`)
-        .maybeSingle();
+      // Fetch user profile via API (bypasses RLS issues)
+      const response = await fetch("/api/auth/me", {
+        credentials: "include",
+      });
 
-      console.log("Layout - Dashboard user:", { dashboardUser, error });
+      console.log("Layout - API response status:", response.status);
 
-      // Update auth_user_id if found by email but not auth_user_id
-      if (dashboardUser && dashboardUser.auth_user_id !== authUser.id) {
-        console.log("Layout - Updating auth_user_id for user");
-        await supabase
-          .from("dashboard_users")
-          .update({ auth_user_id: authUser.id })
-          .eq("id", dashboardUser.id);
+      if (response.status === 401) {
+        // Session invalid, redirect to login
+        router.push("/dashboard/login");
+        return;
       }
 
-      if (error || !dashboardUser) {
+      if (response.status === 404) {
+        // User needs to complete setup
         console.log("Layout - No user found, redirecting to setup");
         router.push("/dashboard/setup");
         return;
       }
 
-      if (!dashboardUser.enabled) {
+      if (response.status === 403) {
+        // Account disabled
         await supabase.auth.signOut();
         router.push("/dashboard/login?error=disabled");
         return;
       }
 
-      setUser(dashboardUser);
-
-      // Get creator data if available
-      if (dashboardUser.creator_id) {
-        try {
-          const { data: creatorData } = await supabase
-            .from("creators")
-            .select("*")
-            .eq("id", dashboardUser.creator_id)
-            .single();
-
-          if (creatorData) {
-            setCreator(creatorData as Creator);
-          }
-        } catch (e) {
-          console.log("Error fetching creator:", e);
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Layout - API error:", errorData);
+        throw new Error(errorData.error || "Failed to fetch user");
       }
 
-      // Get API key based on role
-      // IMPORTANT: API key assignment determines what media the user can access
-      // Model users should ONLY get their creator-specific API key
-      // Studio users should get their studio API key
-      // This prevents models from seeing other models' media within the same studio
-      try {
-        let foundApiKey: string | null = null;
-        
-        if (dashboardUser.role === "admin") {
-          // Admin gets the admin API key
-          const { data: apiUser } = await supabase
-            .from("api_users")
-            .select("api_key")
-            .eq("role", "admin")
-            .eq("enabled", true)
-            .limit(1)
-            .maybeSingle();
-          
-          if (apiUser?.api_key) {
-            foundApiKey = apiUser.api_key;
-          }
-        } else if (dashboardUser.role === "independent" && dashboardUser.creator_id) {
-          // Independent users: ONLY look for their creator-specific API key
-          // This ensures they can only see their own media
-          const { data: apiUser } = await supabase
-            .from("api_users")
-            .select("api_key")
-            .eq("creator_id", dashboardUser.creator_id)
-            .eq("enabled", true)
-            .limit(1)
-            .maybeSingle();
-          
-          if (apiUser?.api_key) {
-            foundApiKey = apiUser.api_key;
-          } else if (dashboardUser.studio_id) {
-            // Fallback: if model doesn't have their own API key, try studio key
-            // But note: client-side filtering will still restrict their view
-            const { data: studioApiUser } = await supabase
-              .from("api_users")
-              .select("api_key")
-              .eq("studio_id", dashboardUser.studio_id)
-              .eq("enabled", true)
-              .limit(1)
-              .maybeSingle();
-            
-            if (studioApiUser?.api_key) {
-              foundApiKey = studioApiUser.api_key;
-              console.log("Layout - Independent using studio API key (client-side filtering enforced)");
-            }
-          }
-        } else if (dashboardUser.role === "business" && dashboardUser.studio_id) {
-          // Business users: get their studio API key
-          const { data: apiUser } = await supabase
-            .from("api_users")
-            .select("api_key")
-            .eq("studio_id", dashboardUser.studio_id)
-            .eq("enabled", true)
-            .limit(1)
-            .maybeSingle();
-          
-          if (apiUser?.api_key) {
-            foundApiKey = apiUser.api_key;
-          }
-        }
+      const data = await response.json();
+      console.log("Layout - User data received:", { 
+        user: !!data.user, 
+        creator: !!data.creator, 
+        apiKey: !!data.apiKey 
+      });
 
-        if (foundApiKey) {
-          console.log("Layout - API key found for user role:", dashboardUser.role);
-          setApiKey(foundApiKey);
-        } else if (dashboardUser.role === "admin") {
-          // Only admins get fallback to admin API key
-          const { data: defaultApiUser } = await supabase
-            .from("api_users")
-            .select("api_key")
-            .eq("role", "admin")
-            .eq("enabled", true)
-            .limit(1)
-            .maybeSingle();
-          
-          if (defaultApiUser?.api_key) {
-            console.log("Layout - Admin using default admin API key");
-            setApiKey(defaultApiUser.api_key);
-          } else {
-            console.log("Layout - No admin API key available");
-          }
-        } else {
-          // Non-admin users without their own API key cannot access media
-          console.log("Layout - No API key for non-admin user:", dashboardUser.role);
-          setApiKey(null);
-        }
-      } catch (e) {
-        console.log("API key fetch error:", e);
+      setUser(data.user);
+      
+      if (data.creator) {
+        setCreator(data.creator as Creator);
+      }
+      
+      if (data.apiKey) {
+        setApiKey(data.apiKey);
       }
 
       setIsLoading(false);
