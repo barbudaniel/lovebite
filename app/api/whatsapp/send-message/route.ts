@@ -94,17 +94,36 @@ export async function POST(request: NextRequest) {
     }
 
     // Send the message via the bot API
-    // The bot expects the WhatsApp JID format (e.g., "123456@g.us")
-    const botResponse = await fetch(`${BOT_API_URL}/send-message`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        groupId: group.whatsapp_id, // This should be the WhatsApp JID like "123456789@g.us"
-        message: message,
-      }),
-    });
+    // Try the new /send-message endpoint first, fall back to /api/messages/send-group
+    let botResponse;
+    try {
+      botResponse = await fetch(`${BOT_API_URL}/send-message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          groupId: group.whatsapp_id, // WhatsApp JID like "123456789@g.us"
+          message: message,
+        }),
+      });
+      
+      // If 404, try the legacy endpoint
+      if (botResponse.status === 404) {
+        botResponse = await fetch(`${BOT_API_URL}/api/messages/send-group`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            groupId: group.whatsapp_id,
+            message: message,
+          }),
+        });
+      }
+    } catch (fetchError) {
+      console.error("Failed to connect to WhatsApp bot:", fetchError);
+      return NextResponse.json(
+        { error: "Failed to connect to WhatsApp bot" },
+        { status: 503 }
+      );
+    }
 
     const botResult = await botResponse.json();
 

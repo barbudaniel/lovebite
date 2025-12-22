@@ -87,8 +87,8 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        // Send the message via the bot
-        const response = await fetch(`${BOT_API_URL}/send-message`, {
+        // Send the message via the bot (try new endpoint, fall back to legacy)
+        let response = await fetch(`${BOT_API_URL}/send-message`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -96,6 +96,18 @@ export async function GET(request: NextRequest) {
             message: msg.message_content,
           }),
         });
+        
+        // If 404, try the legacy endpoint
+        if (response.status === 404) {
+          response = await fetch(`${BOT_API_URL}/api/messages/send-group`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              groupId: group.whatsapp_id,
+              message: msg.message_content,
+            }),
+          });
+        }
 
         const result = await response.json();
 
