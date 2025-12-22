@@ -1568,10 +1568,16 @@ export default function MediaPage() {
 
   const fetchMedia = useCallback(
     async (reset = false) => {
-      if (!apiKey) return;
+      if (!apiKey) {
+        setIsLoading(false);
+        return;
+      }
       
       // Wait for permissions to be loaded before fetching
-      if (!permissionsLoaded) return;
+      if (!permissionsLoaded) {
+        setIsLoading(false);
+        return;
+      }
 
       setIsLoading(true);
       setError(null);
@@ -2537,4 +2543,5 @@ export default function MediaPage() {
     </div>
   );
 }
+
 

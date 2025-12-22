@@ -1131,7 +1131,7 @@ export default function BioLinksPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* Admin/Studio Creator Selector */}
       {isAdminOrBusiness && creators.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -1224,7 +1224,7 @@ export default function BioLinksPage() {
 
       {/* Quick Links */}
       <div className="grid grid-cols-2 gap-4">
-        <Link href="/dashboard/bio-links/analytics">
+        <Link href="/dashboard/statistics">
           <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-5 text-white hover:opacity-90 transition-opacity cursor-pointer">
             <BarChart3 className="w-8 h-8 mb-3 opacity-80" />
             <p className="font-semibold text-lg">Analytics</p>
@@ -1287,29 +1287,26 @@ export default function BioLinksPage() {
       </div>
 
       {/* Modals */}
-      <AnimatePresence>
-        {showSettings && bioLink && effectiveCreatorId && (
-          <SettingsModal
-            bioLink={bioLink}
-            onSave={handleSaveSettings}
-            onClose={() => setShowSettings(false)}
-            creatorId={effectiveCreatorId}
-            apiKey={apiKey}
-          />
-        )}
-      </AnimatePresence>
+      {showSettings && bioLink && effectiveCreatorId && (
+        <SettingsModal
+          bioLink={bioLink}
+          onSave={handleSaveSettings}
+          onClose={() => setShowSettings(false)}
+          creatorId={effectiveCreatorId}
+          apiKey={apiKey}
+        />
+      )}
 
-      <AnimatePresence>
-        {showLinkEditor && bioLink && (
-          <LinkEditor
-            item={editingItem}
-            bioLinkId={bioLink.id}
-            onSave={fetchBioLink}
-            onClose={() => { setShowLinkEditor(false); setEditingItem(null); }}
-            creatorId={effectiveCreatorId!}
-          />
-        )}
-      </AnimatePresence>
+      {showLinkEditor && bioLink && (
+        <LinkEditor
+          item={editingItem}
+          bioLinkId={bioLink.id}
+          onSave={fetchBioLink}
+          onClose={() => { setShowLinkEditor(false); setEditingItem(null); }}
+          creatorId={effectiveCreatorId!}
+        />
+      )}
     </div>
   );
 }
+

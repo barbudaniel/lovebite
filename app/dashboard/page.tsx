@@ -337,7 +337,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -346,7 +346,7 @@ export default function DashboardPage() {
           </h1>
           <p className="text-slate-500 mt-1">Here&apos;s an overview of your performance</p>
         </div>
-        <Link href="/dashboard/bio-links/analytics">
+        <Link href="/dashboard/statistics">
           <Button variant="outline" size="sm">
             <BarChart3 className="w-4 h-4 mr-2" />
             Full Analytics
@@ -405,7 +405,7 @@ export default function DashboardPage() {
                 <h2 className="text-lg font-semibold text-slate-900">Traffic Overview</h2>
                 <p className="text-sm text-slate-500">Views and clicks over the last 7 days</p>
               </div>
-              <Link href="/dashboard/bio-links/analytics" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+              <Link href="/dashboard/statistics" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
                 View details →
               </Link>
             </div>
@@ -548,7 +548,7 @@ export default function DashboardPage() {
                 <QuickAction
                   title="View Analytics"
                   description="Check your performance"
-                  href="/dashboard/bio-links/analytics"
+                  href="/dashboard/statistics"
                   icon={BarChart3}
                   color="bg-gradient-to-br from-emerald-500 to-green-600"
                 />
@@ -658,3 +658,4 @@ function getCountryFlag(country: string): string {
   };
   return flags[country] || "🌍";
 }
+

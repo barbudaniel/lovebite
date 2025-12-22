@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useDashboard } from "../layout";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import {
@@ -28,7 +28,10 @@ import {
   Monitor,
   Tablet,
   ArrowUpRight,
-  ChevronDown,
+  ArrowDownRight,
+  Activity,
+  Zap,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,11 +47,11 @@ import {
   YAxis,
   Area,
   AreaChart,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
 } from "recharts";
+import {
+  getCountryFlag,
+  getCountryCoordinates,
+} from "@/lib/country-utils";
 import {
   Select,
   SelectContent,
@@ -56,7 +59,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Link from "next/link";
+import createGlobe from "cobe";
 
 // ============================================
 // TYPES
@@ -69,11 +72,17 @@ interface BioAnalytics {
     totalClicks: number;
     clickThroughRate: string;
   };
+  changes?: {
+    views: { value: string; type: "up" | "down" | "neutral" };
+    visitors: { value: string; type: "up" | "down" | "neutral" };
+    clicks: { value: string; type: "up" | "down" | "neutral" };
+  };
   viewsByDay: Record<string, number>;
   viewsByCountry: Record<string, number>;
   viewsByDevice: Record<string, number>;
   topLinks: Array<{ label: string; count: number }>;
   topReferrers: Array<{ referrer: string; count: number }>;
+  globeMarkers?: Array<{ country: string; count: number; lat: number; lng: number }>;
 }
 
 interface ModelBioStats {
@@ -91,12 +100,20 @@ interface AggregatedBioStats {
   modelStats: ModelBioStats[];
 }
 
+interface RealtimeVisitor {
+  id: string;
+  lat: number;
+  lng: number;
+  country: string;
+  timestamp: number;
+}
+
 // ============================================
 // CHART CONFIGS
 // ============================================
 
 const chartConfig = {
-  views: { label: "Views", color: "#3b82f6" },
+  views: { label: "Views", color: "#8b5cf6" },
   clicks: { label: "Clicks", color: "#10b981" },
   photos: { label: "Photos", color: "#8b5cf6" },
   videos: { label: "Videos", color: "#f59e0b" },
@@ -104,10 +121,281 @@ const chartConfig = {
   customs: { label: "Customs", color: "#06b6d4" },
 } satisfies ChartConfig;
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
+const COLORS = ["#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#06b6d4"];
+
+// Domains to filter out from referrers (self-referrers)
+const SELF_REFERRER_DOMAINS = [
+  "lustyfantasy.online",
+  "www.lustyfantasy.online",
+  "lovebite.bio",
+  "www.lovebite.bio",
+  "localhost",
+];
 
 // ============================================
-// STAT CARD
+// FAVICON HELPER
+// ============================================
+
+function getFaviconUrl(domain: string): string {
+  // Use Google's favicon service for reliable favicons
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+}
+
+// ============================================
+// REALTIME GLOBE COMPONENT
+// ============================================
+
+interface GlobeProps {
+  realtimeVisitors: RealtimeVisitor[];
+  className?: string;
+}
+
+const RealtimeGlobe = memo(function RealtimeGlobe({
+  realtimeVisitors,
+  className,
+}: GlobeProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pointerInteracting = useRef<number | null>(null);
+  const phiRef = useRef(0);
+  const rotationRef = useRef(0);
+  const globeRef = useRef<ReturnType<typeof createGlobe> | null>(null);
+
+  // Realtime markers only - show visitors with pulsing effect
+  const realtimeMarkers = useMemo(() => {
+    const now = Date.now();
+    return realtimeVisitors
+      .filter((v) => now - v.timestamp < 15000) // Keep visible for 15 seconds
+      .map((v) => {
+        const age = (now - v.timestamp) / 15000; // 0 to 1
+        const size = Math.max(0.08, 0.2 * (1 - age)); // Larger markers, shrink over time
+        return {
+          location: [v.lat, v.lng] as [number, number],
+          size,
+        };
+      });
+  }, [realtimeVisitors]);
+
+  const updatePointerInteraction = useCallback((value: number | null) => {
+    pointerInteracting.current = value;
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = value ? "grabbing" : "grab";
+    }
+  }, []);
+
+  const updateMovement = useCallback((clientX: number) => {
+    if (pointerInteracting.current !== null) {
+      const delta = clientX - pointerInteracting.current;
+      rotationRef.current += delta / 200;
+      pointerInteracting.current = clientX;
+    }
+  }, []);
+
+  useEffect(() => {
+    let width = 0;
+    let animationId: number;
+
+    const onResize = () => {
+      if (canvasRef.current) {
+        width = canvasRef.current.offsetWidth;
+      }
+    };
+    window.addEventListener("resize", onResize);
+    onResize();
+
+    if (!canvasRef.current) return;
+
+    // Destroy existing globe if any
+    if (globeRef.current) {
+      globeRef.current.destroy();
+    }
+
+    globeRef.current = createGlobe(canvasRef.current, {
+      devicePixelRatio: 2,
+      width: width * 2,
+      height: width * 2,
+      phi: 0,
+      theta: 0.3,
+      dark: 0,
+      diffuse: 1.2,
+      mapSamples: 16000,
+      mapBrightness: 1.2,
+      baseColor: [1, 1, 1],
+      markerColor: [0.545, 0.361, 0.965], // Violet
+      glowColor: [0.95, 0.95, 0.98],
+      markers: realtimeMarkers,
+      onRender: (state) => {
+        if (!pointerInteracting.current) {
+          phiRef.current += 0.003;
+        }
+        state.phi = phiRef.current + rotationRef.current;
+        state.width = width * 2;
+        state.height = width * 2;
+      },
+    });
+
+    // Fade in
+    setTimeout(() => {
+      if (canvasRef.current) {
+        canvasRef.current.style.opacity = "1";
+      }
+    }, 100);
+
+    return () => {
+      if (globeRef.current) {
+        globeRef.current.destroy();
+        globeRef.current = null;
+      }
+      window.removeEventListener("resize", onResize);
+    };
+  }, []); // Only run once on mount
+
+  return (
+    <div className={`relative aspect-square ${className}`}>
+      <canvas
+        ref={canvasRef}
+        onPointerDown={(e) => updatePointerInteraction(e.clientX)}
+        onPointerUp={() => updatePointerInteraction(null)}
+        onPointerOut={() => updatePointerInteraction(null)}
+        onMouseMove={(e) => updateMovement(e.clientX)}
+        onTouchMove={(e) => e.touches[0] && updateMovement(e.touches[0].clientX)}
+        style={{
+          width: "100%",
+          height: "100%",
+          cursor: "grab",
+          contain: "layout paint size",
+          opacity: 0,
+          transition: "opacity 0.5s ease",
+        }}
+      />
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent pointer-events-none" />
+      
+      {/* Live indicator */}
+      {realtimeVisitors.length > 0 && (
+        <div className="absolute top-3 left-3 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-slate-200">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          </span>
+          <span className="text-xs font-medium text-slate-700">Live</span>
+        </div>
+      )}
+    </div>
+  );
+});
+
+// ============================================
+// REALTIME ACTIVITY FEED
+// ============================================
+
+function RealtimeActivityFeed({
+  visitors,
+}: {
+  visitors: RealtimeVisitor[];
+}) {
+  const recentVisitors = visitors.slice(-5).reverse();
+  
+  return (
+    <div className="space-y-2">
+      <AnimatePresence mode="popLayout">
+        {recentVisitors.map((visitor) => (
+          <motion.div
+            key={visitor.id}
+            initial={{ opacity: 0, x: -20, height: 0 }}
+            animate={{ opacity: 1, x: 0, height: "auto" }}
+            exit={{ opacity: 0, x: 20, height: 0 }}
+            className="flex items-center gap-3 p-2 bg-gradient-to-r from-violet-50 to-transparent rounded-lg"
+          >
+            <span className="text-lg">{getCountryFlag(visitor.country)}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-700 truncate">
+                Visitor from {visitor.country}
+              </p>
+              <p className="text-xs text-slate-500">
+                {formatTimeAgo(visitor.timestamp)}
+              </p>
+            </div>
+            <Zap className="w-4 h-4 text-amber-500" />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+      
+      {recentVisitors.length === 0 && (
+        <div className="text-center py-4 text-slate-400 text-sm">
+          <Activity className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          <p>Waiting for visitors...</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatTimeAgo(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 5) return "Just now";
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  return `${Math.floor(minutes / 60)}h ago`;
+}
+
+// ============================================
+// REFERRER CARD WITH FAVICON
+// ============================================
+
+function ReferrerCard({
+  referrer,
+  count,
+  color,
+}: {
+  referrer: string;
+  count: number;
+  color: string;
+}) {
+  const displayName = referrer === "Direct" ? "Direct Traffic" : referrer;
+  const faviconUrl = referrer !== "Direct" ? getFaviconUrl(referrer) : null;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-center gap-3 p-4 bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-100 hover:border-slate-200 transition-colors"
+    >
+      <div 
+        className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
+        style={{ backgroundColor: `${color}15` }}
+      >
+        {faviconUrl ? (
+          <img 
+            src={faviconUrl} 
+            alt={referrer}
+            className="w-5 h-5"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+            }}
+          />
+        ) : null}
+        <Globe 
+          className={`w-5 h-5 ${faviconUrl ? 'hidden' : ''}`} 
+          style={{ color }} 
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1">
+          <p className="text-sm font-medium text-slate-900 truncate">{displayName}</p>
+          {referrer !== "Direct" && (
+            <ExternalLink className="w-3 h-3 text-slate-400 flex-shrink-0" />
+          )}
+        </div>
+        <p className="text-xs text-slate-500">{count} visits</p>
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// STAT CARD WITH GRADIENT
 // ============================================
 
 function StatCard({
@@ -116,39 +404,48 @@ function StatCard({
   change,
   changeType = "neutral",
   icon: Icon,
-  iconBg,
+  gradient,
 }: {
   label: string;
   value: string | number;
   change?: string;
   changeType?: "up" | "down" | "neutral";
   icon: React.ComponentType<{ className?: string }>;
-  iconBg: string;
+  gradient: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
-      <div className="flex items-start justify-between">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`rounded-2xl p-5 ${gradient} relative overflow-hidden`}
+    >
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/20" />
+        <div className="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-white/10" />
+      </div>
+      
+      <div className="relative flex items-start justify-between">
         <div>
-          <p className="text-sm text-slate-500 mb-1">{label}</p>
-          <p className="text-2xl font-bold text-slate-900">
+          <p className="text-sm text-white/80 mb-1 font-medium">{label}</p>
+          <p className="text-3xl font-bold text-white">
             {typeof value === "number" ? value.toLocaleString() : value}
           </p>
           {change && (
             <div className={`flex items-center gap-1 mt-2 text-sm ${
-              changeType === "up" ? "text-green-600" :
-              changeType === "down" ? "text-red-600" : "text-slate-500"
+              changeType === "up" ? "text-green-200" :
+              changeType === "down" ? "text-red-200" : "text-white/60"
             }`}>
-              {changeType === "up" && <TrendingUp className="w-3 h-3" />}
-              {changeType === "down" && <TrendingDown className="w-3 h-3" />}
-              <span>{change}</span>
+              {changeType === "up" && <ArrowUpRight className="w-4 h-4" />}
+              {changeType === "down" && <ArrowDownRight className="w-4 h-4" />}
+              <span>{change} vs last period</span>
             </div>
           )}
         </div>
-        <div className={`w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center`}>
-          <Icon className="w-5 h-5 text-white" />
+        <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+          <Icon className="w-6 h-6 text-white" />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -194,9 +491,12 @@ function TopItemRow({
           <span className="text-sm text-slate-900 font-semibold">{value.toLocaleString()}</span>
         </div>
         <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${percentage}%`, backgroundColor: color }}
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${percentage}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="h-full rounded-full"
+            style={{ backgroundColor: color }}
           />
         </div>
       </div>
@@ -229,12 +529,12 @@ function ModelSelector({
         <SelectValue placeholder="Select model" />
       </SelectTrigger>
       <SelectContent>
-          <SelectItem value="all">All Models (Overview)</SelectItem>
-          {models.map((model) => (
-            <SelectItem key={model.id} value={model.id}>
-              {model.username}
-            </SelectItem>
-          ))}
+        <SelectItem value="all">All Models (Overview)</SelectItem>
+        {models.map((model) => (
+          <SelectItem key={model.id} value={model.id}>
+            @{model.username}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
@@ -257,6 +557,9 @@ export default function StatisticsPage() {
   const [models, setModels] = useState<ModelOption[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(creatorParam);
   const [initialized, setInitialized] = useState(false);
+  const [realtimeVisitors, setRealtimeVisitors] = useState<RealtimeVisitor[]>([]);
+  const [bioLinkIds, setBioLinkIds] = useState<string[]>([]);
+  const channelRef = useRef<ReturnType<typeof getSupabaseBrowserClient>["channel"] | null>(null);
 
   const isAdminOrBusiness = user?.role === "admin" || user?.role === "business";
   
@@ -276,7 +579,6 @@ export default function StatisticsPage() {
       const supabase = getSupabaseBrowserClient();
       let query = supabase.from("creators").select("id, username").eq("enabled", true);
       
-      // Business can only see their own models
       if (user?.role === "business" && user?.studio_id) {
         query = query.eq("studio_id", user.studio_id);
       }
@@ -290,6 +592,87 @@ export default function StatisticsPage() {
     fetchModels();
   }, [isAdminOrBusiness, user]);
 
+  // Setup Supabase realtime subscription for live traffic - dynamic per bio link(s)
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    
+    // Clean up previous channel
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    // Clear visitors when switching views
+    setRealtimeVisitors([]);
+
+    if (bioLinkIds.length === 0) return;
+
+    // Create a unique channel name based on the bio link IDs
+    const channelName = `bio_views_${bioLinkIds.join("_").slice(0, 50)}`;
+    
+    // For single bio link, use filter. For multiple, we'll filter client-side
+    const isSingleBioLink = bioLinkIds.length === 1;
+    
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "bio_page_views",
+          ...(isSingleBioLink ? { filter: `bio_link_id=eq.${bioLinkIds[0]}` } : {}),
+        },
+        (payload: { new: { id?: string; country?: string; bio_link_id?: string } }) => {
+          const newView = payload.new;
+          
+          // For multiple bio links, filter client-side
+          if (!isSingleBioLink && newView.bio_link_id && !bioLinkIds.includes(newView.bio_link_id)) {
+            return;
+          }
+          
+          const country = newView.country || "Unknown";
+          const coords = getCountryCoordinates(country);
+          
+          const visitor: RealtimeVisitor = {
+            id: newView.id || `${Date.now()}-${Math.random()}`,
+            lat: coords.lat,
+            lng: coords.lng,
+            country,
+            timestamp: Date.now(),
+          };
+          
+          setRealtimeVisitors((prev) => {
+            // Keep last 20 visitors
+            const updated = [...prev, visitor].slice(-20);
+            return updated;
+          });
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [bioLinkIds]);
+
+  // Cleanup old realtime visitors
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setRealtimeVisitors((prev) => 
+        prev.filter((v) => now - v.timestamp < 60000) // Keep for 60 seconds
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     fetchAllData();
   }, [apiKey, user, period, selectedModelId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -300,7 +683,6 @@ export default function StatisticsPage() {
       const api = apiKey ? createApiClient(apiKey) : null;
       const supabase = getSupabaseBrowserClient();
 
-      // Determine which creator to fetch stats for
       let targetCreatorId: string | null = null;
       
       if (user?.role === "independent") {
@@ -312,13 +694,11 @@ export default function StatisticsPage() {
       // Fetch media stats
       if (api) {
         if (targetCreatorId) {
-          // Fetch specific creator stats
           const response = await api.getCreatorStats(targetCreatorId, 12);
           if (response.success && response.data) {
             setMediaStats(response.data);
           }
         } else if (isAdminOrBusiness) {
-          // Fetch platform overview
           const response = await api.getPlatformOverview();
           if (response.success && response.data) {
             setMediaStats(response.data);
@@ -328,7 +708,6 @@ export default function StatisticsPage() {
 
       // Fetch bio analytics
       if (targetCreatorId) {
-        // Clear aggregated stats when viewing specific model
         setAggregatedBioStats(null);
         
         const { data: bioLink } = await supabase
@@ -338,6 +717,7 @@ export default function StatisticsPage() {
           .maybeSingle();
 
         if (bioLink?.id) {
+          setBioLinkIds([bioLink.id]); // Single bio link for specific model
           const response = await fetch(`/api/analytics/bio/${bioLink.id}?period=${period}`);
           if (response.ok) {
             const data = await response.json();
@@ -346,11 +726,36 @@ export default function StatisticsPage() {
             setBioAnalytics(null);
           }
         } else {
+          setBioLinkIds([]);
           setBioAnalytics(null);
         }
       } else if (isAdminOrBusiness) {
-        // Fetch aggregated bio analytics for all models
         setBioAnalytics(null);
+        
+        // For "All Models" view, fetch all bio link IDs for realtime tracking
+        let bioLinksQuery = supabase.from("bio_links").select("id, creator_id");
+        
+        // If business user, filter by studio
+        if (user?.role === "business" && user?.studio_id) {
+          const { data: studioCreators } = await supabase
+            .from("creators")
+            .select("id")
+            .eq("studio_id", user.studio_id)
+            .eq("enabled", true);
+          
+          if (studioCreators && studioCreators.length > 0) {
+            const creatorIds = studioCreators.map((c: { id: string }) => c.id);
+            bioLinksQuery = bioLinksQuery.in("creator_id", creatorIds);
+          }
+        }
+        
+        const { data: allBioLinks } = await bioLinksQuery;
+        if (allBioLinks && allBioLinks.length > 0) {
+          setBioLinkIds(allBioLinks.map((b: { id: string }) => b.id)); // All bio links for overview
+        } else {
+          setBioLinkIds([]);
+        }
+        
         const aggResponse = await fetch(`/api/analytics/bio/models?period=${period}`);
         if (aggResponse.ok) {
           const aggData = await aggResponse.json();
@@ -384,7 +789,7 @@ export default function StatisticsPage() {
     ? Object.entries(bioAnalytics.viewsByCountry)
         .map(([country, count]) => ({ country, count }))
         .sort((a, b) => b.count - a.count)
-        .slice(0, 5)
+        .slice(0, 6)
     : [];
 
   const deviceData = bioAnalytics?.viewsByDevice
@@ -392,26 +797,29 @@ export default function StatisticsPage() {
         .map(([device, count]) => ({ device: device.charAt(0).toUpperCase() + device.slice(1), count }))
     : [];
 
-  const mediaChartData = mediaStats && isCreatorStats(mediaStats)
-    ? mediaStats.monthly_stats?.slice(-6).map((m) => ({
-        month: m.month.slice(0, 3),
-        photos: m.photos,
-        videos: m.videos,
-        audios: m.audios,
-      })) || []
-    : [];
+  // Filter out self-referrers
+  const filteredReferrers = useMemo(() => {
+    if (!bioAnalytics?.topReferrers) return [];
+    
+    return bioAnalytics.topReferrers
+      .filter((ref) => {
+        if (!ref.referrer) return true; // Keep direct traffic
+        const domain = ref.referrer.toLowerCase();
+        return !SELF_REFERRER_DOMAINS.some((self) => domain.includes(self));
+      })
+      .slice(0, 4);
+  }, [bioAnalytics?.topReferrers]);
 
   const totalViews = bioAnalytics?.summary.totalViews || aggregatedBioStats?.totalViews || 0;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+        <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
       </div>
     );
   }
 
-  // Get selected model name
   const selectedModel = models.find(m => m.id === selectedModelId);
   const displayName = selectedModel?.username || null;
 
@@ -423,15 +831,14 @@ export default function StatisticsPage() {
           <h1 className="text-2xl font-bold text-slate-900">Analytics</h1>
           <p className="text-slate-500">
             {selectedModelId && displayName
-              ? `Stats for ${displayName}`
+              ? `Performance for @${displayName}`
               : isAdminOrBusiness
-              ? "Platform overview & model statistics"
-              : "Track your content performance"}
+              ? "Platform overview & performance metrics"
+              : "Track your bio link performance"}
           </p>
         </div>
         
         <div className="flex items-center gap-3">
-          {/* Model Selector for Admin/Studio */}
           {isAdminOrBusiness && models.length > 0 && (
             <ModelSelector
               models={models}
@@ -440,7 +847,6 @@ export default function StatisticsPage() {
             />
           )}
           
-          {/* Period Selector */}
           <Select value={period} onValueChange={(v) => setPeriod(v as any)}>
             <SelectTrigger className="w-[140px]">
               <Calendar className="w-4 h-4 mr-2" />
@@ -454,45 +860,32 @@ export default function StatisticsPage() {
           </Select>
         </div>
       </div>
-      
 
-      {/* Overview Stats */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Page Views"
-          value={
-            bioAnalytics?.summary.totalViews ||
-            aggregatedBioStats?.totalViews ||
-            0
-          }
-          change={"+12% from last period"}
-          changeType="up"
+          value={bioAnalytics?.summary.totalViews || aggregatedBioStats?.totalViews || 0}
+          change={bioAnalytics?.changes?.views.value}
+          changeType={bioAnalytics?.changes?.views.type}
           icon={Eye}
-          iconBg="bg-blue-500"
+          gradient="bg-gradient-to-br from-violet-500 to-purple-600"
         />
         <StatCard
           label="Unique Visitors"
-          value={
-            bioAnalytics?.summary.uniqueVisitors ||
-            aggregatedBioStats?.totalUniqueVisitors ||
-            0
-          }
-          change={"+8% from last period"}
-          changeType="up"
+          value={bioAnalytics?.summary.uniqueVisitors || aggregatedBioStats?.totalUniqueVisitors || 0}
+          change={bioAnalytics?.changes?.visitors.value}
+          changeType={bioAnalytics?.changes?.visitors.type}
           icon={Users}
-          iconBg="bg-purple-500"
+          gradient="bg-gradient-to-br from-cyan-500 to-blue-600"
         />
         <StatCard
           label="Link Clicks"
-          value={
-            bioAnalytics?.summary.totalClicks ||
-            aggregatedBioStats?.totalClicks ||
-            0
-          }
-          change={"+15% from last period"}
-          changeType="up"
+          value={bioAnalytics?.summary.totalClicks || aggregatedBioStats?.totalClicks || 0}
+          change={bioAnalytics?.changes?.clicks.value}
+          changeType={bioAnalytics?.changes?.clicks.type}
           icon={MousePointerClick}
-          iconBg="bg-green-500"
+          gradient="bg-gradient-to-br from-emerald-500 to-green-600"
         />
         <StatCard
           label="Click Rate"
@@ -503,20 +896,20 @@ export default function StatisticsPage() {
               : 0)
           }%`}
           icon={TrendingUp}
-          iconBg="bg-orange-500"
+          gradient="bg-gradient-to-br from-orange-500 to-amber-500"
         />
       </div>
 
-      {/* Model Bio Stats - Horizontal Bar Chart for Admin/Studio */}
+      {/* Model Bio Stats for Admin/Business */}
       {isAdminOrBusiness && !selectedModelId && aggregatedBioStats && aggregatedBioStats.modelStats.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6">
           <SectionHeader 
             title="Bio Link Performance by Model" 
             subtitle="Views and clicks per model"
           />
           
           <div className="space-y-3 mt-4">
-            {aggregatedBioStats.modelStats.slice(0, 10).map((model, idx) => {
+            {aggregatedBioStats.modelStats.slice(0, 10).map((model) => {
               const maxViews = Math.max(...aggregatedBioStats.modelStats.map(m => m.views));
               const viewsPercentage = maxViews > 0 ? (model.views / maxViews) * 100 : 0;
               const clicksPercentage = maxViews > 0 ? (model.clicks / maxViews) * 100 : 0;
@@ -525,15 +918,15 @@ export default function StatisticsPage() {
                 <button
                   key={model.creatorId}
                   onClick={() => setSelectedModelId(model.creatorId)}
-                  className="w-full text-left group hover:bg-slate-50 rounded-lg p-3 -mx-3 transition-colors"
+                  className="w-full text-left group hover:bg-slate-50 rounded-xl p-3 -mx-3 transition-colors"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-sm font-semibold">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-sm font-semibold shadow-sm">
                         {model.username.charAt(0).toUpperCase()}
                       </div>
                       <span className="font-medium text-slate-900 group-hover:text-violet-600 transition-colors">
-                        {model.username}
+                        @{model.username}
                       </span>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
@@ -548,16 +941,18 @@ export default function StatisticsPage() {
                       <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-violet-500 transition-colors" />
                     </div>
                   </div>
-                  <div className="flex gap-1 h-2">
-                    <div 
-                      className="bg-blue-500 rounded-l transition-all duration-300"
-                      style={{ width: `${viewsPercentage}%` }}
-                      title={`${model.views} views`}
+                  <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-slate-100">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${viewsPercentage}%` }}
+                      transition={{ duration: 0.5 }}
+                      className="bg-violet-500 rounded-l"
                     />
-                    <div 
-                      className="bg-green-500 rounded-r transition-all duration-300"
-                      style={{ width: `${clicksPercentage}%` }}
-                      title={`${model.clicks} clicks`}
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${clicksPercentage}%` }}
+                      transition={{ duration: 0.5, delay: 0.1 }}
+                      className="bg-emerald-500 rounded-r"
                     />
                   </div>
                 </button>
@@ -565,64 +960,97 @@ export default function StatisticsPage() {
             })}
           </div>
           
-          {/* Legend */}
           <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-slate-100">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-blue-500" />
+              <div className="w-3 h-3 rounded-full bg-violet-500" />
               <span className="text-sm text-slate-600">Views</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-green-500" />
+              <div className="w-3 h-3 rounded-full bg-emerald-500" />
               <span className="text-sm text-slate-600">Clicks</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Main Grid */}
+      {/* Main Grid with Globe and Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Traffic Chart - Takes 2 columns */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6">
+        {/* Traffic Chart */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6">
           <SectionHeader 
-            title="Traffic Overview" 
+            title="Traffic Over Time" 
             subtitle="Daily page views"
-            action={
-              <Link href="/dashboard/bio-links" className="text-sm text-brand-600 hover:text-brand-700 flex items-center gap-1">
-                View details <ArrowUpRight className="w-3 h-3" />
-              </Link>
-            }
           />
           
           {viewsChartData.length > 0 ? (
-            <ChartContainer config={chartConfig} className="h-[280px] w-full">
-              <BarChart data={viewsChartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <AreaChart data={viewsChartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+                <defs>
+                  <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <XAxis
                   dataKey="date"
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fontSize: 12, fill: "#64748b" }}
+                  tick={{ fontSize: 12, fill: "#94a3b8" }}
                 />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fontSize: 12, fill: "#64748b" }}
+                  tick={{ fontSize: 12, fill: "#94a3b8" }}
+                  width={40}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="views" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <Area
+                  type="monotone"
+                  dataKey="views"
+                  stroke="#8b5cf6"
+                  strokeWidth={2}
+                  fill="url(#viewsGradient)"
+                />
+              </AreaChart>
             </ChartContainer>
           ) : (
-            <div className="h-[280px] flex items-center justify-center text-slate-400">
+            <div className="h-[300px] flex items-center justify-center text-slate-400">
               <div className="text-center">
                 <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-30" />
                 <p>No traffic data yet</p>
+                <p className="text-sm mt-1">Share your bio link to start tracking!</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Top Countries */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
+        {/* Realtime Globe */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 overflow-hidden">
+          <SectionHeader 
+            title="Live Traffic" 
+            subtitle="Real-time visitor activity"
+          />
+          
+          <RealtimeGlobe
+            realtimeVisitors={realtimeVisitors}
+            className="w-full max-w-[280px] mx-auto"
+          />
+          
+          {/* Real-time activity feed */}
+          <div className="mt-4 pt-4 border-t border-slate-100">
+            <h4 className="text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-violet-500" />
+              Recent Activity
+            </h4>
+            <RealtimeActivityFeed visitors={realtimeVisitors} />
+          </div>
+        </div>
+      </div>
+
+      {/* Second Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top Countries Full List */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6">
           <SectionHeader title="Top Countries" subtitle="By page views" />
           
           {countryData.length > 0 ? (
@@ -639,17 +1067,14 @@ export default function StatisticsPage() {
               ))}
             </div>
           ) : (
-            <div className="h-[200px] flex items-center justify-center text-slate-400 text-sm">
+            <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">
               No country data yet
             </div>
           )}
         </div>
-      </div>
 
-      {/* Second Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Device Breakdown */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6">
           <SectionHeader title="Devices" subtitle="Visitor breakdown" />
           
           {deviceData.length > 0 ? (
@@ -657,23 +1082,28 @@ export default function StatisticsPage() {
               {deviceData.map((item, idx) => {
                 const Icon = item.device === "Mobile" ? Smartphone : item.device === "Desktop" ? Monitor : Tablet;
                 const total = deviceData.reduce((sum, d) => sum + d.count, 0);
+                const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
+                
                 return (
                   <div key={item.device} className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center`} style={{ backgroundColor: `${COLORS[idx]}20` }}>
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: `${COLORS[idx]}15` }}
+                    >
                       <Icon className="w-5 h-5" style={{ color: COLORS[idx] }} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-slate-700">{item.device}</span>
-                        <span className="text-sm text-slate-500">{total > 0 ? Math.round((item.count / total) * 100) : 0}%</span>
+                        <span className="text-sm font-semibold text-slate-900">{percentage}%</span>
                       </div>
                       <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${percentage}%` }}
+                          transition={{ duration: 0.5 }}
                           className="h-full rounded-full"
-                          style={{
-                            width: `${total > 0 ? (item.count / total) * 100 : 0}%`,
-                            backgroundColor: COLORS[idx],
-                          }}
+                          style={{ backgroundColor: COLORS[idx] }}
                         />
                       </div>
                     </div>
@@ -682,14 +1112,14 @@ export default function StatisticsPage() {
               })}
             </div>
           ) : (
-            <div className="h-[150px] flex items-center justify-center text-slate-400 text-sm">
+            <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">
               No device data yet
             </div>
           )}
         </div>
 
         {/* Top Links */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6">
           <SectionHeader title="Top Links" subtitle="Most clicked" />
           
           {bioAnalytics?.topLinks && bioAnalytics.topLinks.length > 0 ? (
@@ -697,164 +1127,73 @@ export default function StatisticsPage() {
               {bioAnalytics.topLinks.slice(0, 5).map((link, idx) => (
                 <div key={link.label} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                   <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-medium text-slate-600">
+                    <span 
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                      style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+                    >
                       {idx + 1}
                     </span>
-                    <span className="text-sm text-slate-700 truncate max-w-[150px]">{link.label}</span>
+                    <span className="text-sm text-slate-700 truncate max-w-[140px]">{link.label}</span>
                   </div>
-                  <span className="text-sm font-semibold text-slate-900">{link.count}</span>
+                  <span className="text-sm font-bold text-slate-900">{link.count}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="h-[150px] flex items-center justify-center text-slate-400 text-sm">
+            <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">
               No link clicks yet
             </div>
           )}
         </div>
-
-        {/* Content Stats */}
-        {mediaStats && isCreatorStats(mediaStats) ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <SectionHeader title="Content Library" subtitle="Total media" />
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-blue-50 rounded-lg p-4 text-center">
-                <ImageIcon className="w-5 h-5 text-blue-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-blue-900">{mediaStats.all_time.photos}</p>
-                <p className="text-xs text-blue-600">Photos</p>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-4 text-center">
-                <Video className="w-5 h-5 text-purple-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-purple-900">{mediaStats.all_time.videos}</p>
-                <p className="text-xs text-purple-600">Videos</p>
-              </div>
-              <div className="bg-orange-50 rounded-lg p-4 text-center">
-                <Music className="w-5 h-5 text-orange-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-orange-900">{mediaStats.all_time.audios}</p>
-                <p className="text-xs text-orange-600">Audio</p>
-              </div>
-              <div className="bg-green-50 rounded-lg p-4 text-center">
-                <FileText className="w-5 h-5 text-green-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-green-900">{mediaStats.all_time.customs}</p>
-                <p className="text-xs text-green-600">Customs</p>
-              </div>
-            </div>
-          </div>
-        ) : mediaStats && !isCreatorStats(mediaStats) && isAdminOrBusiness && !selectedModelId ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <SectionHeader title="Platform Overview" subtitle="Total content" />
-            
-            <div className="space-y-4">
-              {/* Total Media - Highlighted */}
-              <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl p-4 text-center text-white">
-                <BarChart3 className="w-6 h-6 mx-auto mb-2 opacity-80" />
-                <p className="text-3xl font-bold">{((mediaStats as PlatformOverview).counts?.total_media || (mediaStats as PlatformOverview).all_time?.total || 0).toLocaleString()}</p>
-                <p className="text-sm opacity-80">Total Media Files</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-blue-50 rounded-lg p-4 text-center">
-                  <ImageIcon className="w-5 h-5 text-blue-600 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-blue-900">{(mediaStats as PlatformOverview).all_time?.photos || 0}</p>
-                  <p className="text-xs text-blue-600">Photos</p>
-                </div>
-                <div className="bg-purple-50 rounded-lg p-4 text-center">
-                  <Video className="w-5 h-5 text-purple-600 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-purple-900">{(mediaStats as PlatformOverview).all_time?.videos || 0}</p>
-                  <p className="text-xs text-purple-600">Videos</p>
-                </div>
-                <div className="bg-orange-50 rounded-lg p-4 text-center">
-                  <Music className="w-5 h-5 text-orange-600 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-orange-900">{(mediaStats as PlatformOverview).all_time?.audios || 0}</p>
-                  <p className="text-xs text-orange-600">Audio</p>
-                </div>
-                <div className="bg-slate-50 rounded-lg p-4 text-center">
-                  <Users className="w-5 h-5 text-slate-600 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-slate-900">{(mediaStats as PlatformOverview).counts?.creators || 0}</p>
-                  <p className="text-xs text-slate-600">Active Models</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
       </div>
 
-      {/* Monthly Content Chart */}
-      {mediaChartData.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <SectionHeader title="Content Uploads" subtitle="Monthly breakdown" />
+      {/* Top Referrers with Favicons */}
+      {filteredReferrers.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+          <SectionHeader title="Top Referrers" subtitle="External traffic sources" />
           
-          <ChartContainer config={chartConfig} className="h-[250px] w-full">
-            <BarChart data={mediaChartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 12, fill: "#64748b" }}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {filteredReferrers.map((ref, idx) => (
+              <ReferrerCard
+                key={ref.referrer || "direct"}
+                referrer={ref.referrer || "Direct"}
+                count={ref.count}
+                color={COLORS[idx % COLORS.length]}
               />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 12, fill: "#64748b" }}
-              />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="photos" fill="#3b82f6" radius={[4, 4, 0, 0]} stackId="a" />
-              <Bar dataKey="videos" fill="#8b5cf6" radius={[4, 4, 0, 0]} stackId="a" />
-              <Bar dataKey="audios" fill="#f59e0b" radius={[4, 4, 0, 0]} stackId="a" />
-            </BarChart>
-          </ChartContainer>
-
-          {/* Legend */}
-          <div className="flex items-center justify-center gap-6 mt-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-blue-500" />
-              <span className="text-sm text-slate-600">Photos</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-purple-500" />
-              <span className="text-sm text-slate-600">Videos</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-orange-500" />
-              <span className="text-sm text-slate-600">Audio</span>
-            </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Top Referrers */}
-      {bioAnalytics?.topReferrers && bioAnalytics.topReferrers.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <SectionHeader title="Top Referrers" subtitle="Where your traffic comes from" />
+      {/* Content Stats - Only for specific creator */}
+      {mediaStats && isCreatorStats(mediaStats) && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+          <SectionHeader title="Content Library" subtitle="Your uploaded media" />
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {bioAnalytics.topReferrers.slice(0, 4).map((ref, idx) => (
-              <div key={ref.referrer} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
-                  <Globe className="w-4 h-4 text-slate-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 truncate">{ref.referrer || "Direct"}</p>
-                  <p className="text-xs text-slate-500">{ref.count} visits</p>
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-5 text-center border border-violet-100">
+              <ImageIcon className="w-8 h-8 text-violet-600 mx-auto mb-2" />
+              <p className="text-3xl font-bold text-violet-900">{mediaStats.all_time.photos}</p>
+              <p className="text-sm text-violet-600 font-medium">Photos</p>
+            </div>
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 text-center border border-amber-100">
+              <Video className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+              <p className="text-3xl font-bold text-amber-900">{mediaStats.all_time.videos}</p>
+              <p className="text-sm text-amber-600 font-medium">Videos</p>
+            </div>
+            <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-5 text-center border border-rose-100">
+              <Music className="w-8 h-8 text-rose-600 mx-auto mb-2" />
+              <p className="text-3xl font-bold text-rose-900">{mediaStats.all_time.audios}</p>
+              <p className="text-sm text-rose-600 font-medium">Audio</p>
+            </div>
+            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-5 text-center border border-cyan-100">
+              <FileText className="w-8 h-8 text-cyan-600 mx-auto mb-2" />
+              <p className="text-3xl font-bold text-cyan-900">{mediaStats.all_time.customs}</p>
+              <p className="text-sm text-cyan-600 font-medium">Customs</p>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
-}
-
-// Helper function
-function getCountryFlag(country: string): string {
-  const flags: Record<string, string> = {
-    "United States": "🇺🇸", "United Kingdom": "🇬🇧", "Germany": "🇩🇪",
-    "France": "🇫🇷", "Canada": "🇨🇦", "Australia": "🇦🇺",
-    "Netherlands": "🇳🇱", "Spain": "🇪🇸", "Italy": "🇮🇹",
-    "Brazil": "🇧🇷", "Mexico": "🇲🇽", "Japan": "🇯🇵",
-    "India": "🇮🇳", "Romania": "🇷🇴", "Unknown": "🌍",
-  };
-  return flags[country] || "🌍";
 }

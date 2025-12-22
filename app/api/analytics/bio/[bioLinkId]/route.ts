@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { getCountryCoordinates } from "@/lib/country-utils";
 
 // Get authenticated user's Supabase client
 async function getAuthenticatedClient() {
@@ -80,22 +81,25 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Calculate date range
-    let startDate: Date;
+    // Calculate date ranges for current and previous periods
     const now = new Date();
+    let periodDays: number;
     switch (period) {
       case "7d":
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        periodDays = 7;
         break;
       case "30d":
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        periodDays = 30;
         break;
       case "90d":
-        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        periodDays = 90;
         break;
       default:
-        startDate = new Date(0); // All time
+        periodDays = 365; // For "all", compare against last year
     }
+
+    const currentStart = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+    const previousStart = new Date(currentStart.getTime() - periodDays * 24 * 60 * 60 * 1000);
 
     // Use service role for analytics queries (RLS can be complex for aggregations)
     const serviceClient = createClient(
@@ -103,36 +107,71 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    // Get page views
-    const { data: pageViews, error: pvError } = await serviceClient
+    // Get current period page views
+    const { data: currentPageViews, error: pvError } = await serviceClient
       .from("bio_page_views")
       .select("*")
       .eq("bio_link_id", bioLinkId)
-      .gte("created_at", startDate.toISOString())
+      .gte("created_at", currentStart.toISOString())
       .order("created_at", { ascending: false });
 
     if (pvError) {
       console.error("Page views error:", pvError);
     }
 
-    // Get link clicks
-    const { data: linkClicks, error: lcError } = await serviceClient
+    // Get previous period page views for comparison
+    const { data: previousPageViews } = await serviceClient
+      .from("bio_page_views")
+      .select("id, visitor_id, ip_hash")
+      .eq("bio_link_id", bioLinkId)
+      .gte("created_at", previousStart.toISOString())
+      .lt("created_at", currentStart.toISOString());
+
+    // Get current period link clicks
+    const { data: currentLinkClicks, error: lcError } = await serviceClient
       .from("bio_link_clicks")
       .select("*")
       .eq("bio_link_id", bioLinkId)
-      .gte("created_at", startDate.toISOString())
+      .gte("created_at", currentStart.toISOString())
       .order("created_at", { ascending: false });
 
     if (lcError) {
       console.error("Link clicks error:", lcError);
     }
 
+    // Get previous period link clicks for comparison
+    const { data: previousLinkClicks } = await serviceClient
+      .from("bio_link_clicks")
+      .select("id")
+      .eq("bio_link_id", bioLinkId)
+      .gte("created_at", previousStart.toISOString())
+      .lt("created_at", currentStart.toISOString());
+
     // Calculate aggregations
-    const views = pageViews || [];
-    const clicks = linkClicks || [];
+    const views = currentPageViews || [];
+    const clicks = currentLinkClicks || [];
+    const prevViews = previousPageViews || [];
+    const prevClicks = previousLinkClicks || [];
 
     // Unique visitors (by visitor_id or ip_hash)
     const uniqueVisitors = new Set(views.map((v) => v.visitor_id || v.ip_hash)).size;
+    const prevUniqueVisitors = new Set(prevViews.map((v) => v.visitor_id || v.ip_hash)).size;
+
+    // Calculate percentage changes
+    const calculateChange = (current: number, previous: number): { value: string; type: "up" | "down" | "neutral" } => {
+      if (previous === 0) {
+        if (current > 0) return { value: "+100%", type: "up" };
+        return { value: "0%", type: "neutral" };
+      }
+      const change = ((current - previous) / previous) * 100;
+      if (change > 0) return { value: `+${change.toFixed(0)}%`, type: "up" };
+      if (change < 0) return { value: `${change.toFixed(0)}%`, type: "down" };
+      return { value: "0%", type: "neutral" };
+    };
+
+    const viewsChange = calculateChange(views.length, prevViews.length);
+    const visitorsChange = calculateChange(uniqueVisitors, prevUniqueVisitors);
+    const clicksChange = calculateChange(clicks.length, prevClicks.length);
 
     // Views by day
     const viewsByDay: Record<string, number> = {};
@@ -148,11 +187,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       clicksByDay[day] = (clicksByDay[day] || 0) + 1;
     });
 
-    // Views by country
+    // Views by country with coordinates for globe
     const viewsByCountry: Record<string, number> = {};
+    const countryCoordinates: Record<string, { lat: number; lng: number }> = {};
     views.forEach((v) => {
       const country = v.country || "Unknown";
       viewsByCountry[country] = (viewsByCountry[country] || 0) + 1;
+      // Store coordinates if available
+      if (!countryCoordinates[country]) {
+        countryCoordinates[country] = getCountryCoordinates(country);
+      }
     });
 
     // Views by device
@@ -169,23 +213,50 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       viewsByBrowser[browser] = (viewsByBrowser[browser] || 0) + 1;
     });
 
-    // Top referrers
+    // Top referrers - filter out self-referrers (bio link domains)
+    const SELF_REFERRER_DOMAINS = [
+      "lustyfantasy.online",
+      "www.lustyfantasy.online",
+      "lovebite.bio",
+      "www.lovebite.bio",
+      "localhost",
+    ];
+    
     const referrerCounts: Record<string, number> = {};
+    let directCount = 0;
+    
     views.forEach((v) => {
       if (v.referrer) {
         try {
           const url = new URL(v.referrer);
-          const domain = url.hostname;
+          const domain = url.hostname.toLowerCase();
+          
+          // Skip self-referrers
+          if (SELF_REFERRER_DOMAINS.some((self) => domain.includes(self))) {
+            directCount++; // Count as direct traffic
+            return;
+          }
+          
           referrerCounts[domain] = (referrerCounts[domain] || 0) + 1;
         } catch {
-          referrerCounts[v.referrer] = (referrerCounts[v.referrer] || 0) + 1;
+          // Invalid URL, count as direct
+          directCount++;
         }
+      } else {
+        directCount++;
       }
     });
+    
+    // Build top referrers list with direct traffic included
     const topReferrers = Object.entries(referrerCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([referrer, count]) => ({ referrer, count }));
+    
+    // Add direct traffic as first item if significant
+    if (directCount > 0) {
+      topReferrers.unshift({ referrer: "Direct", count: directCount });
+    }
 
     // Clicks by link
     const clicksByLink: Record<string, { label: string; url: string; count: number }> = {};
@@ -197,6 +268,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       clicksByLink[key].count += 1;
     });
     const topLinks = Object.values(clicksByLink).sort((a, b) => b.count - a.count);
+
+    // Globe markers data
+    const globeMarkers = Object.entries(viewsByCountry)
+      .map(([country, count]) => ({
+        country,
+        count,
+        ...countryCoordinates[country],
+      }))
+      .filter((m) => m.lat && m.lng);
 
     // Recent activity
     const recentViews = views.slice(0, 20).map((v) => ({
@@ -222,6 +302,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         totalClicks: clicks.length,
         clickThroughRate: views.length > 0 ? ((clicks.length / views.length) * 100).toFixed(1) : "0",
       },
+      changes: {
+        views: viewsChange,
+        visitors: visitorsChange,
+        clicks: clicksChange,
+      },
       viewsByDay,
       clicksByDay,
       viewsByCountry,
@@ -229,6 +314,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       viewsByBrowser,
       topReferrers,
       topLinks,
+      globeMarkers,
       recentActivity: [...recentViews, ...recentClicks]
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 30),
@@ -238,6 +324,3 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
-
-
-

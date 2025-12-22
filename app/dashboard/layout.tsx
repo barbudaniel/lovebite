@@ -152,11 +152,6 @@ const bioLinksNavItems: NavItem[] = [
     icon: Link2,
   },
   {
-    label: "Analytics",
-    href: "/dashboard/bio-links/analytics",
-    icon: BarChart3,
-  },
-  {
     label: "Domains",
     href: "/dashboard/bio-links/domains",
     icon: Globe,
@@ -930,7 +925,9 @@ export default function DashboardLayout({
             <AppSidebar user={user} onLogout={handleLogout} />
             <div className="flex-1 flex flex-col">
               <Header user={user} dashboardUserId={user?.id} />
-              <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+              <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                <div className="mx-auto max-w-6xl">{children}</div>
+              </main>
             </div>
           </div>
         </SidebarProvider>
