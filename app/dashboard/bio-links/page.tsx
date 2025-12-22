@@ -37,6 +37,10 @@ import {
   FolderOpen,
   Sparkles,
   Zap,
+  ChevronRight,
+  MoreHorizontal,
+  Rocket,
+  ArrowRight,
 } from "lucide-react";
 import {
   Dialog,
@@ -146,51 +150,63 @@ function LinkCard({
   return (
     <Reorder.Item
       value={item}
-      className={`bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-all ${
+      className={`group bg-white rounded-xl border border-slate-200 p-3 hover:border-slate-300 hover:shadow-sm transition-all cursor-grab active:cursor-grabbing ${
         !item.enabled && "opacity-50"
       }`}
     >
-      <div className="flex items-center gap-4">
-        <GripVertical className="w-5 h-5 text-slate-300 cursor-grab shrink-0" />
+      <div className="flex items-center gap-3">
+        <GripVertical className="w-4 h-4 text-slate-300 group-hover:text-slate-400 shrink-0 transition-colors" />
         
         {item.media_url ? (
-          <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+          <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0">
             <img src={item.media_url} alt="" className="w-full h-full object-cover" />
           </div>
         ) : (
-          <div className={`w-12 h-12 rounded-lg bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center shrink-0`}>
-            <IconComponent className={`w-6 h-6 ${iconConfig.color}`} />
+          <div className={`w-10 h-10 rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center shrink-0`}>
+            <IconComponent className={`w-5 h-5 ${iconConfig.color}`} />
           </div>
         )}
 
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 truncate">{item.label}</p>
-          <p className="text-sm text-slate-500 truncate">{item.href}</p>
-          {item.pill_text && (
-            <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-pink-100 text-pink-700">
-              {item.pill_text}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-slate-900 text-sm truncate">{item.label}</p>
+            {item.pill_text && (
+              <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-pink-100 text-pink-700 shrink-0">
+                {item.pill_text}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-400 truncate">{item.href}</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
-            onClick={onToggle}
-            className={`w-10 h-5 rounded-full transition-colors relative ${
-              item.enabled ? "bg-green-500" : "bg-slate-300"
+            onClick={(e) => { e.stopPropagation(); onToggle(); }}
+            className={`w-8 h-[18px] rounded-full transition-colors relative shrink-0 ${
+              item.enabled ? "bg-green-500" : "bg-slate-200"
             }`}
           >
             <div
-              className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                item.enabled ? "translate-x-5" : "translate-x-0.5"
+              className={`absolute top-[2px] w-[14px] h-[14px] bg-white rounded-full shadow-sm transition-transform ${
+                item.enabled ? "translate-x-[16px]" : "translate-x-[2px]"
               }`}
             />
           </button>
-          <Button variant="ghost" size="sm" onClick={onEdit}>
-            <Edit2 className="w-4 h-4" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50">
-            <Trash2 className="w-4 h-4" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={(e) => { e.stopPropagation(); onDelete(); }} 
+            className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
@@ -208,12 +224,14 @@ function LinkEditor({
   onSave,
   onClose,
   creatorId,
+  isOpen,
 }: {
   item: BioLinkItem | null;
   bioLinkId: string;
   onSave: () => void;
   onClose: () => void;
   creatorId: string;
+  isOpen: boolean;
 }) {
   const [form, setForm] = useState({
     label: item?.label || "",
@@ -228,6 +246,21 @@ function LinkEditor({
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [mediaLibrary, setMediaLibrary] = useState<MediaItem[]>([]);
   const [isLoadingMedia, setIsLoadingMedia] = useState(false);
+  
+  // Reset form when item changes
+  useEffect(() => {
+    if (isOpen) {
+      setForm({
+        label: item?.label || "",
+        href: item?.href || "",
+        sub_text: item?.sub_text || "",
+        icon_type: item?.icon_type || "link",
+        pill_text: item?.pill_text || "",
+        media_id: item?.media_id || null,
+        media_url: item?.media_url || null,
+      });
+    }
+  }, [item, isOpen]);
 
   const fetchMedia = async () => {
     setIsLoadingMedia(true);
@@ -309,8 +342,15 @@ function LinkEditor({
     }
   };
 
+  // Handle dialog close - only when explicitly requested
+  const handleOpenChange = useCallback((open: boolean) => {
+    if (!open && !isSaving) {
+      onClose();
+    }
+  }, [onClose, isSaving]);
+  
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{item ? "Edit Link" : "Add New Link"}</DialogTitle>
@@ -717,12 +757,14 @@ function SettingsModal({
   onClose,
   creatorId,
   apiKey,
+  isOpen,
 }: {
   bioLink: BioLink;
   onSave: (data: Partial<BioLink>) => Promise<void>;
   onClose: () => void;
   creatorId: string;
   apiKey: string | null;
+  isOpen: boolean;
 }) {
   const [form, setForm] = useState({
     name: bioLink.name || "",
@@ -736,6 +778,23 @@ function SettingsModal({
     is_published: bioLink.is_published,
   });
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Reset form when bioLink changes and modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setForm({
+        name: bioLink.name || "",
+        slug: bioLink.slug || "",
+        tagline: bioLink.tagline || "",
+        subtitle: bioLink.subtitle || "",
+        welcome_title: bioLink.welcome_title || "",
+        welcome_text: bioLink.welcome_text || "",
+        profile_image_url: bioLink.profile_image_url || "",
+        gallery_image_url: bioLink.gallery_image_url || "",
+        is_published: bioLink.is_published,
+      });
+    }
+  }, [bioLink, isOpen]);
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.slug.trim()) {
@@ -760,8 +819,15 @@ function SettingsModal({
     }
   };
 
+  // Handle dialog close - only when explicitly requested
+  const handleOpenChange = useCallback((open: boolean) => {
+    if (!open && !isSaving) {
+      onClose();
+    }
+  }, [onClose, isSaving]);
+  
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>Bio Link Settings</DialogTitle>
@@ -886,6 +952,273 @@ function SettingsModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ============================================
+// ONBOARDING WIZARD
+// ============================================
+
+type OnboardingStep = "profile" | "links" | "publish";
+
+function OnboardingWizard({
+  bioLink,
+  linkItems,
+  onOpenSettings,
+  onAddLink,
+  onPublish,
+}: {
+  bioLink: BioLink;
+  linkItems: BioLinkItem[];
+  onOpenSettings: () => void;
+  onAddLink: () => void;
+  onPublish: () => void;
+}) {
+  const hasProfile = Boolean(bioLink.profile_image_url || bioLink.tagline);
+  const hasLinks = linkItems.length > 0;
+  const isPublished = bioLink.is_published;
+
+  // Determine current step
+  const currentStep: OnboardingStep = !hasProfile ? "profile" : !hasLinks ? "links" : "publish";
+  const completedSteps = {
+    profile: hasProfile,
+    links: hasLinks,
+    publish: isPublished,
+  };
+
+  if (isPublished && hasProfile && hasLinks) {
+    return null; // Onboarding complete
+  }
+
+  const steps = [
+    {
+      id: "profile" as const,
+      title: "Set Up Profile",
+      description: "Add a profile picture and tagline to personalize your bio link",
+      icon: ImageIcon,
+      action: onOpenSettings,
+      actionLabel: "Add Profile",
+    },
+    {
+      id: "links" as const,
+      title: "Add Your Links",
+      description: "Add links to your social profiles, content, and more",
+      icon: Link2,
+      action: onAddLink,
+      actionLabel: "Add First Link",
+    },
+    {
+      id: "publish" as const,
+      title: "Go Live",
+      description: "Publish your bio link and share it with the world",
+      icon: Rocket,
+      action: onPublish,
+      actionLabel: "Publish Now",
+    },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-gradient-to-br from-slate-50 via-violet-50/30 to-pink-50/30 rounded-2xl border border-slate-200 p-6"
+    >
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
+          <Sparkles className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-900">Getting Started</h3>
+          <p className="text-sm text-slate-500">
+            {Object.values(completedSteps).filter(Boolean).length} of 3 steps complete
+          </p>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="flex gap-2 mb-6">
+        {steps.map((step, index) => (
+          <div
+            key={step.id}
+            className={`h-1.5 flex-1 rounded-full transition-colors ${
+              completedSteps[step.id]
+                ? "bg-gradient-to-r from-violet-500 to-pink-500"
+                : currentStep === step.id
+                ? "bg-violet-200"
+                : "bg-slate-200"
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Current step card */}
+      <div className="space-y-3">
+        {steps.map((step, index) => {
+          const Icon = step.icon;
+          const isCompleted = completedSteps[step.id];
+          const isCurrent = currentStep === step.id;
+          const isLocked = !isCompleted && !isCurrent;
+
+          return (
+            <motion.div
+              key={step.id}
+              initial={false}
+              animate={{
+                opacity: isLocked ? 0.5 : 1,
+                scale: isCurrent ? 1 : 0.98,
+              }}
+              className={`relative flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                isCurrent
+                  ? "bg-white border-violet-200 shadow-sm"
+                  : isCompleted
+                  ? "bg-white/60 border-slate-200"
+                  : "bg-white/40 border-slate-200"
+              }`}
+            >
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  isCompleted
+                    ? "bg-green-100"
+                    : isCurrent
+                    ? "bg-violet-100"
+                    : "bg-slate-100"
+                }`}
+              >
+                {isCompleted ? (
+                  <Check className="w-5 h-5 text-green-600" />
+                ) : (
+                  <Icon className={`w-5 h-5 ${isCurrent ? "text-violet-600" : "text-slate-400"}`} />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`font-medium ${isCompleted ? "text-slate-500" : "text-slate-900"}`}>
+                  {step.title}
+                  {isCompleted && <span className="text-green-600 text-sm ml-2">✓ Done</span>}
+                </p>
+                {!isCompleted && (
+                  <p className="text-sm text-slate-500 truncate">{step.description}</p>
+                )}
+              </div>
+              {isCurrent && (
+                <Button
+                  size="sm"
+                  onClick={step.action}
+                  className="bg-violet-600 hover:bg-violet-700 shrink-0"
+                >
+                  {step.actionLabel}
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// STATUS PILL COMPONENT
+// ============================================
+
+function StatusPill({ isPublished }: { isPublished: boolean }) {
+  return (
+    <div
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+        isPublished
+          ? "bg-green-100 text-green-700"
+          : "bg-amber-100 text-amber-700"
+      }`}
+    >
+      <div
+        className={`w-1.5 h-1.5 rounded-full ${
+          isPublished ? "bg-green-500" : "bg-amber-500"
+        }`}
+      />
+      {isPublished ? "Live" : "Draft"}
+    </div>
+  );
+}
+
+// ============================================
+// QUICK ACTIONS MENU
+// ============================================
+
+function QuickActionsMenu({
+  bioLink,
+  onOpenSettings,
+}: {
+  bioLink: BioLink;
+  onOpenSettings: () => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setIsOpen(!isOpen)}
+        className="h-9 w-9 p-0"
+      >
+        <MoreHorizontal className="w-4 h-4" />
+      </Button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-slate-200 shadow-lg py-1 z-20"
+          >
+            <button
+              onClick={() => { onOpenSettings(); setIsOpen(false); }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <Settings className="w-4 h-4 text-slate-400" />
+              Settings
+            </button>
+            <Link
+              href="/dashboard/statistics"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <BarChart3 className="w-4 h-4 text-slate-400" />
+              Analytics
+            </Link>
+            <Link
+              href="/dashboard/bio-links/domains"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <Globe className="w-4 h-4 text-slate-400" />
+              Custom Domain
+            </Link>
+            <div className="my-1 border-t border-slate-100" />
+            <Link
+              href={`https://bites.bio/${bioLink.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <ExternalLink className="w-4 h-4 text-slate-400" />
+              View Live Page
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -1130,6 +1463,23 @@ export default function BioLinksPage() {
     );
   }
 
+  // Determine if we should show onboarding
+  const hasProfile = Boolean(bioLink?.profile_image_url || bioLink?.tagline);
+  const hasLinks = linkItems.length > 0;
+  const showOnboarding = bioLink && (!hasProfile || !hasLinks || !bioLink.is_published);
+
+  const handlePublish = async () => {
+    if (!bioLink) return;
+    try {
+      const supabase = getSupabaseBrowserClient();
+      await supabase.from("bio_links").update({ is_published: true }).eq("id", bioLink.id);
+      fetchBioLink();
+      toast.success("Your bio link is now live! 🎉");
+    } catch (err) {
+      toast.error("Failed to publish");
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Admin/Studio Creator Selector */}
@@ -1141,7 +1491,7 @@ export default function BioLinksPage() {
           <select
             value={selectedCreatorId || ""}
             onChange={(e) => setSelectedCreatorId(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+            className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
           >
             {creators.map((c) => (
               <option key={c.id} value={c.id}>
@@ -1152,143 +1502,144 @@ export default function BioLinksPage() {
         </div>
       )}
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Bio Links</h1>
-          <p className="text-slate-500">
-            {isAdminOrBusiness && selectedCreatorId 
-              ? `Managing @${creators.find(c => c.id === selectedCreatorId)?.username}'s bio link`
-              : "Manage your bio link page"
-            }
-          </p>
+      {/* Compact Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold text-slate-900">Bio Link</h1>
+              {bioLink && <StatusPill isPublished={bioLink.is_published} />}
+            </div>
+            <p className="text-sm text-slate-500 mt-0.5">
+              bites.bio/{bioLink?.slug || "..."}
+              {bioLink?.custom_domain && (
+                <span className="text-violet-600 ml-2">• {bioLink.custom_domain}</span>
+              )}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={copyLink}>
+          <Button variant="outline" size="sm" onClick={copyLink} className="hidden sm:flex">
             {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-            {copied ? "Copied!" : "Copy Link"}
+            {copied ? "Copied!" : "Copy"}
           </Button>
-          <a href={bioLink?.custom_domain ? `https://${bioLink.custom_domain}` : `https://bites.bio/${bioLink?.slug}`} target="_blank" rel="noopener noreferrer">
+          <a 
+            href={bioLink?.custom_domain ? `https://${bioLink.custom_domain}` : `https://bites.bio/${bioLink?.slug}`} 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
             <Button variant="outline" size="sm">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Preview
+              <Eye className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Preview</span>
             </Button>
           </a>
+          {bioLink && (
+            <QuickActionsMenu bioLink={bioLink} onOpenSettings={() => setShowSettings(true)} />
+          )}
         </div>
       </div>
 
-      {/* Status Card */}
-      <div className={`rounded-2xl p-5 ${
-        bioLink?.is_published
-          ? "bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200"
-          : "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200"
-      }`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              bioLink?.is_published ? "bg-green-100" : "bg-amber-100"
-            }`}>
-              {bioLink?.is_published ? (
-                <Check className="w-6 h-6 text-green-600" />
-              ) : (
-                <AlertCircle className="w-6 h-6 text-amber-600" />
-              )}
-            </div>
-            <div>
-              <p className={`font-semibold text-lg ${
-                bioLink?.is_published ? "text-green-800" : "text-amber-800"
-              }`}>
-                {bioLink?.is_published ? "Published" : "Draft"}
-              </p>
-              <p className={`text-sm ${
-                bioLink?.is_published ? "text-green-600" : "text-amber-600"
-              }`}>
-                {bioLink?.is_published
-                  ? "Your bio link is live and visible"
-                  : "Complete setup and publish to go live"}
-              </p>
-            </div>
-          </div>
-          <Button
-            size="sm"
-            onClick={() => setShowSettings(true)}
-            className={bioLink?.is_published 
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-amber-600 hover:bg-amber-700"}
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
-          </Button>
-        </div>
-      </div>
-
-      {/* Quick Links */}
-      <div className="grid grid-cols-2 gap-4">
-        <Link href="/dashboard/statistics">
-          <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-5 text-white hover:opacity-90 transition-opacity cursor-pointer">
-            <BarChart3 className="w-8 h-8 mb-3 opacity-80" />
-            <p className="font-semibold text-lg">Analytics</p>
-            <p className="text-sm text-white/70">View performance stats</p>
-          </div>
-        </Link>
-        <Link href="/dashboard/bio-links/domains">
-          <div className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl p-5 text-white hover:opacity-90 transition-opacity cursor-pointer">
-            <Globe className="w-8 h-8 mb-3 opacity-80" />
-            <p className="font-semibold text-lg">Domains</p>
-            <p className="text-sm text-white/70">Custom domain settings</p>
-          </div>
-        </Link>
-      </div>
+      {/* Onboarding Wizard - Only show when setup is incomplete */}
+      {showOnboarding && bioLink && (
+        <OnboardingWizard
+          bioLink={bioLink}
+          linkItems={linkItems}
+          onOpenSettings={() => setShowSettings(true)}
+          onAddLink={() => { setEditingItem(null); setShowLinkEditor(true); }}
+          onPublish={handlePublish}
+        />
+      )}
 
       {/* Links Section */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Your Links</h2>
-            <p className="text-sm text-slate-500">Drag to reorder, click to edit</p>
+            <h2 className="font-semibold text-slate-900">Links</h2>
+            <p className="text-xs text-slate-500 mt-0.5">{linkItems.length} link{linkItems.length !== 1 ? "s" : ""} • Drag to reorder</p>
           </div>
-          <Button onClick={() => { setEditingItem(null); setShowLinkEditor(true); }} className="bg-violet-600 hover:bg-violet-700">
-            <Plus className="w-4 h-4 mr-2" />
+          <Button 
+            size="sm"
+            onClick={() => { setEditingItem(null); setShowLinkEditor(true); }} 
+            className="bg-violet-600 hover:bg-violet-700"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
             Add Link
           </Button>
         </div>
 
-        {linkItems.length === 0 ? (
-          <div className="bg-slate-50 border border-dashed border-slate-300 rounded-xl p-8 text-center">
-            <Link2 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="font-semibold text-slate-700 mb-2">No links yet</h3>
-            <p className="text-slate-500 text-sm mb-4">Add your first link to get started</p>
-            <Button
-              variant="outline"
-              onClick={() => { setEditingItem(null); setShowLinkEditor(true); }}
+        <div className="p-4">
+          {linkItems.length === 0 ? (
+            <div className="py-12 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                <Link2 className="w-7 h-7 text-slate-400" />
+              </div>
+              <h3 className="font-medium text-slate-700 mb-1">No links yet</h3>
+              <p className="text-slate-500 text-sm mb-4 max-w-xs mx-auto">
+                Add links to your favorite platforms, content, and more
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setEditingItem(null); setShowLinkEditor(true); }}
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                Add Your First Link
+              </Button>
+            </div>
+          ) : (
+            <Reorder.Group
+              axis="y"
+              values={linkItems}
+              onReorder={handleReorder}
+              className="space-y-2"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Your First Link
-            </Button>
-          </div>
-        ) : (
-          <Reorder.Group
-            axis="y"
-            values={linkItems}
-            onReorder={handleReorder}
-            className="space-y-3"
-          >
-            {linkItems.map((item) => (
-              <LinkCard
-                key={item.id}
-                item={item}
-                onEdit={() => { setEditingItem(item); setShowLinkEditor(true); }}
-                onDelete={() => handleDeleteItem(item.id)}
-                onToggle={() => handleToggleItem(item)}
-              />
-            ))}
-          </Reorder.Group>
-        )}
+              {linkItems.map((item) => (
+                <LinkCard
+                  key={item.id}
+                  item={item}
+                  onEdit={() => { setEditingItem(item); setShowLinkEditor(true); }}
+                  onDelete={() => handleDeleteItem(item.id)}
+                  onToggle={() => handleToggleItem(item)}
+                />
+              ))}
+            </Reorder.Group>
+          )}
+        </div>
       </div>
 
+      {/* Subtle Quick Actions - Only show when onboarding is complete */}
+      {!showOnboarding && bioLink?.is_published && (
+        <div className="flex items-center justify-center gap-6 py-4">
+          <Link
+            href="/dashboard/statistics"
+            className="flex items-center gap-2 text-sm text-slate-500 hover:text-violet-600 transition-colors"
+          >
+            <BarChart3 className="w-4 h-4" />
+            View Analytics
+          </Link>
+          <span className="text-slate-300">•</span>
+          <Link
+            href="/dashboard/bio-links/domains"
+            className="flex items-center gap-2 text-sm text-slate-500 hover:text-violet-600 transition-colors"
+          >
+            <Globe className="w-4 h-4" />
+            Custom Domain
+          </Link>
+          <span className="text-slate-300">•</span>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="flex items-center gap-2 text-sm text-slate-500 hover:text-violet-600 transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+            Settings
+          </button>
+        </div>
+      )}
+
       {/* Modals */}
-      {showSettings && bioLink && effectiveCreatorId && (
+      {bioLink && effectiveCreatorId && (
         <SettingsModal
+          isOpen={showSettings}
           bioLink={bioLink}
           onSave={handleSaveSettings}
           onClose={() => setShowSettings(false)}
@@ -1297,8 +1648,9 @@ export default function BioLinksPage() {
         />
       )}
 
-      {showLinkEditor && bioLink && (
+      {bioLink && (
         <LinkEditor
+          isOpen={showLinkEditor}
           item={editingItem}
           bioLinkId={bioLink.id}
           onSave={fetchBioLink}
