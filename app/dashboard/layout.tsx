@@ -72,6 +72,7 @@ interface Creator {
   id: string;
   username: string;
   group_id: string | null;
+  whatsapp_group_id: string | null;
   storage_folder: string | null;
   bio_link: string | null;
   studio_id: string | null;

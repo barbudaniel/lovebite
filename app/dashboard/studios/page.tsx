@@ -46,6 +46,14 @@ import {
 // TYPES
 // ============================================
 
+interface WhatsAppGroup {
+  id: string;
+  whatsapp_id: string;
+  name: string | null;
+  type: string;
+  participant_count: number;
+}
+
 interface Studio {
   id: string;
   name: string;
@@ -53,12 +61,14 @@ interface Studio {
   phone?: string | null;
   country?: string | null;
   group_id: string | null;
+  whatsapp_group_id: string | null;
   enabled: boolean;
   created_at: string;
   updated_at: string;
   _count?: {
     creators: number;
   };
+  whatsapp_group?: WhatsAppGroup | null;
 }
 
 interface Creator {
@@ -74,12 +84,14 @@ interface Creator {
 function StudioCard({
   studio,
   creatorsCount,
+  whatsappGroup,
   onView,
   onEdit,
   onToggle,
 }: {
   studio: Studio;
   creatorsCount: number;
+  whatsappGroup?: WhatsAppGroup;
   onView: () => void;
   onEdit: () => void;
   onToggle: () => void;
@@ -141,10 +153,10 @@ function StudioCard({
               <Users className="w-3.5 h-3.5" />
               {creatorsCount} {creatorsCount === 1 ? "model" : "models"}
             </span>
-            {studio.group_id && (
-              <span className="flex items-center gap-1 font-mono text-xs">
+            {whatsappGroup && (
+              <span className="flex items-center gap-1 text-green-600">
                 <MessageCircle className="w-3.5 h-3.5" />
-                WhatsApp
+                <span className="truncate max-w-[120px]">{whatsappGroup.name || "WhatsApp"}</span>
               </span>
             )}
           </div>
@@ -179,11 +191,13 @@ function StudioCard({
 function ViewStudioModal({
   studio,
   creators,
+  whatsappGroup,
   onClose,
   onEdit,
 }: {
   studio: Studio;
   creators: Creator[];
+  whatsappGroup?: WhatsAppGroup;
   onClose: () => void;
   onEdit: () => void;
 }) {
@@ -293,23 +307,41 @@ function ViewStudioModal({
                 </p>
               </div>
 
-              {studio.group_id && (
-                <div className="bg-slate-50 rounded-xl p-4 col-span-2">
-                  <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+              {whatsappGroup && (
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 col-span-2 border border-green-200">
+                  <div className="flex items-center gap-2 text-green-700 text-sm mb-2">
                     <MessageCircle className="w-4 h-4" />
-                    WhatsApp Group ID
+                    WhatsApp Group
                   </div>
-                  <div className="flex items-center gap-2">
-                    <code className="font-mono text-sm text-slate-900 bg-slate-100 px-2 py-1 rounded">
-                      {studio.group_id}
-                    </code>
-                    <button
-                      onClick={() => copyToClipboard(studio.group_id!)}
-                      className="p-1 hover:bg-slate-200 rounded"
-                    >
-                      <Copy className="w-3.5 h-3.5 text-slate-400" />
-                    </button>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-green-800">
+                        {whatsappGroup.name || "Connected Group"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="font-mono text-xs text-green-700 bg-green-100 px-2 py-1 rounded">
+                        {whatsappGroup.whatsapp_id}
+                      </code>
+                      <button
+                        onClick={() => copyToClipboard(whatsappGroup.whatsapp_id)}
+                        className="p-1 hover:bg-green-200 rounded"
+                      >
+                        <Copy className="w-3.5 h-3.5 text-green-600" />
+                      </button>
+                    </div>
                   </div>
+                </div>
+              )}
+              {!whatsappGroup && (
+                <div className="bg-amber-50 rounded-xl p-4 col-span-2 border border-amber-200">
+                  <div className="flex items-center gap-2 text-amber-700 text-sm">
+                    <MessageCircle className="w-4 h-4" />
+                    No WhatsApp group linked
+                  </div>
+                  <p className="text-xs text-amber-600 mt-1">
+                    Edit studio to link a WhatsApp group for notifications
+                  </p>
                 </div>
               )}
             </div>
@@ -393,10 +425,12 @@ function ViewStudioModal({
 
 function StudioModal({
   studio,
+  whatsappGroup,
   onClose,
   onSaved,
 }: {
   studio: Studio | null;
+  whatsappGroup?: WhatsAppGroup;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -405,7 +439,8 @@ function StudioModal({
     email: studio?.email || "",
     phone: studio?.phone || "",
     country: studio?.country || "",
-    group_id: studio?.group_id || "",
+    whatsapp_id: whatsappGroup?.whatsapp_id || "",
+    whatsapp_name: whatsappGroup?.name || "",
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -419,6 +454,40 @@ function StudioModal({
     try {
       const supabase = getSupabaseBrowserClient();
 
+      let whatsappGroupId = studio?.whatsapp_group_id || null;
+
+      // Handle WhatsApp group
+      if (formData.whatsapp_id.trim()) {
+        if (whatsappGroup) {
+          // Update existing WhatsApp group
+          const { error: waError } = await supabase
+            .from("whatsapp_groups")
+            .update({
+              whatsapp_id: formData.whatsapp_id.trim(),
+              name: formData.whatsapp_name.trim() || null,
+            })
+            .eq("id", whatsappGroup.id);
+          if (waError) throw waError;
+          whatsappGroupId = whatsappGroup.id;
+        } else {
+          // Create new WhatsApp group
+          const { data: newGroup, error: waError } = await supabase
+            .from("whatsapp_groups")
+            .insert({
+              whatsapp_id: formData.whatsapp_id.trim(),
+              name: formData.whatsapp_name.trim() || `${formData.name}'s Group`,
+              type: "studio",
+            })
+            .select()
+            .single();
+          if (waError) throw waError;
+          whatsappGroupId = newGroup.id;
+        }
+      } else if (whatsappGroup && !formData.whatsapp_id.trim()) {
+        // Unlink WhatsApp group (clear the field)
+        whatsappGroupId = null;
+      }
+
       if (studio) {
         // Update
         const { error } = await supabase
@@ -428,7 +497,7 @@ function StudioModal({
             email: formData.email || null,
             phone: formData.phone || null,
             country: formData.country || null,
-            group_id: formData.group_id || null,
+            whatsapp_group_id: whatsappGroupId,
             updated_at: new Date().toISOString(),
           })
           .eq("id", studio.id);
@@ -442,7 +511,7 @@ function StudioModal({
           email: formData.email || null,
           phone: formData.phone || null,
           country: formData.country || null,
-          group_id: formData.group_id || null,
+          whatsapp_group_id: whatsappGroupId,
           enabled: true,
         });
 
@@ -515,15 +584,31 @@ function StudioModal({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="group_id">WhatsApp Group ID (optional)</Label>
-              <Input
-                id="group_id"
-                value={formData.group_id}
-                onChange={(e) => setFormData({ ...formData, group_id: e.target.value })}
-                placeholder="WhatsApp group ID for notifications"
-              />
-              <p className="text-xs text-slate-500">Used for sending aggregate notifications to studio</p>
+            <div className="space-y-4 border-t border-slate-200 pt-4">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-green-600" />
+                <Label className="text-green-700 font-medium">WhatsApp Group (optional)</Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp_id" className="text-sm">Group ID</Label>
+                <Input
+                  id="whatsapp_id"
+                  value={formData.whatsapp_id}
+                  onChange={(e) => setFormData({ ...formData, whatsapp_id: e.target.value })}
+                  placeholder="123456789@g.us"
+                  className="font-mono"
+                />
+                <p className="text-xs text-slate-500">The WhatsApp group JID for notifications</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp_name" className="text-sm">Group Name</Label>
+                <Input
+                  id="whatsapp_name"
+                  value={formData.whatsapp_name}
+                  onChange={(e) => setFormData({ ...formData, whatsapp_name: e.target.value })}
+                  placeholder="Studio notifications group"
+                />
+              </div>
             </div>
 
             {studio && (
@@ -563,6 +648,7 @@ export default function StudiosPage() {
   const { user } = useDashboard();
   const [studios, setStudios] = useState<Studio[]>([]);
   const [studioCreators, setStudioCreators] = useState<Record<string, Creator[]>>({});
+  const [whatsappGroups, setWhatsappGroups] = useState<WhatsAppGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
@@ -603,6 +689,21 @@ export default function StudiosPage() {
       });
       setStudioCreators(creatorsByStudio);
 
+      // Fetch WhatsApp groups for studios
+      const whatsappGroupIds = (studiosData || [])
+        .map((s: Studio) => s.whatsapp_group_id)
+        .filter((id): id is string => id !== null);
+
+      if (whatsappGroupIds.length > 0) {
+        const { data: waGroupsData } = await supabase
+          .from("whatsapp_groups")
+          .select("*")
+          .in("id", whatsappGroupIds);
+        setWhatsappGroups(waGroupsData || []);
+      } else {
+        setWhatsappGroups([]);
+      }
+
     } catch (err) {
       console.error("Error fetching studios:", err);
       toast.error("Failed to load studios");
@@ -610,6 +711,9 @@ export default function StudiosPage() {
       setIsLoading(false);
     }
   };
+
+  const getWhatsAppGroup = (studio: Studio) =>
+    whatsappGroups.find((w) => w.id === studio.whatsapp_group_id);
 
   useEffect(() => {
     if (user?.role === "admin") {
@@ -756,6 +860,7 @@ export default function StudiosPage() {
               key={studio.id}
               studio={studio}
               creatorsCount={studioCreators[studio.id]?.length || 0}
+              whatsappGroup={getWhatsAppGroup(studio)}
               onView={() => {
                 setSelectedStudio(studio);
                 setShowViewModal(true);
@@ -775,6 +880,7 @@ export default function StudiosPage() {
         <ViewStudioModal
           studio={selectedStudio}
           creators={studioCreators[selectedStudio.id] || []}
+          whatsappGroup={getWhatsAppGroup(selectedStudio)}
           onClose={() => {
             setShowViewModal(false);
             setSelectedStudio(null);
@@ -790,6 +896,7 @@ export default function StudiosPage() {
       {showEditModal && (
         <StudioModal
           studio={selectedStudio}
+          whatsappGroup={selectedStudio ? getWhatsAppGroup(selectedStudio) : undefined}
           onClose={() => {
             setShowEditModal(false);
             setSelectedStudio(null);

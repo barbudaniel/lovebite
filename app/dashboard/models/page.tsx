@@ -39,6 +39,7 @@ import {
   Clock,
   XCircle,
   UserCheck,
+  MessageCircle,
 } from "lucide-react";
 import {
   Dialog,
@@ -54,6 +55,14 @@ import {
 // TYPES
 // ============================================
 
+interface WhatsAppGroup {
+  id: string;
+  whatsapp_id: string;
+  name: string | null;
+  type: string;
+  participant_count: number;
+}
+
 interface Creator {
   id: string;
   username: string;
@@ -64,10 +73,12 @@ interface Creator {
   avatar_url: string | null;
   group_id: string;
   studio_id: string | null;
+  whatsapp_group_id: string | null;
   active: boolean;
   enabled: boolean;
   created_at: string;
   updated_at: string;
+  whatsapp_group?: WhatsAppGroup | null;
 }
 
 interface DashboardUser {
@@ -113,22 +124,26 @@ function ModelCard({
   creator,
   dashboardUser,
   bioLink,
+  whatsappGroup,
   onEdit,
   onRemove,
   onViewProfile,
   onToggleActive,
   onEditBioLink,
   onViewStats,
+  onEditWhatsApp,
 }: {
   creator: Creator;
   dashboardUser?: DashboardUser;
   bioLink?: BioLink;
+  whatsappGroup?: WhatsAppGroup;
   onEdit: () => void;
   onRemove: () => void;
   onViewProfile: () => void;
   onToggleActive: () => void;
   onEditBioLink: () => void;
   onViewStats: () => void;
+  onEditWhatsApp: () => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -334,6 +349,29 @@ function ModelCard({
           >
             <LinkIcon className="w-4 h-4 text-slate-400 group-hover:text-violet-500 mx-auto mb-1" />
             <span className="text-xs text-slate-500 group-hover:text-violet-600">Create Bio Link</span>
+          </button>
+        )}
+
+        {/* WhatsApp Group Info */}
+        {whatsappGroup && (
+          <div className="mt-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
+            <div className="flex items-center gap-2 mb-1">
+              <MessageCircle className="w-4 h-4 text-green-600" />
+              <span className="text-xs font-medium text-green-700">WhatsApp Group</span>
+            </div>
+            <p className="text-sm text-green-800 truncate">{whatsappGroup.name || "Connected"}</p>
+            <p className="text-xs text-green-600 font-mono truncate">{whatsappGroup.whatsapp_id}</p>
+          </div>
+        )}
+
+        {/* No WhatsApp Group */}
+        {!whatsappGroup && (
+          <button
+            onClick={onEditWhatsApp}
+            className="mt-3 w-full p-3 border-2 border-dashed border-green-200 rounded-lg text-center hover:border-green-300 hover:bg-green-50/50 transition-colors group"
+          >
+            <MessageCircle className="w-4 h-4 text-slate-400 group-hover:text-green-500 mx-auto mb-1" />
+            <span className="text-xs text-slate-500 group-hover:text-green-600">Link WhatsApp Group</span>
           </button>
         )}
 
@@ -1117,6 +1155,200 @@ function BioLinkEditor({
 }
 
 // ============================================
+// WHATSAPP GROUP EDITOR MODAL
+// ============================================
+
+function WhatsAppGroupEditor({
+  creator,
+  whatsappGroup,
+  onClose,
+  onSaved,
+}: {
+  creator: Creator;
+  whatsappGroup: WhatsAppGroup | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    whatsapp_id: whatsappGroup?.whatsapp_id || "",
+    name: whatsappGroup?.name || `${creator.display_name || creator.username}'s Group`,
+  });
+
+  const handleSave = async () => {
+    if (!formData.whatsapp_id.trim()) {
+      toast.error("WhatsApp Group ID is required");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      if (whatsappGroup) {
+        // Update existing group
+        const { error } = await supabase
+          .from("whatsapp_groups")
+          .update({
+            whatsapp_id: formData.whatsapp_id.trim(),
+            name: formData.name.trim() || null,
+          })
+          .eq("id", whatsappGroup.id);
+
+        if (error) throw error;
+      } else {
+        // Create new group and link to creator
+        const { data: newGroup, error: createError } = await supabase
+          .from("whatsapp_groups")
+          .insert({
+            whatsapp_id: formData.whatsapp_id.trim(),
+            name: formData.name.trim() || null,
+            type: "creator",
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+
+        // Link to creator
+        const { error: linkError } = await supabase
+          .from("creators")
+          .update({ whatsapp_group_id: newGroup.id })
+          .eq("id", creator.id);
+
+        if (linkError) throw linkError;
+      }
+
+      toast.success("WhatsApp group saved!");
+      onSaved();
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Error saving WhatsApp group:", error);
+      toast.error(error.message || "Failed to save WhatsApp group");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUnlink = async () => {
+    if (!whatsappGroup) return;
+
+    setIsSaving(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      // Unlink from creator
+      const { error } = await supabase
+        .from("creators")
+        .update({ whatsapp_group_id: null })
+        .eq("id", creator.id);
+
+      if (error) throw error;
+
+      toast.success("WhatsApp group unlinked");
+      onSaved();
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Error unlinking WhatsApp group:", error);
+      toast.error(error.message || "Failed to unlink WhatsApp group");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-green-600" />
+              WhatsApp Group
+            </div>
+          </DialogTitle>
+          <DialogDescription>
+            {whatsappGroup ? "Edit" : "Link"} WhatsApp group for {creator.display_name || creator.username}
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogBody className="space-y-4">
+          <div className="space-y-2">
+            <Label>WhatsApp Group ID *</Label>
+            <Input
+              value={formData.whatsapp_id}
+              onChange={(e) => setFormData({ ...formData, whatsapp_id: e.target.value })}
+              placeholder="123456789@g.us"
+              className="font-mono"
+            />
+            <p className="text-xs text-slate-500">
+              The WhatsApp group JID (e.g., 123456789012345678@g.us)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Display Name</Label>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Group name for reference"
+            />
+          </div>
+
+          {whatsappGroup && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="font-medium text-green-800">Currently Linked</span>
+              </div>
+              <p className="text-sm text-green-700">
+                This model is linked to a WhatsApp group. Messages will be processed from this group.
+              </p>
+            </div>
+          )}
+
+          {!whatsappGroup && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="w-4 h-4 text-amber-600" />
+                <span className="font-medium text-amber-800">Not Linked</span>
+              </div>
+              <p className="text-sm text-amber-700">
+                Link a WhatsApp group to enable automatic media processing from WhatsApp.
+              </p>
+            </div>
+          )}
+        </DialogBody>
+
+        <DialogFooter className="gap-3">
+          {whatsappGroup && (
+            <Button
+              variant="outline"
+              onClick={handleUnlink}
+              disabled={isSaving}
+              className="text-red-600 hover:bg-red-50"
+            >
+              Unlink Group
+            </Button>
+          )}
+          <div className="flex-1" />
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <MessageCircle className="w-4 h-4 mr-2" />}
+            {whatsappGroup ? "Save Changes" : "Link Group"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
 // REMOVE CONFIRMATION MODAL
 // ============================================
 
@@ -1251,6 +1483,7 @@ export default function ModelsPage() {
   const [models, setModels] = useState<Creator[]>([]);
   const [dashboardUsers, setDashboardUsers] = useState<DashboardUser[]>([]);
   const [bioLinks, setBioLinks] = useState<BioLink[]>([]);
+  const [whatsappGroups, setWhatsappGroups] = useState<WhatsAppGroup[]>([]);
   const [invites, setInvites] = useState<StudioInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1261,6 +1494,7 @@ export default function ModelsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showBioLinkEditor, setShowBioLinkEditor] = useState(false);
+  const [showWhatsAppEditor, setShowWhatsAppEditor] = useState(false);
 
   const isBusinessOrAdmin = user?.role === "business" || user?.role === "admin";
   const isAdmin = user?.role === "admin";
@@ -1275,7 +1509,7 @@ export default function ModelsPage() {
   };
 
   const fetchModels = async () => {
-    if (!isStudioOrAdmin) return;
+    if (!isBusinessOrAdmin) return;
 
     setIsLoading(true);
     try {
@@ -1297,6 +1531,9 @@ export default function ModelsPage() {
 
       if (creatorsData && creatorsData.length > 0) {
         const creatorIds = creatorsData.map((c) => c.id);
+        const whatsappGroupIds = creatorsData
+          .map((c) => c.whatsapp_group_id)
+          .filter((id): id is string => id !== null);
 
         const { data: dashboardData } = await supabase
           .from("dashboard_users")
@@ -1309,6 +1546,19 @@ export default function ModelsPage() {
           .select("*")
           .in("creator_id", creatorIds);
         setBioLinks(bioLinksData || []);
+
+        // Fetch WhatsApp groups
+        if (whatsappGroupIds.length > 0) {
+          const { data: whatsappData } = await supabase
+            .from("whatsapp_groups")
+            .select("*")
+            .in("id", whatsappGroupIds);
+          setWhatsappGroups(whatsappData || []);
+        } else {
+          setWhatsappGroups([]);
+        }
+      } else {
+        setWhatsappGroups([]);
       }
 
       // Fetch studio invites (for studios)
@@ -1395,7 +1645,10 @@ export default function ModelsPage() {
   const getBioLink = (creatorId: string) =>
     bioLinks.find((b) => b.creator_id === creatorId);
 
-  if (!isStudioOrAdmin) {
+  const getWhatsAppGroup = (creator: Creator) =>
+    whatsappGroups.find((w) => w.id === creator.whatsapp_group_id);
+
+  if (!isBusinessOrAdmin) {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-3">
         <AlertCircle className="w-5 h-5 text-amber-500" />
@@ -1537,6 +1790,7 @@ export default function ModelsPage() {
               creator={model}
               dashboardUser={getDashboardUser(model.id)}
               bioLink={getBioLink(model.id)}
+              whatsappGroup={getWhatsAppGroup(model)}
               onEdit={() => {
                 setSelectedModel(model);
                 setShowEditModal(true);
@@ -1556,6 +1810,10 @@ export default function ModelsPage() {
               }}
               onViewStats={() => {
                 window.location.href = `/dashboard/statistics?creator=${model.id}`;
+              }}
+              onEditWhatsApp={() => {
+                setSelectedModel(model);
+                setShowWhatsAppEditor(true);
               }}
             />
           ))}
@@ -1629,6 +1887,22 @@ export default function ModelsPage() {
             }}
             onSaved={() => {
               setShowBioLinkEditor(false);
+              setSelectedModel(null);
+              fetchModels();
+            }}
+          />
+        )}
+
+        {showWhatsAppEditor && selectedModel && (
+          <WhatsAppGroupEditor
+            creator={selectedModel}
+            whatsappGroup={getWhatsAppGroup(selectedModel) || null}
+            onClose={() => {
+              setShowWhatsAppEditor(false);
+              setSelectedModel(null);
+            }}
+            onSaved={() => {
+              setShowWhatsAppEditor(false);
               setSelectedModel(null);
               fetchModels();
             }}
