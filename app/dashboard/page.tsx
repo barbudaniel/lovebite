@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { useDashboard } from "./layout";
 import { createApiClient, type CreatorStats, type PlatformOverview } from "@/lib/media-api";
+import { useMediaState } from "@/lib/hooks/use-media-state";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import {
   Image as ImageIcon,
@@ -342,6 +343,7 @@ function DashboardSkeleton() {
 
 export default function DashboardPage() {
   const { user, apiKey, creator } = useDashboard();
+  const { globalCounts, creatorMediaCounts } = useMediaState();
   const [mediaStats, setMediaStats] = useState<CreatorStats | PlatformOverview | null>(null);
   const [bioAnalytics, setBioAnalytics] = useState<BioAnalytics | null>(null);
   const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
@@ -584,7 +586,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Media Library Stats */}
+            {/* Media Library Stats - Use shared counts for real-time accuracy */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
@@ -596,55 +598,70 @@ export default function DashboardPage() {
                 </Link>
               </div>
 
-              {mediaStats && isCreatorStats(mediaStats) ? (
-                <>
-                  <div className="grid grid-cols-4 gap-3 mb-4">
-                    <ContentStat
-                      icon={ImageIcon}
-                      label="Photos"
-                      value={mediaStats.all_time.photos}
-                      bg="bg-blue-50"
-                      iconColor="text-blue-500"
-                    />
-                    <ContentStat
-                      icon={Video}
-                      label="Videos"
-                      value={mediaStats.all_time.videos}
-                      bg="bg-purple-50"
-                      iconColor="text-purple-500"
-                    />
-                    <ContentStat
-                      icon={Music}
-                      label="Audio"
-                      value={mediaStats.all_time.audios}
-                      bg="bg-orange-50"
-                      iconColor="text-orange-500"
-                    />
-                    <ContentStat
-                      icon={FileText}
-                      label="Custom"
-                      value={mediaStats.all_time.customs}
-                      bg="bg-green-50"
-                      iconColor="text-green-500"
-                    />
-                  </div>
-                  <div className="pt-4 border-t border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-600">This month</span>
-                      <span className="text-sm font-semibold text-slate-900">
-                        +{mediaStats.current_month.total} uploads
-                      </span>
+              {(() => {
+                // Use shared state counts for real-time accuracy
+                const userCreatorId = user?.creator_id;
+                const counts = userCreatorId && creatorMediaCounts[userCreatorId]
+                  ? creatorMediaCounts[userCreatorId]
+                  : globalCounts;
+                const hasMedia = counts.total > 0;
+                
+                if (hasMedia) {
+                  return (
+                    <>
+                      <div className="grid grid-cols-4 gap-3 mb-4">
+                        <ContentStat
+                          icon={ImageIcon}
+                          label="Photos"
+                          value={counts.image}
+                          bg="bg-blue-50"
+                          iconColor="text-blue-500"
+                        />
+                        <ContentStat
+                          icon={Video}
+                          label="Videos"
+                          value={counts.video}
+                          bg="bg-purple-50"
+                          iconColor="text-purple-500"
+                        />
+                        <ContentStat
+                          icon={Music}
+                          label="Audio"
+                          value={counts.audio}
+                          bg="bg-orange-50"
+                          iconColor="text-orange-500"
+                        />
+                        <ContentStat
+                          icon={FileText}
+                          label="Total"
+                          value={counts.total}
+                          bg="bg-green-50"
+                          iconColor="text-green-500"
+                        />
+                      </div>
+                      {mediaStats && isCreatorStats(mediaStats) && (
+                        <div className="pt-4 border-t border-slate-100">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-slate-600">This month</span>
+                            <span className="text-sm font-semibold text-slate-900">
+                              +{mediaStats.current_month.total} uploads
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                }
+                
+                return (
+                  <div className="h-[140px] flex items-center justify-center bg-slate-50 rounded-xl">
+                    <div className="text-center">
+                      <FolderOpen className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                      <p className="text-slate-500 text-sm">No media uploaded yet</p>
                     </div>
                   </div>
-                </>
-              ) : (
-                <div className="h-[140px] flex items-center justify-center bg-slate-50 rounded-xl">
-                  <div className="text-center">
-                    <FolderOpen className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-                    <p className="text-slate-500 text-sm">No media uploaded yet</p>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Quick Actions */}

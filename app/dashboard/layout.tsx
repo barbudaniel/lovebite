@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import type { DashboardUser } from "@/lib/auth";
+import { MediaStateProvider } from "@/lib/hooks/use-media-state";
 import {
   LayoutDashboard,
   Image as ImageIcon,
@@ -920,19 +921,26 @@ export default function DashboardLayout({
         refreshUser: fetchUser,
       }}
     >
-      <TooltipProvider delayDuration={0}>
-        <SidebarProvider>
-          <div className="flex min-h-screen w-full overflow-x-hidden">
-            <AppSidebar user={user} onLogout={handleLogout} />
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-              <Header user={user} dashboardUserId={user?.id} />
-              <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-x-hidden">
-                <div className="mx-auto max-w-6xl w-full">{children}</div>
-              </main>
+      <MediaStateProvider
+        apiKey={apiKey}
+        userRole={user?.role as "admin" | "business" | "independent" | null}
+        userCreatorId={user?.creator_id}
+        userStudioId={user?.studio_id}
+      >
+        <TooltipProvider delayDuration={0}>
+          <SidebarProvider>
+            <div className="flex min-h-screen w-full overflow-x-hidden">
+              <AppSidebar user={user} onLogout={handleLogout} />
+              <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                <Header user={user} dashboardUserId={user?.id} />
+                <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-x-hidden">
+                  <div className="mx-auto max-w-6xl w-full">{children}</div>
+                </main>
+              </div>
             </div>
-          </div>
-        </SidebarProvider>
-      </TooltipProvider>
+          </SidebarProvider>
+        </TooltipProvider>
+      </MediaStateProvider>
     </DashboardContext.Provider>
   );
 }

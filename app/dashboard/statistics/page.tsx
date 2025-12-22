@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { useDashboard } from "../layout";
+import { useMediaState } from "@/lib/hooks/use-media-state";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import {
   createApiClient,
@@ -671,6 +672,7 @@ function StatisticsPageSkeleton() {
 
 export default function StatisticsPage() {
   const { user, apiKey, creator } = useDashboard();
+  const { globalCounts, creatorMediaCounts } = useMediaState();
   const searchParams = useSearchParams();
   const creatorParam = searchParams.get("creator");
   
@@ -1313,33 +1315,43 @@ export default function StatisticsPage() {
         </div>
       )}
 
-      {/* Content Stats - Only for specific creator */}
-      {mediaStats && isCreatorStats(mediaStats) && (
+      {/* Content Stats - Use shared counts for real-time accuracy */}
+      {(selectedModelId || user?.role === "independent") && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <SectionHeader title="Content Library" subtitle="Your uploaded media" />
+          <SectionHeader title="Content Library" subtitle="Media counts (live)" />
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-5 text-center border border-violet-100">
-              <ImageIcon className="w-8 h-8 text-violet-600 mx-auto mb-2" />
-              <p className="text-3xl font-bold text-violet-900">{mediaStats.all_time.photos}</p>
-              <p className="text-sm text-violet-600 font-medium">Photos</p>
-            </div>
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 text-center border border-amber-100">
-              <Video className="w-8 h-8 text-amber-600 mx-auto mb-2" />
-              <p className="text-3xl font-bold text-amber-900">{mediaStats.all_time.videos}</p>
-              <p className="text-sm text-amber-600 font-medium">Videos</p>
-            </div>
-            <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-5 text-center border border-rose-100">
-              <Music className="w-8 h-8 text-rose-600 mx-auto mb-2" />
-              <p className="text-3xl font-bold text-rose-900">{mediaStats.all_time.audios}</p>
-              <p className="text-sm text-rose-600 font-medium">Audio</p>
-            </div>
-            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-5 text-center border border-cyan-100">
-              <FileText className="w-8 h-8 text-cyan-600 mx-auto mb-2" />
-              <p className="text-3xl font-bold text-cyan-900">{mediaStats.all_time.customs}</p>
-              <p className="text-sm text-cyan-600 font-medium">Customs</p>
-            </div>
-          </div>
+          {(() => {
+            // Use shared state counts for real-time accuracy
+            const targetCreatorId = selectedModelId || user?.creator_id;
+            const counts = targetCreatorId && creatorMediaCounts[targetCreatorId]
+              ? creatorMediaCounts[targetCreatorId]
+              : globalCounts;
+            
+            return (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-5 text-center border border-violet-100">
+                  <ImageIcon className="w-8 h-8 text-violet-600 mx-auto mb-2" />
+                  <p className="text-3xl font-bold text-violet-900">{counts.image}</p>
+                  <p className="text-sm text-violet-600 font-medium">Photos</p>
+                </div>
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 text-center border border-amber-100">
+                  <Video className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+                  <p className="text-3xl font-bold text-amber-900">{counts.video}</p>
+                  <p className="text-sm text-amber-600 font-medium">Videos</p>
+                </div>
+                <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-5 text-center border border-rose-100">
+                  <Music className="w-8 h-8 text-rose-600 mx-auto mb-2" />
+                  <p className="text-3xl font-bold text-rose-900">{counts.audio}</p>
+                  <p className="text-sm text-rose-600 font-medium">Audio</p>
+                </div>
+                <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-5 text-center border border-cyan-100">
+                  <FileText className="w-8 h-8 text-cyan-600 mx-auto mb-2" />
+                  <p className="text-3xl font-bold text-cyan-900">{counts.total}</p>
+                  <p className="text-sm text-cyan-600 font-medium">Total</p>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

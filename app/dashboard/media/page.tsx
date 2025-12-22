@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { useDashboard } from "../layout";
 import { createApiClient, type Media, type MediaCategory, type Creator } from "@/lib/media-api";
+import { useMediaState, type UploadingItem, type MediaCounts, type CreatorMediaCounts } from "@/lib/hooks/use-media-state";
 import MediaViewer from "@/components/media/MediaViewer";
 import { LabelManager, LabelBadge } from "@/components/media/LabelManager";
 import {
@@ -70,16 +71,7 @@ interface FilterState {
   dateTo: string;
 }
 
-interface MediaCounts {
-  image: number;
-  video: number;
-  audio: number;
-  total: number;
-}
-
-interface CreatorMediaCounts {
-  [creatorId: string]: MediaCounts;
-}
+// MediaCounts and CreatorMediaCounts are imported from use-media-state
 
 interface FolderItem {
   id: string;
@@ -843,6 +835,183 @@ function MediaCard({
 }
 
 // ============================================
+// UPLOADING MEDIA CARD (for real-time upload progress)
+// ============================================
+
+function UploadingMediaCard({
+  item,
+  onCancel,
+}: {
+  item: UploadingItem;
+  onCancel?: (id: string) => void;
+}) {
+  const isImage = item.file.type.startsWith("image/");
+  const isVideo = item.file.type.startsWith("video/");
+  const isAudio = item.file.type.startsWith("audio/");
+
+  const getTypeIcon = () => {
+    if (isImage) return ImageIcon;
+    if (isVideo) return Video;
+    if (isAudio) return Music;
+    return FileType;
+  };
+
+  const TypeIcon = getTypeIcon();
+
+  // Status-based styling
+  const getBorderColor = () => {
+    switch (item.status) {
+      case "uploading":
+        return "border-brand-500 ring-2 ring-brand-200";
+      case "processing":
+        return "border-amber-500 ring-2 ring-amber-200";
+      case "complete":
+        return "border-green-500 ring-2 ring-green-200";
+      case "error":
+        return "border-red-500 ring-2 ring-red-200";
+      default:
+        return "border-slate-300";
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className={`group relative bg-white rounded-lg sm:rounded-xl border-2 ${getBorderColor()} overflow-hidden shadow-lg`}
+    >
+      {/* Preview */}
+      <div className="aspect-square bg-slate-100 overflow-hidden relative">
+        {item.preview ? (
+          isVideo ? (
+            <video
+              src={item.preview}
+              className="w-full h-full object-cover opacity-60"
+              muted
+            />
+          ) : (
+            <img
+              src={item.preview}
+              alt={item.file.name}
+              className="w-full h-full object-cover opacity-60"
+            />
+          )
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+            <TypeIcon className="w-12 h-12 text-slate-400" />
+          </div>
+        )}
+
+        {/* Overlay based on status */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
+          {item.status === "pending" && (
+            <>
+              <Loader2 className="w-8 h-8 text-white animate-spin" />
+              <span className="text-xs text-white mt-2 font-medium">Waiting...</span>
+            </>
+          )}
+
+          {item.status === "uploading" && (
+            <>
+              <div className="relative w-16 h-16">
+                {/* Circular progress */}
+                <svg className="w-16 h-16 -rotate-90">
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    stroke="rgba(255,255,255,0.3)"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    stroke="white"
+                    strokeWidth="4"
+                    fill="none"
+                    strokeDasharray={Math.PI * 56}
+                    strokeDashoffset={Math.PI * 56 * (1 - item.progress / 100)}
+                    className="transition-all duration-300"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">{item.progress}%</span>
+                </div>
+              </div>
+              <span className="text-xs text-white mt-2 font-medium">Uploading</span>
+            </>
+          )}
+
+          {item.status === "processing" && (
+            <>
+              <div className="relative">
+                <Sparkles className="w-10 h-10 text-amber-400 animate-pulse" />
+                <div className="absolute inset-0 animate-ping">
+                  <Sparkles className="w-10 h-10 text-amber-400 opacity-50" />
+                </div>
+              </div>
+              <span className="text-xs text-white mt-2 font-medium">AI Processing...</span>
+            </>
+          )}
+
+          {item.status === "complete" && (
+            <>
+              <div className="bg-green-500 rounded-full p-2">
+                <CheckCircle className="w-8 h-8 text-white" />
+              </div>
+              <span className="text-xs text-white mt-2 font-medium">Complete!</span>
+            </>
+          )}
+
+          {item.status === "error" && (
+            <>
+              <div className="bg-red-500 rounded-full p-2">
+                <XCircle className="w-8 h-8 text-white" />
+              </div>
+              <span className="text-xs text-white mt-2 font-medium">Failed</span>
+              <span className="text-xs text-white/70 mt-1 px-2 text-center">{item.error}</span>
+            </>
+          )}
+        </div>
+
+        {/* Progress bar at bottom */}
+        {(item.status === "uploading" || item.status === "processing") && (
+          <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/30">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: item.status === "processing" ? "100%" : `${item.progress}%` }}
+              transition={{ duration: 0.3 }}
+              className={`h-full ${item.status === "processing" ? "bg-amber-500 animate-pulse" : "bg-brand-500"}`}
+            />
+          </div>
+        )}
+
+        {/* Cancel button for pending/uploading */}
+        {(item.status === "pending" || item.status === "uploading") && onCancel && (
+          <button
+            onClick={() => onCancel(item.id)}
+            className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+          >
+            <X className="w-3.5 h-3.5 text-white" />
+          </button>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="p-1.5 sm:p-2.5">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+          <span className="text-xs text-slate-500 truncate">{item.file.name}</span>
+          <TypeIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
 // UPLOAD MODAL
 // ============================================
 
@@ -864,6 +1033,10 @@ function UploadModal({
   userRole,
   apiKey,
   onUploadComplete,
+  onAddUploadingItem,
+  onUpdateUploadingItem,
+  onCompleteUpload,
+  onRemoveUploadingItem,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -872,6 +1045,10 @@ function UploadModal({
   userRole: "admin" | "business" | "independent";
   apiKey: string;
   onUploadComplete: () => void;
+  onAddUploadingItem: (item: UploadingItem) => void;
+  onUpdateUploadingItem: (id: string, updates: Partial<UploadingItem>) => void;
+  onCompleteUpload: (id: string, media: Media) => void;
+  onRemoveUploadingItem: (id: string) => void;
 }) {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [creatorId, setCreatorId] = useState<string>(selectedCreatorId || "");
@@ -970,15 +1147,43 @@ function UploadModal({
     setIsUploading(true);
     const api = createApiClient(apiKey);
 
+    // Add items to the media grid immediately
+    for (const uploadFile of files) {
+      if (uploadFile.status !== "pending") continue;
+      
+      // Create a unique ID for tracking in the shared state
+      const sharedStateId = `upload-${uploadFile.id}`;
+      
+      // Add to shared media state so it appears in the grid
+      onAddUploadingItem({
+        id: sharedStateId,
+        file: uploadFile.file,
+        creatorId,
+        progress: 0,
+        status: "pending",
+        preview: uploadFile.preview,
+        category: category || undefined,
+      });
+    }
+
+    // Close modal immediately so user sees progress in the grid
+    onClose();
+
     for (let i = 0; i < files.length; i++) {
       const uploadFile = files[i];
       if (uploadFile.status !== "pending") continue;
 
+      const sharedStateId = `upload-${uploadFile.id}`;
+
+      // Update local state
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadFile.id ? { ...f, status: "uploading" } : f
         )
       );
+      
+      // Update shared state
+      onUpdateUploadingItem(sharedStateId, { status: "uploading" });
 
       try {
         const response = await api.uploadMedia({
@@ -993,10 +1198,12 @@ function UploadModal({
                   f.id === uploadFile.id ? { ...f, progress, status: "processing" } : f
                 )
               );
+              onUpdateUploadingItem(sharedStateId, { progress, status: "processing" });
             } else {
               setFiles((prev) =>
                 prev.map((f) => (f.id === uploadFile.id ? { ...f, progress } : f))
               );
+              onUpdateUploadingItem(sharedStateId, { progress });
             }
           },
         });
@@ -1009,6 +1216,12 @@ function UploadModal({
                 : f
             )
           );
+          // Complete in shared state - this updates counts
+          onCompleteUpload(sharedStateId, response.data);
+          // Remove from uploading items after a brief delay
+          setTimeout(() => {
+            onRemoveUploadingItem(sharedStateId);
+          }, 1500);
         } else {
           setFiles((prev) =>
             prev.map((f) =>
@@ -1017,6 +1230,10 @@ function UploadModal({
                 : f
             )
           );
+          onUpdateUploadingItem(sharedStateId, { 
+            status: "error", 
+            error: response.error || "Upload failed" 
+          });
         }
       } catch (err) {
         setFiles((prev) =>
@@ -1026,13 +1243,19 @@ function UploadModal({
               : f
           )
         );
+        onUpdateUploadingItem(sharedStateId, { 
+          status: "error", 
+          error: "Upload failed" 
+        });
       }
     }
 
     setIsUploading(false);
 
-    const successCount = files.filter((f) => f.status === "complete").length;
-    const errorCount = files.filter((f) => f.status === "error").length;
+    // Count final results
+    const finalFiles = files;
+    const successCount = finalFiles.filter((f) => f.status === "complete").length;
+    const errorCount = finalFiles.filter((f) => f.status === "error").length;
 
     if (successCount > 0) {
       toast.success(`Uploaded ${successCount} file(s) successfully`);
@@ -1307,6 +1530,19 @@ export default function MediaPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
+  // Use shared media state from context
+  const {
+    globalCounts,
+    creatorMediaCounts,
+    uploadingItems,
+    refreshCounts,
+    addUploadingItem,
+    updateUploadingItem,
+    removeUploadingItem,
+    completeUpload,
+    clearCompletedUploads,
+  } = useMediaState();
+  
   const [media, setMedia] = useState<Media[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
   const [categories, setCategories] = useState<MediaCategory[]>([]);
@@ -1331,8 +1567,6 @@ export default function MediaPage() {
     dateTo: "",
   });
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [creatorMediaCounts, setCreatorMediaCounts] = useState<CreatorMediaCounts>({});
-  const [globalCounts, setGlobalCounts] = useState<MediaCounts>({ image: 0, video: 0, audio: 0, total: 0 });
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const loadMoreOffset = useRef(0);
@@ -1465,7 +1699,7 @@ export default function MediaPage() {
   const [studioCreatorIds, setStudioCreatorIds] = useState<Set<string>>(new Set());
   const [permissionsLoaded, setPermissionsLoaded] = useState(false);
 
-  // Fetch creators and their media counts for folder view
+  // Fetch creators for folder view (counts are managed by context)
   const fetchCreators = useCallback(async () => {
     if (!apiKey || !isAdminOrBusiness || !permissionsLoaded) return;
 
@@ -1481,58 +1715,11 @@ export default function MediaPage() {
 
       if (response.success && response.data) {
         setCreators(response.data);
-        
-        // Get the set of creator IDs this user can access
-        const accessibleCreatorIds = new Set(response.data.map(c => c.id));
-
-        // Only fetch counts if we don't have them yet (to avoid refetching)
-        if (Object.keys(creatorMediaCounts).length === 0) {
-          // Fetch media counts for each creator
-          const counts: CreatorMediaCounts = {};
-          let totalImage = 0, totalVideo = 0, totalAudio = 0;
-
-          // Use server-side studio_id filtering for studios
-          const allMediaResponse = await api.listMedia({ 
-            limit: 5000,
-            studio_id: studioIdParam, 
-          });
-          if (allMediaResponse.success && allMediaResponse.data) {
-            allMediaResponse.data.forEach((m: Media) => {
-              const creatorId = m.creator_id;
-              
-              // Only count media from accessible creators (extra client-side check)
-              if (!accessibleCreatorIds.has(creatorId)) return;
-              
-              if (!counts[creatorId]) {
-                counts[creatorId] = { image: 0, video: 0, audio: 0, total: 0 };
-              }
-              if (m.media_type === "image") {
-                counts[creatorId].image++;
-                totalImage++;
-              } else if (m.media_type === "video") {
-                counts[creatorId].video++;
-                totalVideo++;
-              } else if (m.media_type === "audio") {
-                counts[creatorId].audio++;
-                totalAudio++;
-              }
-              counts[creatorId].total++;
-            });
-          }
-
-          setCreatorMediaCounts(counts);
-          setGlobalCounts({
-            image: totalImage,
-            video: totalVideo,
-            audio: totalAudio,
-            total: totalImage + totalVideo + totalAudio,
-          });
-        }
       }
     } catch (err) {
       console.error("Error fetching creators:", err);
     }
-  }, [apiKey, isAdminOrBusiness, user, creatorMediaCounts, permissionsLoaded]);
+  }, [apiKey, isAdminOrBusiness, user, permissionsLoaded]);
 
   // Fetch studio creators for permission filtering
   useEffect(() => {
@@ -1808,58 +1995,7 @@ export default function MediaPage() {
     }
   }, [apiKey, isLoadingMore, pagination, filters, user, selectedCreator, studioCreatorIds, permissionsLoaded]);
 
-  // Force refresh counts
-  const refreshCounts = useCallback(async () => {
-    if (!apiKey || !isAdminOrBusiness || !permissionsLoaded) return;
-
-    try {
-      const api = createApiClient(apiKey);
-      const counts: CreatorMediaCounts = {};
-      let totalImage = 0, totalVideo = 0, totalAudio = 0;
-
-      // Use server-side studio_id filtering for studios
-      const studioIdParam = user?.role === "business" ? user?.studio_id || undefined : undefined;
-      
-      const allMediaResponse = await api.listMedia({ 
-        limit: 5000,
-        studio_id: studioIdParam,
-      });
-      if (allMediaResponse.success && allMediaResponse.data) {
-        allMediaResponse.data.forEach((m: Media) => {
-          // Additional client-side filtering for studios as extra security
-          if (user?.role === "business" && studioCreatorIds.size > 0) {
-            if (!studioCreatorIds.has(m.creator_id)) return;
-          }
-          
-          const creatorId = m.creator_id;
-          if (!counts[creatorId]) {
-            counts[creatorId] = { image: 0, video: 0, audio: 0, total: 0 };
-          }
-          if (m.media_type === "image") {
-            counts[creatorId].image++;
-            totalImage++;
-          } else if (m.media_type === "video") {
-            counts[creatorId].video++;
-            totalVideo++;
-          } else if (m.media_type === "audio") {
-            counts[creatorId].audio++;
-            totalAudio++;
-          }
-          counts[creatorId].total++;
-        });
-      }
-
-      setCreatorMediaCounts(counts);
-      setGlobalCounts({
-        image: totalImage,
-        video: totalVideo,
-        audio: totalAudio,
-        total: totalImage + totalVideo + totalAudio,
-      });
-    } catch (err) {
-      console.error("Error refreshing counts:", err);
-    }
-  }, [apiKey, isAdminOrBusiness, user, studioCreatorIds, permissionsLoaded]);
+  // refreshCounts is now provided by useMediaState context
 
   useEffect(() => {
     // Only fetch creators once permissions are loaded
@@ -1906,6 +2042,28 @@ export default function MediaPage() {
       audioCount: 0,
     }));
   }, [creators, categories, currentPath, isAdminOrBusiness, creatorMediaCounts]);
+
+  // Filter uploading items by current creator context
+  const filteredUploadingItems = useMemo(() => {
+    // Filter out completed items after a short delay (they'll be in the media list)
+    const activeItems = uploadingItems.filter(item => {
+      // If complete, only show for a brief moment before it appears in the main list
+      if (item.status === "complete") return false;
+      return true;
+    });
+
+    // Filter by selected creator if applicable
+    if (selectedCreator) {
+      return activeItems.filter(item => item.creatorId === selectedCreator);
+    }
+    
+    // For independent users, only show their own uploads
+    if (user?.role === "independent" && user?.creator_id) {
+      return activeItems.filter(item => item.creatorId === user.creator_id);
+    }
+    
+    return activeItems;
+  }, [uploadingItems, selectedCreator, user?.role, user?.creator_id]);
 
   const handleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -2468,6 +2626,16 @@ export default function MediaPage() {
           <div className="min-w-0 w-full overflow-hidden">
             {viewMode === "list" || (viewMode === "folders" && currentPath.length > 0) ? (
               <div className="space-y-2">
+                {/* Uploading items first (list view) */}
+                <AnimatePresence mode="popLayout">
+                  {filteredUploadingItems.map((item) => (
+                    <UploadingMediaCard
+                      key={`uploading-${item.id}`}
+                      item={item}
+                      onCancel={removeUploadingItem}
+                    />
+                  ))}
+                </AnimatePresence>
                 {media.map((item) => (
                   <MediaCard
                     key={item.id}
@@ -2486,6 +2654,16 @@ export default function MediaPage() {
               </div>
             ) : (
               <div className="media-grid w-full">
+                {/* Uploading items first (grid view) */}
+                <AnimatePresence mode="popLayout">
+                  {filteredUploadingItems.map((item) => (
+                    <UploadingMediaCard
+                      key={`uploading-${item.id}`}
+                      item={item}
+                      onCancel={removeUploadingItem}
+                    />
+                  ))}
+                </AnimatePresence>
                 {media.map((item) => (
                   <MediaCard
                     key={item.id}
@@ -2542,9 +2720,12 @@ export default function MediaPage() {
           apiKey={apiKey}
           onUploadComplete={() => {
             fetchMedia(true);
-            refreshCounts(); // Refresh media counts
-            setShowUploadModal(false);
+            // Counts are updated via shared state automatically
           }}
+          onAddUploadingItem={addUploadingItem}
+          onUpdateUploadingItem={updateUploadingItem}
+          onCompleteUpload={completeUpload}
+          onRemoveUploadingItem={removeUploadingItem}
         />
       )}
     </div>
