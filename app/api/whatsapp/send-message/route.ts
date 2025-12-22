@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase-server";
+import { getSupabaseServerClient } from "@/lib/supabase-server";
 
 const BOT_API_URL = process.env.NEXT_PUBLIC_BOT_API_URL || "http://143.110.128.83:3001";
 
@@ -8,7 +8,7 @@ const BOT_API_URL = process.env.NEXT_PUBLIC_BOT_API_URL || "http://143.110.128.8
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabase();
+    const supabase = await getSupabaseServerClient();
     
     // Get authenticated user
     const { data: { user } } = await supabase.auth.getUser();
@@ -94,13 +94,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Send the message via the bot API
+    // The bot expects the WhatsApp JID format (e.g., "123456@g.us")
     const botResponse = await fetch(`${BOT_API_URL}/send-message`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        groupId: group.whatsapp_id,
+        groupId: group.whatsapp_id, // This should be the WhatsApp JID like "123456789@g.us"
         message: message,
       }),
     });

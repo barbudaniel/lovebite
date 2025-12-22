@@ -1373,13 +1373,21 @@ export default function WhatsAppBotPage() {
   // Track if connection toast has been shown to prevent duplicates
   const connectionNotifiedRef = useRef(false);
 
-  // Fetch groups from database
+  // Fetch groups from database/bot
   const fetchDbGroups = useCallback(async () => {
     try {
       const response = await fetch("/api/whatsapp/groups");
       if (response.ok) {
         const data = await response.json();
-        setDbGroups(data.groups || []);
+        // Transform the response to match our WhatsAppGroup type
+        const groups: WhatsAppGroup[] = (data.groups || []).map((g: any) => ({
+          id: g.id || g.whatsapp_id,
+          whatsapp_id: g.whatsapp_id || g.id,
+          name: g.name || 'Unnamed Group',
+          type: g.type || 'creator',
+          participant_count: g.participant_count || g.participants || g.participantCount || 0,
+        }));
+        setDbGroups(groups);
       }
     } catch (error) {
       console.error("Failed to fetch groups:", error);
@@ -1586,7 +1594,7 @@ export default function WhatsAppBotPage() {
               ? "bg-yellow-500 text-white"
               : "bg-slate-200 text-slate-700"
           }
-          pulse={botStatus && !isConnected}
+          pulse={!!botStatus && !isConnected}
         />
         <StatusCard
           title="RabbitMQ"

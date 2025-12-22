@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/whatsapp/cron",
+      "schedule": "* * * * *"
+    }
+  ]
+}
+
