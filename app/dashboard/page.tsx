@@ -57,7 +57,13 @@ interface BioAnalytics {
     totalClicks: number;
     clickThroughRate: string;
   };
+  changes?: {
+    views: { value: string; type: "up" | "down" | "neutral" };
+    visitors: { value: string; type: "up" | "down" | "neutral" };
+    clicks: { value: string; type: "up" | "down" | "neutral" };
+  };
   viewsByDay: Record<string, number>;
+  clicksByDay: Record<string, number>;
   topCountries: Array<{ country: string; count: number }>;
 }
 
@@ -441,16 +447,30 @@ export default function DashboardPage() {
     return "Good evening";
   };
 
-  // Line chart data
-  const chartData = bioAnalytics?.viewsByDay
-    ? Object.entries(bioAnalytics.viewsByDay)
-        .map(([date, views]) => ({
-          date: new Date(date).toLocaleDateString("en-US", { weekday: "short" }),
-          views,
-          clicks: Math.floor(views * 0.15), // Simulated click data
-        }))
-        .slice(-7)
-    : [];
+  // Line chart data - use real views and clicks from API
+  const chartData = (() => {
+    if (!bioAnalytics?.viewsByDay) return [];
+    
+    const viewsData = bioAnalytics.viewsByDay;
+    const clicksData = bioAnalytics.clicksByDay || {};
+    
+    // Get all unique dates from both views and clicks
+    const allDates = new Set([
+      ...Object.keys(viewsData),
+      ...Object.keys(clicksData),
+    ]);
+    
+    // Sort dates and map to chart data
+    return Array.from(allDates)
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+      .map((date) => ({
+        date: new Date(date).toLocaleDateString("en-US", { weekday: "short" }),
+        fullDate: date,
+        views: viewsData[date] || 0,
+        clicks: clicksData[date] || 0,
+      }))
+      .slice(-7);
+  })();
 
   const hasData = mediaStats || (bioAnalytics && bioAnalytics.summary.totalViews > 0);
 
@@ -464,7 +484,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            {getGreeting()}, {user?.display_name || creator?.username || "there"}
+            {getGreeting()}
           </h1>
           <p className="text-slate-500 mt-1">Here&apos;s an overview of your performance</p>
         </div>
@@ -491,24 +511,24 @@ export default function DashboardPage() {
                 label="Page Views"
                 value={bioAnalytics?.summary.totalViews || 0}
                 icon={Eye}
-                trend="12%"
-                trendUp={true}
+                trend={bioAnalytics?.changes?.views.value}
+                trendUp={bioAnalytics?.changes?.views.type === "up"}
                 gradient="bg-gradient-to-br from-violet-500 to-purple-600"
               />
               <GradientStatCard
                 label="Unique Visitors"
                 value={bioAnalytics?.summary.uniqueVisitors || 0}
                 icon={Users}
-                trend="8%"
-                trendUp={true}
+                trend={bioAnalytics?.changes?.visitors.value}
+                trendUp={bioAnalytics?.changes?.visitors.type === "up"}
                 gradient="bg-gradient-to-br from-cyan-500 to-blue-600"
               />
               <GradientStatCard
                 label="Link Clicks"
                 value={bioAnalytics?.summary.totalClicks || 0}
                 icon={MousePointerClick}
-                trend="15%"
-                trendUp={true}
+                trend={bioAnalytics?.changes?.clicks.value}
+                trendUp={bioAnalytics?.changes?.clicks.type === "up"}
                 gradient="bg-gradient-to-br from-emerald-500 to-green-600"
               />
               <GradientStatCard

@@ -79,6 +79,7 @@ interface BioAnalytics {
     clicks: { value: string; type: "up" | "down" | "neutral" };
   };
   viewsByDay: Record<string, number>;
+  clicksByDay?: Record<string, number>;
   viewsByCountry: Record<string, number>;
   viewsByDevice: Record<string, number>;
   topLinks: Array<{ label: string; count: number }>;
@@ -99,6 +100,13 @@ interface AggregatedBioStats {
   totalClicks: number;
   totalUniqueVisitors: number;
   modelStats: ModelBioStats[];
+  // Aggregated chart data
+  viewsByDay?: Record<string, number>;
+  clicksByDay?: Record<string, number>;
+  viewsByCountry?: Record<string, number>;
+  viewsByDevice?: Record<string, number>;
+  topLinks?: Array<{ label: string; count: number }>;
+  topReferrers?: Array<{ referrer: string; count: number }>;
 }
 
 interface RealtimeVisitor {
@@ -680,6 +688,7 @@ export default function StatisticsPage() {
   const [bioAnalytics, setBioAnalytics] = useState<BioAnalytics | null>(null);
   const [aggregatedBioStats, setAggregatedBioStats] = useState<AggregatedBioStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false); // Light refresh indicator
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("30d");
   const [models, setModels] = useState<ModelOption[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(creatorParam);
@@ -687,6 +696,7 @@ export default function StatisticsPage() {
   const [realtimeVisitors, setRealtimeVisitors] = useState<RealtimeVisitor[]>([]);
   const [bioLinkIds, setBioLinkIds] = useState<string[]>([]);
   const channelRef = useRef<ReturnType<typeof getSupabaseBrowserClient>["channel"] | null>(null);
+  const prevSelectedModelRef = useRef<string | null>(null); // Track model changes
 
   const isAdminOrBusiness = user?.role === "admin" || user?.role === "business";
   
@@ -720,22 +730,32 @@ export default function StatisticsPage() {
   }, [isAdminOrBusiness, user]);
 
   // Setup Supabase realtime subscription for live traffic - dynamic per bio link(s)
+  // Only recreate channel when bio link IDs actually change (not just array reference)
+  const bioLinkIdsKey = bioLinkIds.sort().join(",");
+  
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
     
-    // Clean up previous channel
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
+    // Only clear visitors and recreate channel when switching to different model
+    const modelChanged = prevSelectedModelRef.current !== selectedModelId;
+    if (modelChanged) {
+      prevSelectedModelRef.current = selectedModelId;
+      setRealtimeVisitors([]);
+      
+      // Clean up previous channel
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     }
 
-    // Clear visitors when switching views
-    setRealtimeVisitors([]);
-
     if (bioLinkIds.length === 0) return;
+    
+    // Don't recreate channel if it already exists for the same bio links
+    if (channelRef.current && !modelChanged) return;
 
     // Create a unique channel name based on the bio link IDs
-    const channelName = `bio_views_${bioLinkIds.join("_").slice(0, 50)}`;
+    const channelName = `bio_views_${bioLinkIdsKey.slice(0, 50)}_${Date.now()}`;
     
     // For single bio link, use filter. For multiple, we'll filter client-side
     const isSingleBioLink = bioLinkIds.length === 1;
@@ -781,12 +801,20 @@ export default function StatisticsPage() {
     channelRef.current = channel;
 
     return () => {
+      // Only cleanup on unmount, not on every re-render
+    };
+  }, [bioLinkIdsKey, selectedModelId]); // eslint-disable-line react-hooks/exhaustive-deps
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      const supabase = getSupabaseBrowserClient();
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [bioLinkIds]);
+  }, []);
 
   // Cleanup old realtime visitors
   useEffect(() => {
@@ -800,12 +828,21 @@ export default function StatisticsPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Track if this is initial load or refresh
+  const hasLoadedOnce = useRef(false);
+  
   useEffect(() => {
-    fetchAllData();
+    fetchAllData(!hasLoadedOnce.current);
+    hasLoadedOnce.current = true;
   }, [apiKey, user, period, selectedModelId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchAllData = async () => {
-    setIsLoading(true);
+  const fetchAllData = async (isInitialLoad = false) => {
+    // Only show full skeleton on initial load, use light refresh for subsequent loads
+    if (isInitialLoad) {
+      setIsLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
     
     const api = apiKey ? createApiClient(apiKey) : null;
     const supabase = getSupabaseBrowserClient();
@@ -923,46 +960,68 @@ export default function StatisticsPage() {
     // Wait for all promises to complete in parallel
     await Promise.all(promises);
     setIsLoading(false);
+    setIsRefreshing(false);
   };
 
   const isCreatorStats = (s: CreatorStats | PlatformOverview): s is CreatorStats => {
     return "creator" in s;
   };
 
-  // Prepare chart data
-  const viewsChartData = bioAnalytics?.viewsByDay
-    ? Object.entries(bioAnalytics.viewsByDay)
-        .map(([date, views]) => ({
-          date: new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-          views,
-        }))
-        .slice(-14)
-    : [];
+  // Prepare chart data - use bioAnalytics for individual model, aggregatedBioStats for overview
+  const viewsByDaySource = bioAnalytics?.viewsByDay || aggregatedBioStats?.viewsByDay;
+  const clicksByDaySource = bioAnalytics?.clicksByDay || aggregatedBioStats?.clicksByDay;
+  
+  const trafficChartData = (() => {
+    if (!viewsByDaySource) return [];
+    
+    // Get all unique dates from both views and clicks
+    const allDates = new Set([
+      ...Object.keys(viewsByDaySource),
+      ...Object.keys(clicksByDaySource || {}),
+    ]);
+    
+    // Sort dates and map to chart data
+    return Array.from(allDates)
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+      .map((date) => ({
+        date: new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        fullDate: date,
+        views: viewsByDaySource[date] || 0,
+        clicks: clicksByDaySource?.[date] || 0,
+      }))
+      .slice(-14);
+  })();
 
-  const countryData = bioAnalytics?.viewsByCountry
-    ? Object.entries(bioAnalytics.viewsByCountry)
+  const viewsByCountrySource = bioAnalytics?.viewsByCountry || aggregatedBioStats?.viewsByCountry;
+  const countryData = viewsByCountrySource
+    ? Object.entries(viewsByCountrySource)
         .map(([country, count]) => ({ country, count }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 6)
     : [];
 
-  const deviceData = bioAnalytics?.viewsByDevice
-    ? Object.entries(bioAnalytics.viewsByDevice)
+  const viewsByDeviceSource = bioAnalytics?.viewsByDevice || aggregatedBioStats?.viewsByDevice;
+  const deviceData = viewsByDeviceSource
+    ? Object.entries(viewsByDeviceSource)
         .map(([device, count]) => ({ device: device.charAt(0).toUpperCase() + device.slice(1), count }))
     : [];
 
-  // Filter out self-referrers
+  // Filter out self-referrers - use bioAnalytics or aggregatedBioStats
+  const referrersSource = bioAnalytics?.topReferrers || aggregatedBioStats?.topReferrers;
   const filteredReferrers = useMemo(() => {
-    if (!bioAnalytics?.topReferrers) return [];
+    if (!referrersSource) return [];
     
-    return bioAnalytics.topReferrers
+    return referrersSource
       .filter((ref) => {
         if (!ref.referrer) return true; // Keep direct traffic
         const domain = ref.referrer.toLowerCase();
         return !SELF_REFERRER_DOMAINS.some((self) => domain.includes(self));
       })
       .slice(0, 4);
-  }, [bioAnalytics?.topReferrers]);
+  }, [referrersSource]);
+  
+  // Top links - use bioAnalytics or aggregatedBioStats
+  const topLinksSource = bioAnalytics?.topLinks || aggregatedBioStats?.topLinks;
 
   const totalViews = bioAnalytics?.summary.totalViews || aggregatedBioStats?.totalViews || 0;
 
@@ -978,7 +1037,12 @@ export default function StatisticsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Analytics</h1>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            Analytics
+            {isRefreshing && (
+              <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+            )}
+          </h1>
           <p className="text-slate-500">
             {selectedModelId && displayName
               ? `Performance for @${displayName}`
@@ -1129,16 +1193,20 @@ export default function StatisticsPage() {
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6">
           <SectionHeader 
             title="Traffic Over Time" 
-            subtitle="Daily page views"
+            subtitle="Daily page views & clicks"
           />
           
-          {viewsChartData.length > 0 ? (
+          {trafficChartData.length > 0 ? (
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <AreaChart data={viewsChartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+              <AreaChart data={trafficChartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
                 <defs>
                   <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="clicksGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis
@@ -1160,6 +1228,15 @@ export default function StatisticsPage() {
                   stroke="#8b5cf6"
                   strokeWidth={2}
                   fill="url(#viewsGradient)"
+                  name="Views"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="clicks"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  fill="url(#clicksGradient)"
+                  name="Clicks"
                 />
               </AreaChart>
             </ChartContainer>
@@ -1272,9 +1349,9 @@ export default function StatisticsPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
           <SectionHeader title="Top Links" subtitle="Most clicked" />
           
-          {bioAnalytics?.topLinks && bioAnalytics.topLinks.length > 0 ? (
+          {topLinksSource && topLinksSource.length > 0 ? (
             <div className="space-y-3">
-              {bioAnalytics.topLinks.slice(0, 5).map((link, idx) => (
+              {topLinksSource.slice(0, 5).map((link, idx) => (
                 <div key={link.label} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                   <div className="flex items-center gap-3">
                     <span 

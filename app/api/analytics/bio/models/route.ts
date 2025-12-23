@@ -33,6 +33,13 @@ export interface AggregatedBioStats {
   totalClicks: number;
   totalUniqueVisitors: number;
   modelStats: ModelBioStats[];
+  // Aggregated chart data
+  viewsByDay: Record<string, number>;
+  clicksByDay: Record<string, number>;
+  viewsByCountry: Record<string, number>;
+  viewsByDevice: Record<string, number>;
+  topLinks: Array<{ label: string; count: number }>;
+  topReferrers: Array<{ referrer: string; count: number }>;
 }
 
 export async function GET(request: NextRequest) {
@@ -127,22 +134,28 @@ export async function GET(request: NextRequest) {
     const bioLinkIds = bioLinks.map((b) => b.id);
     const bioLinkToCreator = new Map(bioLinks.map((b) => [b.id, b.creator_id]));
 
-    // Get page views for all bio links
+    // Get page views for all bio links with full details for aggregation
     const { data: pageViews } = await serviceClient
       .from("bio_page_views")
-      .select("bio_link_id, visitor_id, ip_hash")
+      .select("bio_link_id, visitor_id, ip_hash, country, device_type, referrer, created_at")
       .in("bio_link_id", bioLinkIds)
       .gte("created_at", startDate.toISOString());
 
-    // Get link clicks for all bio links
+    // Get link clicks for all bio links with details
     const { data: linkClicks } = await serviceClient
       .from("bio_link_clicks")
-      .select("bio_link_id")
+      .select("bio_link_id, link_label, created_at")
       .in("bio_link_id", bioLinkIds)
       .gte("created_at", startDate.toISOString());
 
-    // Aggregate stats by creator
+    // Aggregate stats by creator + global aggregations
     const creatorStatsMap = new Map<string, { views: number; clicks: number; visitorSet: Set<string> }>();
+    const viewsByDay: Record<string, number> = {};
+    const clicksByDay: Record<string, number> = {};
+    const viewsByCountry: Record<string, number> = {};
+    const viewsByDevice: Record<string, number> = {};
+    const referrerCounts: Record<string, number> = {};
+    const linkClickCounts: Record<string, number> = {};
 
     // Initialize all creators
     creators.forEach((c) => {
@@ -150,7 +163,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Process page views
-    (pageViews || []).forEach((pv) => {
+    (pageViews || []).forEach((pv: any) => {
       const creatorId = bioLinkToCreator.get(pv.bio_link_id);
       if (creatorId) {
         const stats = creatorStatsMap.get(creatorId);
@@ -159,16 +172,54 @@ export async function GET(request: NextRequest) {
           stats.visitorSet.add(pv.visitor_id || pv.ip_hash || "unknown");
         }
       }
+      
+      // Aggregate by day
+      if (pv.created_at) {
+        const day = pv.created_at.split("T")[0];
+        viewsByDay[day] = (viewsByDay[day] || 0) + 1;
+      }
+      
+      // Aggregate by country
+      const country = pv.country || "Unknown";
+      viewsByCountry[country] = (viewsByCountry[country] || 0) + 1;
+      
+      // Aggregate by device
+      const device = pv.device_type || "unknown";
+      viewsByDevice[device] = (viewsByDevice[device] || 0) + 1;
+      
+      // Aggregate referrers
+      if (pv.referrer) {
+        try {
+          const url = new URL(pv.referrer);
+          const domain = url.hostname.replace("www.", "");
+          referrerCounts[domain] = (referrerCounts[domain] || 0) + 1;
+        } catch {
+          referrerCounts[pv.referrer] = (referrerCounts[pv.referrer] || 0) + 1;
+        }
+      } else {
+        referrerCounts["Direct"] = (referrerCounts["Direct"] || 0) + 1;
+      }
     });
 
     // Process link clicks
-    (linkClicks || []).forEach((lc) => {
+    (linkClicks || []).forEach((lc: any) => {
       const creatorId = bioLinkToCreator.get(lc.bio_link_id);
       if (creatorId) {
         const stats = creatorStatsMap.get(creatorId);
         if (stats) {
           stats.clicks += 1;
         }
+      }
+      
+      // Aggregate clicks by day
+      if (lc.created_at) {
+        const day = lc.created_at.split("T")[0];
+        clicksByDay[day] = (clicksByDay[day] || 0) + 1;
+      }
+      
+      // Aggregate link clicks by label
+      if (lc.link_label) {
+        linkClickCounts[lc.link_label] = (linkClickCounts[lc.link_label] || 0) + 1;
       }
     });
 
@@ -194,12 +245,29 @@ export async function GET(request: NextRequest) {
 
     // Sort by views descending
     modelStats.sort((a, b) => b.views - a.views);
+    
+    // Convert to sorted arrays
+    const topLinks = Object.entries(linkClickCounts)
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+    
+    const topReferrers = Object.entries(referrerCounts)
+      .map(([referrer, count]) => ({ referrer, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
 
     return NextResponse.json({
       totalViews,
       totalClicks,
       totalUniqueVisitors: allVisitors.size,
       modelStats,
+      viewsByDay,
+      clicksByDay,
+      viewsByCountry,
+      viewsByDevice,
+      topLinks,
+      topReferrers,
     });
   } catch (error) {
     console.error("Model bio analytics error:", error);

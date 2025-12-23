@@ -207,12 +207,12 @@ function DraggableScroll({
   };
 
   return (
-    <div className="relative flex items-center gap-1">
+    <div className="relative flex items-center gap-2">
       {/* Left Arrow */}
       {showArrows && (
         <button
           onClick={() => scrollBy('left')}
-          className={`hidden sm:flex items-center justify-center w-7 h-7 rounded-full bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all flex-shrink-0 ${
+          className={`hidden sm:flex items-center justify-center w-7 h-7 rounded-full bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-colors flex-shrink-0 ${
             canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           aria-label="Scroll left"
@@ -224,7 +224,7 @@ function DraggableScroll({
       {/* Scrollable Container */}
       <div
         ref={containerRef}
-        className={`scrollbar-hide flex-1 ${className || ''}`}
+        className={`scrollbar-hide flex-1 overflow-hidden ${className || ''}`}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
@@ -244,7 +244,7 @@ function DraggableScroll({
       {showArrows && (
         <button
           onClick={() => scrollBy('right')}
-          className={`hidden sm:flex items-center justify-center w-7 h-7 rounded-full bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all flex-shrink-0 ${
+          className={`hidden sm:flex items-center justify-center w-7 h-7 rounded-full bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-colors flex-shrink-0 ${
             canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           aria-label="Scroll right"
@@ -438,16 +438,19 @@ function FolderCard({
 }) {
   const totalCount = folder.photoCount + folder.videoCount + folder.audioCount;
   const hasContent = totalCount > 0;
+  const isCreator = folder.type === "creator";
 
-  return (
-    <motion.button
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      onClick={onClick}
-      className="group bg-white rounded-lg sm:rounded-xl border border-slate-200 p-3 sm:p-4 hover:shadow-lg hover:border-brand-300 transition-all text-left w-full"
-    >
-      <div className="flex items-start gap-3 sm:gap-4">
-        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center shrink-0 group-hover:from-brand-100 group-hover:to-brand-50 transition-all overflow-hidden">
+  // Vertical badge card for creators, horizontal for categories
+  if (isCreator) {
+    return (
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onClick={onClick}
+        className="group bg-white rounded-2xl border-2 border-slate-200 hover:border-brand-400 hover:shadow-lg p-4 transition-colors text-center flex flex-col items-center min-w-[140px] max-w-[180px] cursor-pointer"
+      >
+        {/* Avatar/Icon */}
+        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-100 to-brand-50 group-hover:from-brand-200 group-hover:to-brand-100 flex items-center justify-center transition-colors overflow-hidden mb-3">
           {folder.thumbnail ? (
             <img
               src={folder.thumbnail}
@@ -455,47 +458,86 @@ function FolderCard({
               className="w-full h-full object-cover"
             />
           ) : (
-            <FolderClosed className="w-5 h-5 sm:w-7 sm:h-7 text-amber-500 group-hover:text-brand-500 transition-colors" />
+            <Users className="w-7 h-7 text-brand-500 group-hover:text-brand-600 transition-colors" />
           )}
         </div>
+        
+        {/* Model Name - Never truncated */}
+        <p className="font-bold text-sm text-slate-900 group-hover:text-brand-600 transition-colors break-words hyphens-auto leading-tight mb-1">
+          {folder.name}
+        </p>
+        
+        {/* Media stats - Compact */}
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          {folder.photoCount > 0 && (
+            <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-blue-600">
+              <ImageIcon className="w-3 h-3" />
+              {folder.photoCount}
+            </span>
+          )}
+          {folder.videoCount > 0 && (
+            <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-purple-600">
+              <Video className="w-3 h-3" />
+              {folder.videoCount}
+            </span>
+          )}
+          {folder.audioCount > 0 && (
+            <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-orange-600">
+              <Music className="w-3 h-3" />
+              {folder.audioCount}
+            </span>
+          )}
+          {!hasContent && (
+            <span className="text-[11px] text-slate-400">Empty</span>
+          )}
+        </div>
+      </motion.button>
+    );
+  }
+
+  // Horizontal card for categories
+  return (
+    <motion.button
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      onClick={onClick}
+      className="group bg-white rounded-xl border-2 border-slate-200 hover:border-amber-300 hover:shadow-md p-4 transition-colors text-left w-full cursor-pointer"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 group-hover:from-amber-200 group-hover:to-amber-100 flex items-center justify-center shrink-0 transition-all">
+          <FolderClosed className="w-6 h-6 text-amber-500 group-hover:text-amber-600 transition-colors" />
+        </div>
+        
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm sm:text-base text-slate-900 truncate group-hover:text-brand-600 transition-colors">
+          <p className="font-semibold text-sm text-slate-900 truncate group-hover:text-amber-600 transition-colors">
             {folder.name}
           </p>
-          
-          {/* Media type counts */}
-          <div className="flex items-center gap-2 sm:gap-3 mt-1 sm:mt-1.5 flex-wrap">
+          <div className="flex items-center gap-2 mt-1">
             {folder.photoCount > 0 && (
-              <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-blue-600">
-                <ImageIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span className="inline-flex items-center gap-0.5 text-[11px] text-blue-600">
+                <ImageIcon className="w-3 h-3" />
                 {folder.photoCount}
               </span>
             )}
             {folder.videoCount > 0 && (
-              <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-purple-600">
-                <Video className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span className="inline-flex items-center gap-0.5 text-[11px] text-purple-600">
+                <Video className="w-3 h-3" />
                 {folder.videoCount}
               </span>
             )}
             {folder.audioCount > 0 && (
-              <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-orange-600">
-                <Music className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span className="inline-flex items-center gap-0.5 text-[11px] text-orange-600">
+                <Music className="w-3 h-3" />
                 {folder.audioCount}
               </span>
             )}
             {!hasContent && (
-              <span className="text-[10px] sm:text-xs text-slate-400">No media</span>
+              <span className="text-[11px] text-slate-400">Empty</span>
             )}
           </div>
-
-          {folder.type === "creator" && (
-            <span className="hidden sm:inline-flex items-center gap-1 mt-2 px-2 py-0.5 bg-slate-100 rounded-full text-xs text-slate-600">
-              <Users className="w-3 h-3" />
-              Model
-            </span>
-          )}
         </div>
-        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-1 transition-all shrink-0" />
+        
+        <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all shrink-0" />
       </div>
     </motion.button>
   );
@@ -656,6 +698,8 @@ function MediaCard({
   onCategoryUpdate,
   viewMode,
   apiKey,
+  showCreatorName = false,
+  creatorName,
 }: {
   media: Media;
   isSelected: boolean;
@@ -667,6 +711,8 @@ function MediaCard({
   onCategoryUpdate: (mediaId: string, newCategory: string) => void;
   viewMode: ViewMode;
   apiKey: string;
+  showCreatorName?: boolean;
+  creatorName?: string;
 }) {
   const getTypeIcon = () => {
     switch (media.media_type) {
@@ -728,6 +774,9 @@ function MediaCard({
             </div>
 
             <div className="flex-1 min-w-0" onClick={() => onView(media)}>
+              {showCreatorName && creatorName && (
+                <p className="text-xs font-medium text-brand-600 truncate">{creatorName}</p>
+              )}
               <p className="font-medium text-sm text-slate-900 truncate">{toTitleCase(media.category || "uncategorized")}</p>
               <p className="text-xs text-slate-500">
                 {formatFileSize(media.file_size_bytes)} • {format(new Date(media.created_at), "MMM d")}
@@ -789,13 +838,13 @@ function MediaCard({
           </div>
 
           <div className="flex-1 min-w-0">
+            {showCreatorName && creatorName && (
+              <p className="text-xs font-semibold text-brand-600 truncate mb-0.5">@{creatorName}</p>
+            )}
             <p className="font-medium text-slate-900 truncate">{toTitleCase(media.category || "uncategorized")}</p>
             <p className="text-sm text-slate-500">
               {formatFileSize(media.file_size_bytes)} • {format(new Date(media.created_at), "MMM d")}
             </p>
-            {media.creator && (
-              <p className="text-xs text-slate-400">by @{media.creator.username}</p>
-            )}
           </div>
 
           <p className="text-sm text-slate-500">
@@ -905,6 +954,12 @@ function MediaCard({
 
       {/* Info */}
       <div className="p-1.5 sm:p-2.5">
+        {/* Creator name - shown for studio/admin */}
+        {showCreatorName && creatorName && (
+          <p className="text-[10px] sm:text-xs font-medium text-brand-600 truncate mb-1">
+            {creatorName}
+          </p>
+        )}
         <div className="flex items-center justify-between gap-1.5 sm:gap-2">
           <CategoryBadge
             category={media.category}
@@ -1633,7 +1688,11 @@ export default function MediaPage() {
   const [categories, setCategories] = useState<MediaCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  // Default to folder view for admin/business, grid for independent
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    // Will be updated in useEffect when user loads
+    return "folders";
+  });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [viewingMedia, setViewingMedia] = useState<Media | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -1679,6 +1738,17 @@ export default function MediaPage() {
       setSelectedCreator(creatorParam);
     }
   }, [dateFromParam, dateToParam, creatorParam]);
+  
+  // Set default view mode based on user role
+  useEffect(() => {
+    if (user?.role === "independent") {
+      // Independent models see grid view by default (their own media)
+      setViewMode("grid");
+    } else if (user?.role === "admin" || user?.role === "business") {
+      // Studio/Admin see folder view to select models first
+      setViewMode("folders");
+    }
+  }, [user?.role]);
   
   // Open media viewer if mediaId is in URL
   useEffect(() => {
@@ -2129,6 +2199,13 @@ export default function MediaPage() {
       audioCount: 0,
     }));
   }, [creators, categories, currentPath, isAdminOrBusiness, creatorMediaCounts]);
+
+  // Helper to get creator name by ID
+  const getCreatorName = useCallback((creatorId: string | null) => {
+    if (!creatorId) return undefined;
+    const creator = creators.find(c => c.id === creatorId);
+    return creator?.username;
+  }, [creators]);
 
   // Filter uploading items by current creator context
   const filteredUploadingItems = useMemo(() => {
@@ -2614,15 +2691,28 @@ export default function MediaPage() {
             </Button>
           </div>
         ) : (
-          <div className="media-grid">
-            {folderItems.map((folder) => (
-              <FolderCard
-                key={folder.id}
-                folder={folder}
-                onClick={() => handleFolderClick(folder)}
-              />
-            ))}
-          </div>
+          // Use flex-wrap for model cards (vertical badges), grid for categories
+          folderItems[0]?.type === "creator" ? (
+            <div className="flex flex-wrap gap-3 sm:gap-4">
+              {folderItems.map((folder) => (
+                <FolderCard
+                  key={folder.id}
+                  folder={folder}
+                  onClick={() => handleFolderClick(folder)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {folderItems.map((folder) => (
+                <FolderCard
+                  key={folder.id}
+                  folder={folder}
+                  onClick={() => handleFolderClick(folder)}
+                />
+              ))}
+            </div>
+          )
         )
       ) : media.length === 0 ? (
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-12 text-center">
@@ -2673,10 +2763,10 @@ export default function MediaPage() {
                       <button
                         key={cat.name}
                         onClick={() => toggleCategoryFilter(cat.name)}
-                        className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                        className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                           isSelected
-                            ? "bg-brand-500 text-white shadow-md"
-                            : `${iconConfig.bg} ${iconConfig.color}`
+                            ? "bg-brand-500 text-white"
+                            : `${iconConfig.bg} ${iconConfig.color} hover:opacity-80`
                         }`}
                       >
                         <IconComponent className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -2690,7 +2780,7 @@ export default function MediaPage() {
                 {filters.categories.size > 0 && (
                   <button
                     onClick={() => setFilters({ ...filters, categories: new Set() })}
-                    className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all whitespace-nowrap flex-shrink-0"
+                    className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors whitespace-nowrap flex-shrink-0"
                   >
                     <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     Clear
@@ -2734,6 +2824,8 @@ export default function MediaPage() {
                     onCategoryUpdate={handleCategoryUpdate}
                     viewMode="list"
                     apiKey={apiKey || ""}
+                    showCreatorName={isAdminOrBusiness && !selectedCreator}
+                    creatorName={getCreatorName(item.creator_id)}
                   />
                 ))}
               </div>
@@ -2762,6 +2854,8 @@ export default function MediaPage() {
                     onCategoryUpdate={handleCategoryUpdate}
                     viewMode="grid"
                     apiKey={apiKey || ""}
+                    showCreatorName={isAdminOrBusiness && !selectedCreator}
+                    creatorName={getCreatorName(item.creator_id)}
                   />
                 ))}
               </div>

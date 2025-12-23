@@ -73,8 +73,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect('https://lovebite.fans');
     }
     
+    // API routes should be handled locally (no redirect) to avoid CORS issues
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.next();
+    }
+    
     // System routes should redirect to lovebite.fans
-    const systemRoutes = ['/dashboard', '/api', '/admin', '/join', '/register', '/bio', '/creator', '/_next'];
+    const systemRoutes = ['/dashboard', '/admin', '/join', '/register', '/bio', '/creator', '/_next'];
     const isSystemRoute = systemRoutes.some(route => pathname.startsWith(route));
     
     if (isSystemRoute) {

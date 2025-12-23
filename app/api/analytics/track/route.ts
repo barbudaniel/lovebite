@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 
+// CORS headers - allow requests from any origin (for custom domains)
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Max-Age": "86400", // Cache preflight for 24 hours
+};
+
+// Handle OPTIONS preflight request
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
 // Create Supabase client with service role for inserting analytics
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -103,7 +119,7 @@ export async function POST(request: NextRequest) {
       // No bio link found - cannot track without a valid bio_link_id
       // This happens for legacy creators not yet in the database
       console.log(`Analytics: No bio_link found for slug "${creatorSlug}", skipping tracking`);
-      return NextResponse.json({ success: true, skipped: true });
+      return NextResponse.json({ success: true, skipped: true }, { headers: corsHeaders });
     }
 
     // Get client IP
@@ -139,7 +155,7 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error("Error tracking page view:", error);
-        return NextResponse.json({ error: "Failed to track" }, { status: 500 });
+        return NextResponse.json({ error: "Failed to track" }, { status: 500, headers: corsHeaders });
       }
     } else if (type === "link_click") {
       // Track link click
@@ -157,16 +173,16 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error("Error tracking link click:", error);
-        return NextResponse.json({ error: "Failed to track" }, { status: 500 });
+        return NextResponse.json({ error: "Failed to track" }, { status: 500, headers: corsHeaders });
       }
     } else {
-      return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid type" }, { status: 400, headers: corsHeaders });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: corsHeaders });
   } catch (error) {
     console.error("Analytics tracking error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Server error" }, { status: 500, headers: corsHeaders });
   }
 }
 
