@@ -70,7 +70,7 @@ export function Navigation({ variant = "light" }: NavigationProps) {
           <div className="flex items-center justify-between h-16 sm:h-18">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group z-10">
-            <Image src="/logo.png" alt="Lovdash" width={140} height={30} />
+            <Image src="/logo.png" alt="Lovdash" width={125} height={30} />
             </Link>
 
             {/* Desktop Navigation */}
