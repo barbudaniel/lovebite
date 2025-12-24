@@ -1,6 +1,6 @@
-# Lovebite Landing Page
+# Lovdash Landing Page
 
-A modern, animated landing page for Lovebite - a content creator management agency. Built with Next.js 15, Tailwind CSS, shadcn/ui components, and Motion (Framer Motion).
+A modern, animated landing page for Lovdash - a content creator management agency. Built with Next.js 15, Tailwind CSS, shadcn/ui components, and Motion (Framer Motion).
 
 ## Features
 
@@ -32,7 +32,7 @@ A modern, animated landing page for Lovebite - a content creator management agen
 1. Clone the repository:
 \`\`\`bash
 git clone <repository-url>
-cd lovebite_landingpage
+cd Lovdash_landingpage
 \`\`\`
 
 2. Install dependencies:
@@ -118,7 +118,11 @@ Update text content directly in the section components under \`components/sectio
 Private - All rights reserved.
 
 
-# lovebite
+# Lovdash
+
+
+
+
 
 
 

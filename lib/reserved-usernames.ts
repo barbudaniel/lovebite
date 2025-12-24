@@ -34,11 +34,11 @@ export const RESERVED_USERNAMES = [
   'news',
   
   // Brand names
-  'lovebite',
+  'Lovdash',
   'bites',
   'bitesbio',
-  'lovebite-fans',
-  'lovebite_fans',
+  'Lovdash-fans',
+  'Lovdash_fans',
   
   // Generic reserved
   'www',

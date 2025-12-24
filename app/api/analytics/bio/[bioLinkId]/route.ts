@@ -217,8 +217,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const SELF_REFERRER_DOMAINS = [
       "lustyfantasy.online",
       "www.lustyfantasy.online",
-      "lovebite.bio",
-      "www.lovebite.bio",
+      "Lovdash.bio",
+      "www.Lovdash.bio",
       "localhost",
     ];
     

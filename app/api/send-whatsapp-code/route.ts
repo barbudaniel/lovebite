@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         phone: cleanPhone,
-        message: `🔐 *Lovebite Dashboard Login*\n\nYour verification code is:\n\n*${code}*\n\nThis code expires in 5 minutes.\n\n_If you didn't request this, please ignore this message._`,
+        message: `🔐 *Lovdash Dashboard Login*\n\nYour verification code is:\n\n*${code}*\n\nThis code expires in 5 minutes.\n\n_If you didn't request this, please ignore this message._`,
       }),
     });
 

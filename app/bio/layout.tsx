@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Lovebite BIO | The Ultimate Bio Link for Adult Creators",
+  title: "Lovdash BIO | The Ultimate Bio Link for Adult Creators",
   description: "Create your custom bio link profile. Synced with your live activity on OnlyFans, Chaturbate, and more. Customizable, secure, and built for creators.",
   keywords: [
     "bio link",
@@ -9,11 +9,11 @@ export const metadata: Metadata = {
     "adult creator tools",
     "OnlyFans link",
     "cam model bio",
-    "Lovebite BIO",
+    "Lovdash BIO",
     "linktree alternative",
   ],
   openGraph: {
-    title: "Lovebite BIO | The Ultimate Bio Link for Adult Creators",
+    title: "Lovdash BIO | The Ultimate Bio Link for Adult Creators",
     description: "One link for all your platforms. Synced live activity, custom domains, and zero bans.",
     type: "website",
   },
@@ -26,6 +26,10 @@ export default function BioLayout({
 }) {
   return <>{children}</>;
 }
+
+
+
+
 
 
 

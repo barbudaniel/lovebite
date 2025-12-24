@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { useDashboard } from "../layout";
 import { useMediaState } from "@/lib/hooks/use-media-state";
@@ -33,6 +33,12 @@ import {
   Activity,
   Zap,
   ExternalLink,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRight,
+  Link2,
+  Hash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,7 +66,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import createGlobe from "cobe";
+import Link from "next/link";
 
 // ============================================
 // TYPES
@@ -82,7 +90,7 @@ interface BioAnalytics {
   clicksByDay?: Record<string, number>;
   viewsByCountry: Record<string, number>;
   viewsByDevice: Record<string, number>;
-  topLinks: Array<{ label: string; count: number }>;
+  topLinks: Array<{ label: string; count: number; modelUsername?: string }>;
   topReferrers: Array<{ referrer: string; count: number }>;
   globeMarkers?: Array<{ country: string; count: number; lat: number; lng: number }>;
 }
@@ -100,12 +108,11 @@ interface AggregatedBioStats {
   totalClicks: number;
   totalUniqueVisitors: number;
   modelStats: ModelBioStats[];
-  // Aggregated chart data
   viewsByDay?: Record<string, number>;
   clicksByDay?: Record<string, number>;
   viewsByCountry?: Record<string, number>;
   viewsByDevice?: Record<string, number>;
-  topLinks?: Array<{ label: string; count: number }>;
+  topLinks?: Array<{ label: string; count: number; modelUsername?: string; creatorId?: string }>;
   topReferrers?: Array<{ referrer: string; count: number }>;
 }
 
@@ -132,12 +139,11 @@ const chartConfig = {
 
 const COLORS = ["#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#06b6d4"];
 
-// Domains to filter out from referrers (self-referrers)
 const SELF_REFERRER_DOMAINS = [
   "lustyfantasy.online",
   "www.lustyfantasy.online",
-  "lovebite.bio",
-  "www.lovebite.bio",
+  "Lovdash.bio",
+  "www.Lovdash.bio",
   "localhost",
 ];
 
@@ -146,7 +152,6 @@ const SELF_REFERRER_DOMAINS = [
 // ============================================
 
 function getFaviconUrl(domain: string): string {
-  // Use Google's favicon service for reliable favicons
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
 }
 
@@ -169,14 +174,13 @@ const RealtimeGlobe = memo(function RealtimeGlobe({
   const rotationRef = useRef(0);
   const globeRef = useRef<ReturnType<typeof createGlobe> | null>(null);
 
-  // Realtime markers only - show visitors with pulsing effect
   const realtimeMarkers = useMemo(() => {
     const now = Date.now();
     return realtimeVisitors
-      .filter((v) => now - v.timestamp < 15000) // Keep visible for 15 seconds
+      .filter((v) => now - v.timestamp < 15000)
       .map((v) => {
-        const age = (now - v.timestamp) / 15000; // 0 to 1
-        const size = Math.max(0.08, 0.2 * (1 - age)); // Larger markers, shrink over time
+        const age = (now - v.timestamp) / 15000;
+        const size = Math.max(0.08, 0.2 * (1 - age));
         return {
           location: [v.lat, v.lng] as [number, number],
           size,
@@ -201,7 +205,6 @@ const RealtimeGlobe = memo(function RealtimeGlobe({
 
   useEffect(() => {
     let width = 0;
-    let animationId: number;
 
     const onResize = () => {
       if (canvasRef.current) {
@@ -213,7 +216,6 @@ const RealtimeGlobe = memo(function RealtimeGlobe({
 
     if (!canvasRef.current) return;
 
-    // Destroy existing globe if any
     if (globeRef.current) {
       globeRef.current.destroy();
     }
@@ -229,7 +231,7 @@ const RealtimeGlobe = memo(function RealtimeGlobe({
       mapSamples: 16000,
       mapBrightness: 1.2,
       baseColor: [1, 1, 1],
-      markerColor: [0.545, 0.361, 0.965], // Violet
+      markerColor: [0.545, 0.361, 0.965],
       glowColor: [0.95, 0.95, 0.98],
       markers: realtimeMarkers,
       onRender: (state) => {
@@ -242,7 +244,6 @@ const RealtimeGlobe = memo(function RealtimeGlobe({
       },
     });
 
-    // Fade in
     setTimeout(() => {
       if (canvasRef.current) {
         canvasRef.current.style.opacity = "1";
@@ -256,7 +257,7 @@ const RealtimeGlobe = memo(function RealtimeGlobe({
       }
       window.removeEventListener("resize", onResize);
     };
-  }, []); // Only run once on mount
+  }, []);
 
   return (
     <div className={`relative aspect-square ${className}`}>
@@ -276,10 +277,8 @@ const RealtimeGlobe = memo(function RealtimeGlobe({
           transition: "opacity 0.5s ease",
         }}
       />
-      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent pointer-events-none" />
       
-      {/* Live indicator */}
       {realtimeVisitors.length > 0 && (
         <div className="absolute top-3 left-3 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-slate-200">
           <span className="relative flex h-2 w-2">
@@ -538,7 +537,7 @@ function ModelSelector({
         <SelectValue placeholder="Select model" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">All Models (Overview)</SelectItem>
+        <SelectItem value="all">All Models</SelectItem>
         {models.map((model) => (
           <SelectItem key={model.id} value={model.id}>
             @{model.username}
@@ -546,6 +545,295 @@ function ModelSelector({
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+// ============================================
+// PAGINATION COMPONENT
+// ============================================
+
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  
+  return (
+    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+      <p className="text-sm text-slate-500">
+        Page {currentPage} of {totalPages}
+      </p>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// MODEL PERFORMANCE TABLE (SCALABLE)
+// ============================================
+
+const MODELS_PER_PAGE = 15;
+
+function ModelPerformanceTable({
+  modelStats,
+  onSelectModel,
+}: {
+  modelStats: ModelBioStats[];
+  onSelectModel: (id: string) => void;
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Filter models by search
+  const filteredModels = useMemo(() => {
+    if (!searchQuery.trim()) return modelStats;
+    const query = searchQuery.toLowerCase();
+    return modelStats.filter((m) => 
+      m.username.toLowerCase().includes(query)
+    );
+  }, [modelStats, searchQuery]);
+  
+  // Paginate
+  const totalPages = Math.ceil(filteredModels.length / MODELS_PER_PAGE);
+  const paginatedModels = filteredModels.slice(
+    (currentPage - 1) * MODELS_PER_PAGE,
+    currentPage * MODELS_PER_PAGE
+  );
+  
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+  
+  const maxViews = Math.max(...modelStats.map(m => m.views), 1);
+  
+  return (
+    <div className="space-y-4">
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input
+          placeholder="Search models..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+      
+      {/* Table Header */}
+      <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100">
+        <div className="col-span-4">Model</div>
+        <div className="col-span-2 text-right">Views</div>
+        <div className="col-span-2 text-right">Clicks</div>
+        <div className="col-span-3">Performance</div>
+        <div className="col-span-1"></div>
+      </div>
+      
+      {/* Table Body */}
+      <div className="divide-y divide-slate-50">
+        {paginatedModels.length === 0 ? (
+          <div className="py-12 text-center text-slate-400">
+            <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p className="font-medium">No models found</p>
+            <p className="text-sm mt-1">
+              {searchQuery ? "Try a different search term" : "No bio link data yet"}
+            </p>
+          </div>
+        ) : (
+          paginatedModels.map((model, idx) => {
+            const viewsPercentage = (model.views / maxViews) * 100;
+            const clicksPercentage = maxViews > 0 ? (model.clicks / maxViews) * 100 : 0;
+            const ctr = model.views > 0 
+              ? ((model.clicks / model.views) * 100).toFixed(1) 
+              : "0.0";
+            
+            return (
+              <motion.div
+                key={model.creatorId}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: idx * 0.02 }}
+                className="grid grid-cols-12 gap-4 px-4 py-3 items-center hover:bg-slate-50/50 rounded-lg transition-colors group"
+              >
+                {/* Model Name */}
+                <div className="col-span-4 flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-sm font-semibold shadow-sm flex-shrink-0">
+                    {model.username.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-medium text-slate-900 truncate">
+                    @{model.username}
+                  </span>
+                </div>
+                
+                {/* Views */}
+                <div className="col-span-2 text-right">
+                  <span className="text-sm font-semibold text-slate-900">
+                    {model.views.toLocaleString()}
+                  </span>
+                </div>
+                
+                {/* Clicks */}
+                <div className="col-span-2 text-right">
+                  <span className="text-sm font-semibold text-slate-900">
+                    {model.clicks.toLocaleString()}
+                  </span>
+                </div>
+                
+                {/* Performance Bar */}
+                <div className="col-span-3">
+                  <div className="flex gap-0.5 h-2 rounded-full overflow-hidden bg-slate-100">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${viewsPercentage}%` }}
+                      transition={{ duration: 0.4 }}
+                      className="bg-violet-500 rounded-l"
+                    />
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${clicksPercentage}%` }}
+                      transition={{ duration: 0.4, delay: 0.1 }}
+                      className="bg-emerald-500 rounded-r"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">{ctr}% CTR</p>
+                </div>
+                
+                {/* Action */}
+                <div className="col-span-1 flex justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onSelectModel(model.creatorId)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </motion.div>
+            );
+          })
+        )}
+      </div>
+      
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+      
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-6 pt-2">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-violet-500" />
+          <span className="text-xs text-slate-600">Views</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-emerald-500" />
+          <span className="text-xs text-slate-600">Clicks</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// TOP LINKS TABLE (WITH MODEL INFO)
+// ============================================
+
+function TopLinksTable({
+  links,
+  modelStats,
+  onSelectModel,
+}: {
+  links: Array<{ label: string; count: number; modelUsername?: string; creatorId?: string }>;
+  modelStats: ModelBioStats[];
+  onSelectModel: (id: string) => void;
+}) {
+  if (!links || links.length === 0) {
+    return (
+      <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">
+        <div className="text-center">
+          <Link2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          <p>No link clicks yet</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-2">
+      {links.slice(0, 5).map((link, idx) => {
+        // Try to find model by username if available
+        const model = link.creatorId 
+          ? modelStats.find(m => m.creatorId === link.creatorId)
+          : link.modelUsername 
+          ? modelStats.find(m => m.username.toLowerCase() === link.modelUsername?.toLowerCase())
+          : null;
+        
+        return (
+          <div 
+            key={`${link.label}-${idx}`} 
+            className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors group"
+          >
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <span 
+                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+              >
+                {idx + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-700 truncate">{link.label}</p>
+                {model && (
+                  <button
+                    onClick={() => onSelectModel(model.creatorId)}
+                    className="text-xs text-violet-600 hover:text-violet-700 hover:underline"
+                  >
+                    @{model.username}
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-900">{link.count}</span>
+              {model && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onSelectModel(model.creatorId)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0"
+                >
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -580,7 +868,6 @@ function StatCardSkeleton({ gradient }: { gradient: string }) {
 function StatisticsPageSkeleton() {
   return (
     <div className="space-y-6">
-      {/* Header Skeleton */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <SkeletonPulse className="h-8 w-32 mb-2" />
@@ -592,7 +879,6 @@ function StatisticsPageSkeleton() {
         </div>
       </div>
 
-      {/* Stats Grid Skeleton */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCardSkeleton gradient="bg-gradient-to-br from-violet-500 to-purple-600" />
         <StatCardSkeleton gradient="bg-gradient-to-br from-cyan-500 to-blue-600" />
@@ -600,76 +886,46 @@ function StatisticsPageSkeleton() {
         <StatCardSkeleton gradient="bg-gradient-to-br from-orange-500 to-amber-500" />
       </div>
 
-      {/* Main Grid Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Traffic Chart Skeleton */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6">
-          <div className="mb-4">
-            <SkeletonPulse className="h-5 w-36 mb-1" />
-            <SkeletonPulse className="h-4 w-24" />
-          </div>
-          <div className="h-[300px] flex items-end gap-2 pt-8">
-            {[...Array(14)].map((_, i) => (
-              <div
-                key={i}
-                className="flex-1 bg-gradient-to-t from-violet-100 to-violet-50 rounded-t animate-pulse"
-                style={{ height: `${30 + Math.random() * 60}%`, animationDelay: `${i * 50}ms` }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Globe Skeleton */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 overflow-hidden">
-          <div className="mb-4">
-            <SkeletonPulse className="h-5 w-28 mb-1" />
-            <SkeletonPulse className="h-4 w-36" />
-          </div>
-          <div className="w-full max-w-[280px] mx-auto aspect-square relative">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 animate-pulse" />
-            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-slate-50 to-slate-100 animate-pulse" style={{ animationDelay: "150ms" }} />
-            <div className="absolute inset-8 rounded-full bg-gradient-to-br from-white to-slate-50 animate-pulse" style={{ animationDelay: "300ms" }} />
-          </div>
-          <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
-            <SkeletonPulse className="h-4 w-32 mb-3" />
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
-                <SkeletonPulse className="h-6 w-6 rounded" />
-                <div className="flex-1">
-                  <SkeletonPulse className="h-4 w-28 mb-1" />
-                  <SkeletonPulse className="h-3 w-16" />
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <SkeletonPulse className="h-6 w-48 mb-2" />
+        <SkeletonPulse className="h-4 w-32 mb-6" />
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4 py-3">
+              <SkeletonPulse className="w-8 h-8 rounded-full" />
+              <SkeletonPulse className="h-4 w-24" />
+              <div className="flex-1" />
+              <SkeletonPulse className="h-4 w-16" />
+              <SkeletonPulse className="h-4 w-16" />
+              <SkeletonPulse className="h-2 w-32 rounded-full" />
+            </div>
+          ))}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Second Row Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6">
-            <div className="mb-4">
-              <SkeletonPulse className="h-5 w-28 mb-1" />
-              <SkeletonPulse className="h-4 w-20" />
-            </div>
-            <div className="space-y-3">
-              {[...Array(4)].map((_, j) => (
-                <div key={j} className="flex items-center gap-3 py-2">
-                  <SkeletonPulse className="h-6 w-6 rounded" />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <SkeletonPulse className="h-4 w-24" />
-                      <SkeletonPulse className="h-4 w-12" />
-                    </div>
-                    <SkeletonPulse className="h-1.5 w-full rounded-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+// ============================================
+// EMPTY STATE COMPONENT
+// ============================================
+
+function EmptyState({ 
+  title, 
+  description, 
+  icon: Icon = BarChart3 
+}: { 
+  title: string; 
+  description: string; 
+  icon?: React.ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+      <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+        <Icon className="w-8 h-8 text-slate-400" />
       </div>
+      <h3 className="text-lg font-semibold text-slate-900 mb-2">{title}</h3>
+      <p className="text-slate-500 max-w-md">{description}</p>
     </div>
   );
 }
@@ -682,13 +938,14 @@ export default function StatisticsPage() {
   const { user, apiKey, creator } = useDashboard();
   const { globalCounts, creatorMediaCounts } = useMediaState();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const creatorParam = searchParams.get("creator");
   
   const [mediaStats, setMediaStats] = useState<CreatorStats | PlatformOverview | null>(null);
   const [bioAnalytics, setBioAnalytics] = useState<BioAnalytics | null>(null);
   const [aggregatedBioStats, setAggregatedBioStats] = useState<AggregatedBioStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false); // Light refresh indicator
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("30d");
   const [models, setModels] = useState<ModelOption[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(creatorParam);
@@ -696,11 +953,20 @@ export default function StatisticsPage() {
   const [realtimeVisitors, setRealtimeVisitors] = useState<RealtimeVisitor[]>([]);
   const [bioLinkIds, setBioLinkIds] = useState<string[]>([]);
   const channelRef = useRef<ReturnType<typeof getSupabaseBrowserClient>["channel"] | null>(null);
-  const prevSelectedModelRef = useRef<string | null>(null); // Track model changes
+  const prevSelectedModelRef = useRef<string | null>(null);
 
   const isAdminOrBusiness = user?.role === "admin" || user?.role === "business";
   
-  // Initialize selectedModelId from URL param
+  // Handle model selection - update URL for deep linking
+  const handleSelectModel = useCallback((modelId: string | null) => {
+    setSelectedModelId(modelId);
+    if (modelId) {
+      router.push(`/dashboard/statistics?creator=${modelId}`, { scroll: false });
+    } else {
+      router.push('/dashboard/statistics', { scroll: false });
+    }
+  }, [router]);
+  
   useEffect(() => {
     if (!initialized && creatorParam) {
       setSelectedModelId(creatorParam);
@@ -708,7 +974,6 @@ export default function StatisticsPage() {
     }
   }, [creatorParam, initialized]);
 
-  // Fetch available models for admin/business
   useEffect(() => {
     if (!isAdminOrBusiness) return;
 
@@ -729,20 +994,16 @@ export default function StatisticsPage() {
     fetchModels();
   }, [isAdminOrBusiness, user]);
 
-  // Setup Supabase realtime subscription for live traffic - dynamic per bio link(s)
-  // Only recreate channel when bio link IDs actually change (not just array reference)
   const bioLinkIdsKey = bioLinkIds.sort().join(",");
   
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
     
-    // Only clear visitors and recreate channel when switching to different model
     const modelChanged = prevSelectedModelRef.current !== selectedModelId;
     if (modelChanged) {
       prevSelectedModelRef.current = selectedModelId;
       setRealtimeVisitors([]);
       
-      // Clean up previous channel
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
@@ -750,14 +1011,9 @@ export default function StatisticsPage() {
     }
 
     if (bioLinkIds.length === 0) return;
-    
-    // Don't recreate channel if it already exists for the same bio links
     if (channelRef.current && !modelChanged) return;
 
-    // Create a unique channel name based on the bio link IDs
     const channelName = `bio_views_${bioLinkIdsKey.slice(0, 50)}_${Date.now()}`;
-    
-    // For single bio link, use filter. For multiple, we'll filter client-side
     const isSingleBioLink = bioLinkIds.length === 1;
     
     const channel = supabase
@@ -773,7 +1029,6 @@ export default function StatisticsPage() {
         (payload: { new: { id?: string; country?: string; bio_link_id?: string } }) => {
           const newView = payload.new;
           
-          // For multiple bio links, filter client-side
           if (!isSingleBioLink && newView.bio_link_id && !bioLinkIds.includes(newView.bio_link_id)) {
             return;
           }
@@ -790,7 +1045,6 @@ export default function StatisticsPage() {
           };
           
           setRealtimeVisitors((prev) => {
-            // Keep last 20 visitors
             const updated = [...prev, visitor].slice(-20);
             return updated;
           });
@@ -800,12 +1054,9 @@ export default function StatisticsPage() {
 
     channelRef.current = channel;
 
-    return () => {
-      // Only cleanup on unmount, not on every re-render
-    };
-  }, [bioLinkIdsKey, selectedModelId]); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {};
+  }, [bioLinkIdsKey, selectedModelId]);
   
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       const supabase = getSupabaseBrowserClient();
@@ -816,19 +1067,17 @@ export default function StatisticsPage() {
     };
   }, []);
 
-  // Cleanup old realtime visitors
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
       setRealtimeVisitors((prev) => 
-        prev.filter((v) => now - v.timestamp < 60000) // Keep for 60 seconds
+        prev.filter((v) => now - v.timestamp < 60000)
       );
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // Track if this is initial load or refresh
   const hasLoadedOnce = useRef(false);
   
   useEffect(() => {
@@ -837,7 +1086,6 @@ export default function StatisticsPage() {
   }, [apiKey, user, period, selectedModelId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchAllData = async (isInitialLoad = false) => {
-    // Only show full skeleton on initial load, use light refresh for subsequent loads
     if (isInitialLoad) {
       setIsLoading(true);
     } else {
@@ -856,7 +1104,6 @@ export default function StatisticsPage() {
       targetCreatorId = selectedModelId;
     }
 
-    // 1. Fetch media stats (parallel)
     if (api) {
       const mediaPromise = (async () => {
         try {
@@ -878,7 +1125,6 @@ export default function StatisticsPage() {
       promises.push(mediaPromise);
     }
 
-    // 2. Fetch bio analytics (parallel)
     if (targetCreatorId) {
       setAggregatedBioStats(null);
       
@@ -913,7 +1159,6 @@ export default function StatisticsPage() {
       
       const aggPromise = (async () => {
         try {
-          // Fetch bio link IDs for realtime tracking
           let bioLinksQuery = supabase.from("bio_links").select("id, creator_id");
           
           if (user?.role === "business" && user?.studio_id) {
@@ -957,7 +1202,6 @@ export default function StatisticsPage() {
       promises.push(aggPromise, modelsPromise);
     }
     
-    // Wait for all promises to complete in parallel
     await Promise.all(promises);
     setIsLoading(false);
     setIsRefreshing(false);
@@ -967,20 +1211,17 @@ export default function StatisticsPage() {
     return "creator" in s;
   };
 
-  // Prepare chart data - use bioAnalytics for individual model, aggregatedBioStats for overview
   const viewsByDaySource = bioAnalytics?.viewsByDay || aggregatedBioStats?.viewsByDay;
   const clicksByDaySource = bioAnalytics?.clicksByDay || aggregatedBioStats?.clicksByDay;
   
   const trafficChartData = (() => {
     if (!viewsByDaySource) return [];
     
-    // Get all unique dates from both views and clicks
     const allDates = new Set([
       ...Object.keys(viewsByDaySource),
       ...Object.keys(clicksByDaySource || {}),
     ]);
     
-    // Sort dates and map to chart data
     return Array.from(allDates)
       .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
       .map((date) => ({
@@ -1006,21 +1247,19 @@ export default function StatisticsPage() {
         .map(([device, count]) => ({ device: device.charAt(0).toUpperCase() + device.slice(1), count }))
     : [];
 
-  // Filter out self-referrers - use bioAnalytics or aggregatedBioStats
   const referrersSource = bioAnalytics?.topReferrers || aggregatedBioStats?.topReferrers;
   const filteredReferrers = useMemo(() => {
     if (!referrersSource) return [];
     
     return referrersSource
       .filter((ref) => {
-        if (!ref.referrer) return true; // Keep direct traffic
+        if (!ref.referrer) return true;
         const domain = ref.referrer.toLowerCase();
         return !SELF_REFERRER_DOMAINS.some((self) => domain.includes(self));
       })
       .slice(0, 4);
   }, [referrersSource]);
   
-  // Top links - use bioAnalytics or aggregatedBioStats
   const topLinksSource = bioAnalytics?.topLinks || aggregatedBioStats?.topLinks;
 
   const totalViews = bioAnalytics?.summary.totalViews || aggregatedBioStats?.totalViews || 0;
@@ -1031,6 +1270,9 @@ export default function StatisticsPage() {
 
   const selectedModel = models.find(m => m.id === selectedModelId);
   const displayName = selectedModel?.username || null;
+  
+  // Check if we have any data at all
+  const hasNoData = !bioAnalytics && (!aggregatedBioStats || (aggregatedBioStats.totalViews === 0 && aggregatedBioStats.modelStats.length === 0));
 
   return (
     <div className="space-y-6">
@@ -1057,7 +1299,7 @@ export default function StatisticsPage() {
             <ModelSelector
               models={models}
               selectedId={selectedModelId}
-              onSelect={setSelectedModelId}
+              onSelect={handleSelectModel}
             />
           )}
           
@@ -1114,265 +1356,204 @@ export default function StatisticsPage() {
         />
       </div>
 
-      {/* Model Bio Stats for Admin/Business */}
+      {/* Empty State for No Data */}
+      {hasNoData && isAdminOrBusiness && !selectedModelId && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-8">
+          <EmptyState
+            title="No analytics data yet"
+            description="Once your models' bio links start receiving traffic, you'll see performance metrics here. Share bio links to start tracking!"
+            icon={BarChart3}
+          />
+        </div>
+      )}
+
+      {/* Model Bio Stats Table for Admin/Business - SCALABLE VERSION */}
       {isAdminOrBusiness && !selectedModelId && aggregatedBioStats && aggregatedBioStats.modelStats.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
           <SectionHeader 
-            title="Bio Link Performance by Model" 
-            subtitle="Views and clicks per model"
+            title="Model Performance" 
+            subtitle={`${aggregatedBioStats.modelStats.length} models with bio links`}
           />
           
-          <div className="space-y-3 mt-4">
-            {aggregatedBioStats.modelStats.slice(0, 10).map((model) => {
-              const maxViews = Math.max(...aggregatedBioStats.modelStats.map(m => m.views));
-              const viewsPercentage = maxViews > 0 ? (model.views / maxViews) * 100 : 0;
-              const clicksPercentage = maxViews > 0 ? (model.clicks / maxViews) * 100 : 0;
-              
-              return (
-                <button
-                  key={model.creatorId}
-                  onClick={() => setSelectedModelId(model.creatorId)}
-                  className="w-full text-left group hover:bg-slate-50 rounded-xl p-3 -mx-3 transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-sm font-semibold shadow-sm">
-                        {model.username.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="font-medium text-slate-900 group-hover:text-violet-600 transition-colors">
-                        @{model.username}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="text-slate-500">
-                        <Eye className="w-3.5 h-3.5 inline mr-1" />
-                        {model.views.toLocaleString()}
-                      </span>
-                      <span className="text-slate-500">
-                        <MousePointerClick className="w-3.5 h-3.5 inline mr-1" />
-                        {model.clicks.toLocaleString()}
-                      </span>
-                      <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-violet-500 transition-colors" />
-                    </div>
-                  </div>
-                  <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-slate-100">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${viewsPercentage}%` }}
-                      transition={{ duration: 0.5 }}
-                      className="bg-violet-500 rounded-l"
-                    />
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${clicksPercentage}%` }}
-                      transition={{ duration: 0.5, delay: 0.1 }}
-                      className="bg-emerald-500 rounded-r"
-                    />
-                  </div>
-                </button>
-              );
-            })}
+          <ModelPerformanceTable
+            modelStats={aggregatedBioStats.modelStats}
+            onSelectModel={handleSelectModel}
+          />
+        </div>
+      )}
+
+      {/* Main Grid with Globe and Chart */}
+      {(trafficChartData.length > 0 || !hasNoData) && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Traffic Chart */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6">
+            <SectionHeader 
+              title="Traffic Over Time" 
+              subtitle="Daily page views & clicks"
+            />
+            
+            {trafficChartData.length > 0 ? (
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <AreaChart data={trafficChartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+                  <defs>
+                    <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="clicksGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 12, fill: "#94a3b8" }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 12, fill: "#94a3b8" }}
+                    width={40}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area
+                    type="monotone"
+                    dataKey="views"
+                    stroke="#8b5cf6"
+                    strokeWidth={2}
+                    fill="url(#viewsGradient)"
+                    name="Views"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="clicks"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    fill="url(#clicksGradient)"
+                    name="Clicks"
+                  />
+                </AreaChart>
+              </ChartContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-slate-400">
+                <div className="text-center">
+                  <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                  <p>No traffic data yet</p>
+                  <p className="text-sm mt-1">Share your bio link to start tracking!</p>
+                </div>
+              </div>
+            )}
           </div>
-          
-          <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-violet-500" />
-              <span className="text-sm text-slate-600">Views</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-emerald-500" />
-              <span className="text-sm text-slate-600">Clicks</span>
+
+          {/* Realtime Globe */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 overflow-hidden">
+            <SectionHeader 
+              title="Live Traffic" 
+              subtitle="Real-time visitor activity"
+            />
+            
+            <RealtimeGlobe
+              realtimeVisitors={realtimeVisitors}
+              className="w-full max-w-[280px] mx-auto"
+            />
+            
+            <div className="mt-4 pt-4 border-t border-slate-100">
+              <h4 className="text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-violet-500" />
+                Recent Activity
+              </h4>
+              <RealtimeActivityFeed visitors={realtimeVisitors} />
             </div>
           </div>
         </div>
       )}
 
-      {/* Main Grid with Globe and Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Traffic Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6">
-          <SectionHeader 
-            title="Traffic Over Time" 
-            subtitle="Daily page views & clicks"
-          />
-          
-          {trafficChartData.length > 0 ? (
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <AreaChart data={trafficChartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-                <defs>
-                  <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="clicksGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fontSize: 12, fill: "#94a3b8" }}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fontSize: 12, fill: "#94a3b8" }}
-                  width={40}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Area
-                  type="monotone"
-                  dataKey="views"
-                  stroke="#8b5cf6"
-                  strokeWidth={2}
-                  fill="url(#viewsGradient)"
-                  name="Views"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="clicks"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  fill="url(#clicksGradient)"
-                  name="Clicks"
-                />
-              </AreaChart>
-            </ChartContainer>
-          ) : (
-            <div className="h-[300px] flex items-center justify-center text-slate-400">
-              <div className="text-center">
-                <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                <p>No traffic data yet</p>
-                <p className="text-sm mt-1">Share your bio link to start tracking!</p>
+      {/* Second Row */}
+      {(countryData.length > 0 || deviceData.length > 0 || (topLinksSource && topLinksSource.length > 0)) && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Top Countries Full List */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <SectionHeader title="Top Countries" subtitle="By page views" />
+            
+            {countryData.length > 0 ? (
+              <div className="space-y-1">
+                {countryData.map((item, idx) => (
+                  <TopItemRow
+                    key={item.country}
+                    label={item.country}
+                    value={item.count}
+                    percentage={totalViews > 0 ? (item.count / totalViews) * 100 : 0}
+                    color={COLORS[idx % COLORS.length]}
+                    icon={getCountryFlag(item.country)}
+                  />
+                ))}
               </div>
-            </div>
-          )}
-        </div>
+            ) : (
+              <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">
+                No country data yet
+              </div>
+            )}
+          </div>
 
-        {/* Realtime Globe */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 overflow-hidden">
-          <SectionHeader 
-            title="Live Traffic" 
-            subtitle="Real-time visitor activity"
-          />
-          
-          <RealtimeGlobe
-            realtimeVisitors={realtimeVisitors}
-            className="w-full max-w-[280px] mx-auto"
-          />
-          
-          {/* Real-time activity feed */}
-          <div className="mt-4 pt-4 border-t border-slate-100">
-            <h4 className="text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-violet-500" />
-              Recent Activity
-            </h4>
-            <RealtimeActivityFeed visitors={realtimeVisitors} />
+          {/* Device Breakdown */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <SectionHeader title="Devices" subtitle="Visitor breakdown" />
+            
+            {deviceData.length > 0 ? (
+              <div className="space-y-4">
+                {deviceData.map((item, idx) => {
+                  const Icon = item.device === "Mobile" ? Smartphone : item.device === "Desktop" ? Monitor : Tablet;
+                  const total = deviceData.reduce((sum, d) => sum + d.count, 0);
+                  const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
+                  
+                  return (
+                    <div key={item.device} className="flex items-center gap-3">
+                      <div 
+                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style={{ backgroundColor: `${COLORS[idx]}15` }}
+                      >
+                        <Icon className="w-5 h-5" style={{ color: COLORS[idx] }} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-slate-700">{item.device}</span>
+                          <span className="text-sm font-semibold text-slate-900">{percentage}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${percentage}%` }}
+                            transition={{ duration: 0.5 }}
+                            className="h-full rounded-full"
+                            style={{ backgroundColor: COLORS[idx] }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">
+                No device data yet
+              </div>
+            )}
+          </div>
+
+          {/* Top Links - WITH MODEL INFO */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <SectionHeader title="Top Links" subtitle="Most clicked" />
+            
+            <TopLinksTable
+              links={topLinksSource || []}
+              modelStats={aggregatedBioStats?.modelStats || []}
+              onSelectModel={handleSelectModel}
+            />
           </div>
         </div>
-      </div>
-
-      {/* Second Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Top Countries Full List */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <SectionHeader title="Top Countries" subtitle="By page views" />
-          
-          {countryData.length > 0 ? (
-            <div className="space-y-1">
-              {countryData.map((item, idx) => (
-                <TopItemRow
-                  key={item.country}
-                  label={item.country}
-                  value={item.count}
-                  percentage={totalViews > 0 ? (item.count / totalViews) * 100 : 0}
-                  color={COLORS[idx % COLORS.length]}
-                  icon={getCountryFlag(item.country)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">
-              No country data yet
-            </div>
-          )}
-        </div>
-
-        {/* Device Breakdown */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <SectionHeader title="Devices" subtitle="Visitor breakdown" />
-          
-          {deviceData.length > 0 ? (
-            <div className="space-y-4">
-              {deviceData.map((item, idx) => {
-                const Icon = item.device === "Mobile" ? Smartphone : item.device === "Desktop" ? Monitor : Tablet;
-                const total = deviceData.reduce((sum, d) => sum + d.count, 0);
-                const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
-                
-                return (
-                  <div key={item.device} className="flex items-center gap-3">
-                    <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: `${COLORS[idx]}15` }}
-                    >
-                      <Icon className="w-5 h-5" style={{ color: COLORS[idx] }} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-slate-700">{item.device}</span>
-                        <span className="text-sm font-semibold text-slate-900">{percentage}%</span>
-                      </div>
-                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${percentage}%` }}
-                          transition={{ duration: 0.5 }}
-                          className="h-full rounded-full"
-                          style={{ backgroundColor: COLORS[idx] }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">
-              No device data yet
-            </div>
-          )}
-        </div>
-
-        {/* Top Links */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <SectionHeader title="Top Links" subtitle="Most clicked" />
-          
-          {topLinksSource && topLinksSource.length > 0 ? (
-            <div className="space-y-3">
-              {topLinksSource.slice(0, 5).map((link, idx) => (
-                <div key={link.label} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <span 
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                      style={{ backgroundColor: COLORS[idx % COLORS.length] }}
-                    >
-                      {idx + 1}
-                    </span>
-                    <span className="text-sm text-slate-700 truncate max-w-[140px]">{link.label}</span>
-                  </div>
-                  <span className="text-sm font-bold text-slate-900">{link.count}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">
-              No link clicks yet
-            </div>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Top Referrers with Favicons */}
       {filteredReferrers.length > 0 && (
@@ -1398,7 +1579,6 @@ export default function StatisticsPage() {
           <SectionHeader title="Content Library" subtitle="Media counts (live)" />
           
           {(() => {
-            // Use shared state counts for real-time accuracy
             const targetCreatorId = selectedModelId || user?.creator_id;
             const counts = targetCreatorId && creatorMediaCounts[targetCreatorId]
               ? creatorMediaCounts[targetCreatorId]

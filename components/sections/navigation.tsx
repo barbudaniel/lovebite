@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { Heart, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 const navLinks: { href: string; label: string; isNew?: boolean }[] = [
   { href: "#about", label: "About" },
@@ -69,12 +70,7 @@ export function Navigation({ variant = "light" }: NavigationProps) {
           <div className="flex items-center justify-between h-16 sm:h-18">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group z-10">
-              <div className="w-9 h-9 bg-brand-600 rounded-lg flex items-center justify-center text-white transition-transform duration-200 group-hover:scale-110 group-active:scale-95">
-                <Heart className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" strokeWidth={2.5} />
-              </div>
-              <span className={`font-bold text-lg sm:text-xl transition-colors duration-200 group-hover:text-brand-600 ${
-                isDarkMode ? "text-white" : "text-slate-900"
-              }`}>Lovebite</span>
+            <Image src="/logo.png" alt="Lovdash" width={140} height={30} />
             </Link>
 
             {/* Desktop Navigation */}

@@ -21,7 +21,7 @@ const highlights = [
   { icon: Clock, text: "24/7 engagement" },
 ];
 
-export function LovebiteAI() {
+export function LovdashAI() {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +52,7 @@ export function LovebiteAI() {
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
                 Introducing{" "}
                 <span className="bg-gradient-to-r from-product-400 to-brand-400 bg-clip-text text-transparent">
-                  Lovebite AI
+                  Lovdash AI
                 </span>
               </h2>
               <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-400 leading-relaxed">
@@ -95,7 +95,7 @@ export function LovebiteAI() {
                 href="/ai"
                 className="inline-flex items-center gap-2 text-product-400 hover:text-product-300 font-medium transition-colors group"
               >
-                Learn more about Lovebite AI
+                Learn more about Lovdash AI
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>
@@ -132,7 +132,7 @@ export function LovebiteAI() {
                     You&apos;re on the list!
                   </h4>
                   <p className="text-slate-400 text-sm">
-                    We&apos;ll notify you when Lovebite AI launches.
+                    We&apos;ll notify you when Lovdash AI launches.
                   </p>
                 </motion.div>
               ) : (

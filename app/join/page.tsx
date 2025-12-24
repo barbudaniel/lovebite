@@ -262,7 +262,7 @@ function JoinPageContent() {
         });
       }
 
-      toast.success("Account created! Welcome to Lovebite!");
+      toast.success("Account created! Welcome to Lovdash!");
 
       // Redirect based on session
       if (authData.session) {
@@ -289,7 +289,7 @@ function JoinPageContent() {
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Lovebite</h1>
+              <h1 className="text-2xl font-bold text-white">Lovdash</h1>
               <p className="text-xs text-slate-400">Creator Platform</p>
             </div>
           </Link>
@@ -334,7 +334,7 @@ function JoinPageContent() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">Lovebite</span>
+              <span className="text-xl font-bold text-white">Lovdash</span>
             </Link>
           </div>
 
@@ -378,7 +378,7 @@ function JoinPageContent() {
                     <Label className="text-slate-300">Your bio link</Label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                        lovebite.bio/
+                        Lovdash.bio/
                       </span>
                       <Input
                         value={formData.username}
@@ -588,7 +588,7 @@ function JoinPageContent() {
                           {formData.stageName || formData.displayName || "Your Name"}
                         </p>
                         <p className="text-sm text-slate-400">
-                          lovebite.bio/{formData.username}
+                          Lovdash.bio/{formData.username}
                         </p>
                       </div>
                     </div>

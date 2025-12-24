@@ -11,7 +11,7 @@ const testimonials = [
     role: "Content Creator",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=128&h=128",
     quote:
-      "I've been in the industry for 7 years. Lovebite helped me create a consistent monthly income, much higher than before. I love that I can get everything done in just 10-20 hours per week.",
+      "I've been in the industry for 7 years. Lovdash helped me create a consistent monthly income, much higher than before. I love that I can get everything done in just 10-20 hours per week.",
     earnings: "$3,200/mo",
   },
   {
@@ -19,7 +19,7 @@ const testimonials = [
     role: "Model & Influencer",
     avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=128&h=128",
     quote:
-      "Communication and building connections with Lovebite has been effortless. They always keep their word, they're always open and willing to answer questions.",
+      "Communication and building connections with Lovdash has been effortless. They always keep their word, they're always open and willing to answer questions.",
     earnings: "$2,800/mo",
   },
   {
@@ -27,7 +27,7 @@ const testimonials = [
     role: "New Creator",
     avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=128&h=128",
     quote:
-      "The team is very trustworthy and professional. I just started collaborating with Lovebite, and I'm already convinced that things will work smoothly!",
+      "The team is very trustworthy and professional. I just started collaborating with Lovdash, and I'm already convinced that things will work smoothly!",
     earnings: "Just Started",
   },
   {
@@ -43,7 +43,7 @@ const testimonials = [
     role: "Part-time Model",
     avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=128&h=128",
     quote:
-      "Since I also work another job and my free time is limited, collaboration with Lovebite seemed just right. The financial results have helped me enjoy more free time!",
+      "Since I also work another job and my free time is limited, collaboration with Lovdash seemed just right. The financial results have helped me enjoy more free time!",
     earnings: "$1,900/mo",
   },
 ];

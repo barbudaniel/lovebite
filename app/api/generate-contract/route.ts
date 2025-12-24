@@ -41,7 +41,7 @@ function generateContractHtml(data: {
 </head>
 <body>
   <div class="header">
-    <div class="logo">LOVEBITE<span>FANS</span></div>
+    <div class="logo">Lovdash<span>FANS</span></div>
     <p style="color: #666; margin-top: 5px;">Creator Management Agency</p>
   </div>
 
@@ -196,6 +196,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Failed to generate contract' }, { status: 500 });
   }
 }
+
+
+
+
 
 
 

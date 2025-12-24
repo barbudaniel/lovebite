@@ -564,9 +564,9 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
             </motion.div>
           )}
 
-          {/* Lovebite Badge - Create your bio */}
+          {/* Lovdash Badge - Create your bio */}
           <motion.a
-            href="https://www.lovebite.fans/"
+            href="https://www.Lovdash.fans/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 py-3 text-center"
@@ -580,7 +580,7 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
                 Create your bio with
               </span>
               <span className="text-[12px] font-bold text-white">
-                Lovebite
+                Lovdash
               </span>
             </div>
           </motion.a>

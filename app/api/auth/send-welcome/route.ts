@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Recipient email and name are required" }, { status: 400 });
     }
 
-    const baseUrl = dashboardUrl || `${process.env.NEXT_PUBLIC_SITE_URL || "https://lovebite.fans"}/dashboard`;
+    const baseUrl = dashboardUrl || `${process.env.NEXT_PUBLIC_SITE_URL || "https://Lovdash.fans"}/dashboard`;
     
     let htmlContent: string;
     let subject: string;
@@ -20,15 +20,15 @@ export async function POST(request: NextRequest) {
     if (type === "account_created" && tempPassword) {
       // Account created with temporary password
       htmlContent = getAccountCreatedHtml(name, to, tempPassword, baseUrl);
-      subject = `Your Lovebite account is ready!`;
+      subject = `Your Lovdash account is ready!`;
     } else {
       // Regular welcome email
       htmlContent = getWelcomeHtml(name, baseUrl);
-      subject = `Welcome to Lovebite, ${name}! 🎉`;
+      subject = `Welcome to Lovdash, ${name}! 🎉`;
     }
 
     const { error: emailError } = await resend.emails.send({
-      from: "Lovebite <welcome@lovebite.fans>",
+      from: "Lovdash <welcome@Lovdash.fans>",
       to,
       subject,
       html: htmlContent,

@@ -38,7 +38,7 @@ export interface AggregatedBioStats {
   clicksByDay: Record<string, number>;
   viewsByCountry: Record<string, number>;
   viewsByDevice: Record<string, number>;
-  topLinks: Array<{ label: string; count: number }>;
+  topLinks: Array<{ label: string; count: number; creatorId?: string; modelUsername?: string }>;
   topReferrers: Array<{ referrer: string; count: number }>;
 }
 
@@ -133,6 +133,7 @@ export async function GET(request: NextRequest) {
 
     const bioLinkIds = bioLinks.map((b) => b.id);
     const bioLinkToCreator = new Map(bioLinks.map((b) => [b.id, b.creator_id]));
+    const creatorIdToUsername = new Map(creators.map((c) => [c.id, c.username]));
 
     // Get page views for all bio links with full details for aggregation
     const { data: pageViews } = await serviceClient
@@ -155,7 +156,7 @@ export async function GET(request: NextRequest) {
     const viewsByCountry: Record<string, number> = {};
     const viewsByDevice: Record<string, number> = {};
     const referrerCounts: Record<string, number> = {};
-    const linkClickCounts: Record<string, number> = {};
+    const linkClickCounts: Record<string, { count: number; creatorId?: string }> = {};
 
     // Initialize all creators
     creators.forEach((c) => {
@@ -217,9 +218,16 @@ export async function GET(request: NextRequest) {
         clicksByDay[day] = (clicksByDay[day] || 0) + 1;
       }
       
-      // Aggregate link clicks by label
+      // Aggregate link clicks by label (with creator info)
       if (lc.link_label) {
-        linkClickCounts[lc.link_label] = (linkClickCounts[lc.link_label] || 0) + 1;
+        const creatorId = bioLinkToCreator.get(lc.bio_link_id);
+        const existing = linkClickCounts[lc.link_label];
+        if (existing) {
+          existing.count += 1;
+          // Keep the most frequent creator for this label
+        } else {
+          linkClickCounts[lc.link_label] = { count: 1, creatorId };
+        }
       }
     });
 
@@ -246,9 +254,14 @@ export async function GET(request: NextRequest) {
     // Sort by views descending
     modelStats.sort((a, b) => b.views - a.views);
     
-    // Convert to sorted arrays
+    // Convert to sorted arrays (with model info)
     const topLinks = Object.entries(linkClickCounts)
-      .map(([label, count]) => ({ label, count }))
+      .map(([label, data]) => ({ 
+        label, 
+        count: data.count,
+        creatorId: data.creatorId,
+        modelUsername: data.creatorId ? creatorIdToUsername.get(data.creatorId) : undefined
+      }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
     

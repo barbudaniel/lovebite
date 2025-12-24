@@ -1215,7 +1215,7 @@ function SettingsModal({
   const [localCommands, setLocalCommands] = useState(commands);
   const [isSaving, setIsSaving] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState(
-    "👋 Welcome to Lovebite! How can I help you today?"
+    "👋 Welcome to Lovdash! How can I help you today?"
   );
 
   const handleSave = async () => {

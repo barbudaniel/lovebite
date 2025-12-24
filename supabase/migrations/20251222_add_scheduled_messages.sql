@@ -174,3 +174,6 @@ COMMENT ON COLUMN public.whatsapp_scheduled_messages.schedule_type IS 'Type of s
 COMMENT ON COLUMN public.whatsapp_scheduled_messages.schedule_day_of_week IS 'Day of week for weekly schedules (0=Sunday, 6=Saturday)';
 COMMENT ON COLUMN public.whatsapp_scheduled_messages.next_run_at IS 'Calculated next execution time';
 
+
+
+

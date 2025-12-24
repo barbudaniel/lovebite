@@ -79,9 +79,9 @@ export async function POST(request: NextRequest) {
     const name = dashboardUser.display_name || "User";
     const htmlContent = getPasswordChangedHtml(name);
     await resend.emails.send({
-      from: "Lovebite <security@lovebite.fans>",
+      from: "Lovdash <security@Lovdash.fans>",
       to: email,
-      subject: "Your Lovebite password has been changed",
+      subject: "Your Lovdash password has been changed",
       html: htmlContent,
     }).catch(err => {
       console.error("Failed to send password changed email:", err);

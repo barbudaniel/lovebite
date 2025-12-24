@@ -98,9 +98,9 @@ export async function POST(request: NextRequest) {
       const secret = generateBase32Secret(20);
       
       // Generate provisioning URI for QR code
-      const platform = account.platform || "Lovebite";
+      const platform = account.platform || "Lovdash";
       const username = account.username || account.email || "account";
-      const uri = `otpauth://totp/${encodeURIComponent(platform)}:${encodeURIComponent(username)}?secret=${secret}&issuer=${encodeURIComponent("Lovebite")}&digits=6&period=30`;
+      const uri = `otpauth://totp/${encodeURIComponent(platform)}:${encodeURIComponent(username)}?secret=${secret}&issuer=${encodeURIComponent("Lovdash")}&digits=6&period=30`;
 
       // Store secret temporarily (not enabled yet until verified)
       await supabase

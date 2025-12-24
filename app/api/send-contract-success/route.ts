@@ -9,7 +9,7 @@ function getSuccessEmailHtml(creatorName: string): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Lovebite Fans</title>
+    <title>Welcome to Lovdash Fans</title>
     <!--[if mso]>
     <noscript>
     <xml>
@@ -37,7 +37,7 @@ function getSuccessEmailHtml(creatorName: string): string {
 <body style="margin: 0; padding: 0; background-color: #fff1f2;">
 
     <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all; font-family: sans-serif;">
-        Welcome to Lovebite Fans! Your contract is attached.
+        Welcome to Lovdash Fans! Your contract is attached.
     </div>
 
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fff1f2;">
@@ -53,7 +53,7 @@ function getSuccessEmailHtml(creatorName: string): string {
                     <tr>
                         <td align="center" class="mobile-header" style="padding: 40px 0 20px 0; background-color: #ffffff;">
                             <h1 style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #111827;">
-                                <a href="https://lovebite.fans" target="_blank" style="color: #111827; text-decoration: none;">LOVEBITE<span style="color: #db2777;">FANS</span></a>
+                                <a href="https://Lovdash.fans" target="_blank" style="color: #111827; text-decoration: none;">Lovdash<span style="color: #db2777;">FANS</span></a>
                             </h1>
                         </td>
                     </tr>
@@ -73,7 +73,7 @@ function getSuccessEmailHtml(creatorName: string): string {
                             </h2>
                             
                             <p style="margin: 0 0 25px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #4b5563;">
-                                Congratulations! Your onboarding is complete and you're now officially part of Lovebite Fans. We're thrilled to have you on board.
+                                Congratulations! Your onboarding is complete and you're now officially part of Lovdash Fans. We're thrilled to have you on board.
                             </p>
 
                             <p style="margin: 0 0 35px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: #4b5563;">
@@ -101,7 +101,7 @@ function getSuccessEmailHtml(creatorName: string): string {
                                     <td align="center" style="border-top: 1px solid #f3f4f6; padding-top: 25px;">
                                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #9ca3af;">
                                             Questions? We're here to help.<br>
-                                            <a href="mailto:support@lovebite.fans" style="color: #db2777; text-decoration: none; font-weight: 500;">Contact Support</a>
+                                            <a href="mailto:support@Lovdash.fans" style="color: #db2777; text-decoration: none; font-weight: 500;">Contact Support</a>
                                         </p>
                                     </td>
                                 </tr>
@@ -111,9 +111,9 @@ function getSuccessEmailHtml(creatorName: string): string {
 
                     <tr>
                         <td style="background-color: #111827; padding: 40px 30px; text-align: center;">
-                            <p style="margin: 0 0 15px 0; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 1px;">LOVEBITE FANS</p>
+                            <p style="margin: 0 0 15px 0; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 1px;">Lovdash FANS</p>
                             <p style="margin: 0 0 25px 0;">
-                                <a href="https://lovebite.fans" style="color: #9ca3af; text-decoration: none; font-size: 13px;">www.lovebite.fans</a>
+                                <a href="https://Lovdash.fans" style="color: #9ca3af; text-decoration: none; font-size: 13px;">www.Lovdash.fans</a>
                             </p>
                             <div style="height: 1px; background-color: #374151; width: 100%; max-width: 200px; margin: 0 auto 25px auto;"></div>
                             <p style="margin: 0; color: #6b7280; font-size: 11px; line-height: 1.6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
@@ -173,22 +173,22 @@ export async function POST(request: Request) {
     if (contractPdfUrl) {
       // Attach PDF from URL (Resend will fetch it)
       attachments.push({
-        filename: 'Lovebite_Agency_Contract.pdf',
+        filename: 'Lovdash_Agency_Contract.pdf',
         path: contractPdfUrl,
       });
     } else if (contractHtml) {
       // Attach HTML as file
       attachments.push({
-        filename: 'Lovebite_Agency_Contract.html',
+        filename: 'Lovdash_Agency_Contract.html',
         content: Buffer.from(contractHtml, 'utf-8'),
         contentType: 'text/html',
       });
     }
 
     const { data, error } = await resend.emails.send({
-      from: 'Lovebite Fans <onboarding@lovebite.fans>',
+      from: 'Lovdash Fans <onboarding@Lovdash.fans>',
       to: to,
-      subject: 'Welcome to Lovebite Fans – Your Signed Contract',
+      subject: 'Welcome to Lovdash Fans – Your Signed Contract',
       html: htmlContent,
       attachments,
     });

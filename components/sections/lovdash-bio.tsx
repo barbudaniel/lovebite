@@ -34,7 +34,7 @@ const platforms = [
   "Pornhub",
 ];
 
-export function LovebiteBio() {
+export function LovdashBio() {
   const [domainQuery, setDomainQuery] = useState("");
 
   return (
@@ -139,7 +139,7 @@ export function LovebiteBio() {
                 </span>
               </h2>
               <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-400 leading-relaxed">
-                Meet <span className="text-white font-semibold">Lovebite BIO</span> — the link-in-bio tool built for adult creators. 
+                Meet <span className="text-white font-semibold">Lovdash BIO</span> — the link-in-bio tool built for adult creators. 
                 Sync your live status from OnlyFans & Chaturbate, showcase your content, and track every click.
               </p>
             </AnimatedSection>

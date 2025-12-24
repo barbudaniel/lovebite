@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 
 // Hardcoded admin password - in production use env variable
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "lovebite2024";
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "Lovdash2024";
 
 const statusColors: Record<OnboardingStatus, string> = {
   pending: "bg-slate-100 text-slate-700",
@@ -411,7 +411,7 @@ export default function AdminPage() {
         const url = URL.createObjectURL(data);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `lovebite-contract-${onboarding.id}.pdf`;
+        a.download = `Lovdash-contract-${onboarding.id}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -422,7 +422,7 @@ export default function AdminPage() {
         const url = URL.createObjectURL(pdfBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `lovebite-contract-${onboarding.id}.pdf`;
+        a.download = `Lovdash-contract-${onboarding.id}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -463,7 +463,7 @@ export default function AdminPage() {
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(14);
       pdf.setFont("helvetica", "bold");
-      pdf.text("LOVEBITE", margin, 13);
+      pdf.text("Lovdash", margin, 13);
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
       pdf.text(title, pageWidth - margin, 13, { align: "right" });

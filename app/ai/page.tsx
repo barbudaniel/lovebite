@@ -23,7 +23,7 @@ const features = [
     icon: Brain,
     title: "Natural Conversations",
     description:
-      "Never loops or repeats. Lovebite remembers every conversation detail and builds genuine connections.",
+      "Never loops or repeats. Lovdash remembers every conversation detail and builds genuine connections.",
   },
   {
     icon: MessageCircle,
@@ -58,15 +58,15 @@ const features = [
 ];
 
 const comparisons = [
-  { feature: "Natural Conversations", lovebite: true, others: false },
-  { feature: "No Repetitive Loops", lovebite: true, others: false },
-  { feature: "Fan Memory", lovebite: "Unlimited", others: "Limited" },
-  { feature: "Understands Feelings", lovebite: true, others: false },
-  { feature: "Always Online", lovebite: true, others: "Sometimes" },
-  { feature: "Priority Support", lovebite: true, others: false },
+  { feature: "Natural Conversations", Lovdash: true, others: false },
+  { feature: "No Repetitive Loops", Lovdash: true, others: false },
+  { feature: "Fan Memory", Lovdash: "Unlimited", others: "Limited" },
+  { feature: "Understands Feelings", Lovdash: true, others: false },
+  { feature: "Always Online", Lovdash: true, others: "Sometimes" },
+  { feature: "Priority Support", Lovdash: true, others: false },
 ];
 
-export default function LovebiteAIPage() {
+export default function LovdashAIPage() {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -131,7 +131,7 @@ export default function LovebiteAIPage() {
             transition={{ delay: 0.2 }}
             className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            Meet Lovebite AI — your smart assistant that chats with fans, 
+            Meet Lovdash AI — your smart assistant that chats with fans, 
             handles messages, and makes sales 24/7. Stop typing. Start living.
           </motion.p>
 
@@ -155,7 +155,7 @@ export default function LovebiteAIPage() {
                   You&apos;re on the list!
                 </h3>
                 <p className="text-slate-400 text-sm">
-                  We&apos;ll notify you when Lovebite AI launches. Get ready to transform your creator business.
+                  We&apos;ll notify you when Lovdash AI launches. Get ready to transform your creator business.
                 </p>
               </motion.div>
             ) : (
@@ -244,10 +244,10 @@ export default function LovebiteAIPage() {
             className="bg-slate-900 rounded-2xl border border-slate-800 p-6 sm:p-8"
           >
             <p className="text-product-400 font-semibold mb-4 text-sm uppercase tracking-wider">
-              The Lovebite Difference
+              The Lovdash Difference
             </p>
             <p className="text-lg sm:text-xl text-slate-300 leading-relaxed">
-              Lovebite understands the full conversation—past, present, and where it&apos;s heading. 
+              Lovdash understands the full conversation—past, present, and where it&apos;s heading. 
               Every reply moves things forward naturally. No more embarrassing 
               loops. No more lost sales. Just smooth, real conversations that convert.
             </p>
@@ -322,7 +322,7 @@ export default function LovebiteAIPage() {
           >
             <div className="grid grid-cols-3 gap-4 p-4 sm:p-6 border-b border-slate-800 text-sm font-semibold">
               <div className="text-slate-500">Feature</div>
-              <div className="text-center text-product-400">Lovebite AI</div>
+              <div className="text-center text-product-400">Lovdash AI</div>
               <div className="text-center text-slate-500">Others</div>
             </div>
             {comparisons.map((row, i) => (
@@ -334,10 +334,10 @@ export default function LovebiteAIPage() {
               >
                 <div className="text-slate-300">{row.feature}</div>
                 <div className="text-center">
-                  {row.lovebite === true ? (
+                  {row.Lovdash === true ? (
                     <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
                   ) : (
-                    <span className="text-product-400 font-medium">{row.lovebite}</span>
+                    <span className="text-product-400 font-medium">{row.Lovdash}</span>
                   )}
                 </div>
                 <div className="text-center">
@@ -380,7 +380,7 @@ export default function LovebiteAIPage() {
               <div className="text-4xl mb-4">👩‍💻</div>
               <h3 className="text-xl font-bold text-white mb-3">Solo Creators</h3>
               <p className="text-slate-400 leading-relaxed mb-4">
-                Reclaim your sleep. Lovebite handles the night shift with more charm than 
+                Reclaim your sleep. Lovdash handles the night shift with more charm than 
                 you have at 4 AM. Focus on content, not conversations.
               </p>
               <ul className="space-y-2">

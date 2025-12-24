@@ -8,7 +8,7 @@ const footerLinks = [
   { href: "#about", label: "Who We Are" },
   { href: "#process", label: "How it Works" },
   { href: "#models", label: "Earnings" },
-  { href: "/ai", label: "Lovebite AI" },
+  { href: "/ai", label: "Lovdash AI" },
   { href: "#faq", label: "FAQ" },
   { href: "#contact", label: "Contact" },
 ];
@@ -41,7 +41,7 @@ export function Footer({ variant = "light" }: FooterProps) {
               </div>
               <span className={`font-bold text-xl transition-colors duration-200 group-hover:text-brand-600 ${
                 isDark ? "text-white" : "text-slate-900"
-              }`}>Lovebite</span>
+              }`}>Lovdash</span>
             </Link>
           </motion.div>
 
@@ -53,7 +53,7 @@ export function Footer({ variant = "light" }: FooterProps) {
             transition={{ delay: 0.1 }}
             className={`text-sm max-w-md mb-6 ${isDark ? "text-slate-400" : "text-slate-500"}`}
           >
-            Lovebite Entertainment helps independent models earn money by
+            Lovdash Entertainment helps independent models earn money by
             selling self-made content on subscription platforms. Your safety
             and growth are our priority.
           </motion.p>
@@ -93,7 +93,7 @@ export function Footer({ variant = "light" }: FooterProps) {
             transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center gap-3 text-xs sm:text-sm"
           >
-            <p className={isDark ? "text-slate-500" : "text-slate-400"}>&copy; 2025 Lovebite Entertainment. All rights reserved.</p>
+            <p className={isDark ? "text-slate-500" : "text-slate-400"}>&copy; 2025 Lovdash Entertainment. All rights reserved.</p>
             <span className={`hidden sm:inline ${isDark ? "text-slate-700" : "text-slate-300"}`}>•</span>
             <p className="text-brand-500 font-semibold uppercase tracking-wider text-xs">
               18+ Only

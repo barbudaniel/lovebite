@@ -70,7 +70,7 @@ export default function NotFoundClient() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
         >
-          This creator profile doesn&apos;t exist yet. Want to create your own Lovebite bio page?
+          This creator profile doesn&apos;t exist yet. Want to create your own Lovdash bio page?
         </motion.p>
 
         {/* Buttons */}
@@ -82,7 +82,7 @@ export default function NotFoundClient() {
         >
           {/* Primary CTA - Create */}
           <motion.a
-            href="https://www.lovebite.fans/#contact"
+            href="https://www.Lovdash.fans/#contact"
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-gradient-to-r from-rose-500 to-rose-600 text-white font-semibold text-[15px] shadow-xl shadow-rose-500/25"
             whileHover={{ scale: 1.03, boxShadow: "0 20px 40px rgba(244, 63, 94, 0.3)" }}
             whileTap={{ scale: 0.98 }}
@@ -91,14 +91,14 @@ export default function NotFoundClient() {
             Create Your Bio
           </motion.a>
 
-          {/* Secondary CTA - Visit Lovebite */}
+          {/* Secondary CTA - Visit Lovdash */}
           <motion.a
-            href="https://www.lovebite.fans/"
+            href="https://www.Lovdash.fans/"
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-full border border-slate-700 text-slate-300 font-medium text-[15px] hover:bg-slate-800/50 hover:border-slate-600 transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Visit Lovebite
+            Visit Lovdash
             <ArrowRight className="h-4 w-4" />
           </motion.a>
         </motion.div>
@@ -110,12 +110,16 @@ export default function NotFoundClient() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8, duration: 0.5 }}
         >
-          Powered by <span className="text-rose-500 font-medium">Lovebite</span>
+          Powered by <span className="text-rose-500 font-medium">Lovdash</span>
         </motion.p>
       </motion.div>
     </div>
   );
 }
+
+
+
+
 
 
 

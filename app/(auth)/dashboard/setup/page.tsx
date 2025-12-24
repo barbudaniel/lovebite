@@ -222,7 +222,7 @@ function SetupContent() {
             <Sparkles className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">
-            Welcome to Lovebite
+            Welcome to Lovdash
           </h1>
           <p className="text-slate-400">
             Let&apos;s get your creator account set up
@@ -394,7 +394,7 @@ function SetupContent() {
         {/* Footer */}
         <p className="text-center text-slate-500 text-sm mt-6">
           Need help?{" "}
-          <a href="mailto:support@lovebite.com" className="text-brand-400 hover:text-brand-300">
+          <a href="mailto:support@Lovdash.com" className="text-brand-400 hover:text-brand-300">
             Contact support
           </a>
         </p>

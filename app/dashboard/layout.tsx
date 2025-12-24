@@ -285,7 +285,7 @@ function AppSidebar({ user, onLogout }: { user: DashboardUser | null; onLogout: 
                   <span className="text-sm font-bold">L</span>
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">Lovebite</span>
+                  <span className="font-semibold">Lovdash</span>
                   <span className="text-xs text-muted-foreground">Creator Dashboard</span>
                 </div>
               </Link>

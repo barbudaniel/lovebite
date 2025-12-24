@@ -9,7 +9,7 @@ export interface WhatsAppStatus {
   timestamp: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://lovebite.studio/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://Lovdash.studio/api';
 
 /**
  * Hook to check WhatsApp bot status

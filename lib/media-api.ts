@@ -1,5 +1,5 @@
 // ============================================
-// LOVEBITE MEDIA API CLIENT
+// Lovdash MEDIA API CLIENT
 // ============================================
 // This client interfaces with the external media management microservice
 // Uses a local proxy to avoid mixed content (HTTPS -> HTTP) issues
@@ -586,6 +586,7 @@ export function getServerApiClient(): MediaApiClient {
 export function createApiClient(apiKey: string): MediaApiClient {
   return new MediaApiClient(apiKey);
 }
+
 
 
 

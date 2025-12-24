@@ -18,3 +18,6 @@ COMMENT ON COLUMN public.creators.bio IS 'Short biography/description of the cre
 COMMENT ON COLUMN public.creators.display_name IS 'Public display name (different from username)';
 COMMENT ON COLUMN public.creators.email IS 'Creator contact email address';
 
+
+
+

@@ -82,15 +82,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate reset link with code
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lovebite.fans";
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://Lovdash.fans";
     const resetLink = `${baseUrl}/dashboard/login/reset-password?email=${encodeURIComponent(email)}&code=${code}`;
 
     // Send email
     const htmlContent = getPasswordResetHtml(code, resetLink, dashboardUser.display_name);
     const { error: emailError } = await resend.emails.send({
-      from: "Lovebite <security@lovebite.fans>",
+      from: "Lovdash <security@Lovdash.fans>",
       to: email,
-      subject: `${code} - Reset your Lovebite password`,
+      subject: `${code} - Reset your Lovdash password`,
       html: htmlContent,
     });
 

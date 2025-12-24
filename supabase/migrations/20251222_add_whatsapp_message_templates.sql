@@ -165,3 +165,7 @@ COMMENT ON COLUMN public.whatsapp_message_templates.category IS 'Template catego
 COMMENT ON TABLE public.whatsapp_message_history IS 'Logs all WhatsApp messages sent to groups';
 COMMENT ON COLUMN public.whatsapp_message_history.whatsapp_group_id IS 'The actual WhatsApp JID stored for historical reference';
 
+
+
+
+

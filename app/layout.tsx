@@ -18,9 +18,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Lovebite | Monetize Your Influence - Creator Management Agency",
+  title: "Lovdash | Monetize Your Influence - Creator Management Agency",
   description:
-    "Stop giving away 50% of your earnings. Lovebite is a content creator management agency that helps you earn smart. We handle the tech, marketing, and management—you just bring the heat.",
+    "Stop giving away 50% of your earnings. Lovdash is a content creator management agency that helps you earn smart. We handle the tech, marketing, and management—you just bring the heat.",
   keywords: [
     "content creator",
     "OnlyFans management",
@@ -29,9 +29,9 @@ export const metadata: Metadata = {
     "content monetization",
   ],
   openGraph: {
-    title: "Lovebite | Monetize Your Influence",
+    title: "Lovdash | Monetize Your Influence",
     description:
-      "Your Screen. Your Empire. Stop working hard for algorithms. Start earning smart with Lovebite.",
+      "Your Screen. Your Empire. Stop working hard for algorithms. Start earning smart with Lovdash.",
     type: "website",
   },
 };

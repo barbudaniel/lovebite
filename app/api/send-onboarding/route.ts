@@ -9,7 +9,7 @@ function getOnboardingEmailHtml(contractLink: string): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invitation to Join Lovebite Fans</title>
+    <title>Invitation to Join Lovdash Fans</title>
     <!--[if mso]>
     <noscript>
     <xml>
@@ -110,7 +110,7 @@ function getOnboardingEmailHtml(contractLink: string): string {
                                     <td align="center" style="border-top: 1px solid #f3f4f6; padding-top: 25px;">
                                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #9ca3af;">
                                             Questions about the agreement?<br>
-                                            <a href="mailto:onboarding@lovebite.fans" style="color: #db2777; text-decoration: none; font-weight: 500;">Contact Onboarding Support</a>
+                                            <a href="mailto:onboarding@Lovdash.fans" style="color: #db2777; text-decoration: none; font-weight: 500;">Contact Onboarding Support</a>
                                         </p>
                                     </td>
                                 </tr>
@@ -123,7 +123,7 @@ function getOnboardingEmailHtml(contractLink: string): string {
                         <td style="background-color: #111827; padding: 40px 30px; text-align: center;">
                             
                             <p style="margin: 0 0 25px 0;">
-                                <a href="https://lovebite.fans" style="color: #9ca3af; text-decoration: none; font-size: 13px;">www.lovebite.fans</a>
+                                <a href="https://Lovdash.fans" style="color: #9ca3af; text-decoration: none; font-size: 13px;">www.Lovdash.fans</a>
                             </p>
                             
                             <!-- Divider -->
@@ -177,9 +177,9 @@ export async function POST(request: Request) {
     const htmlContent = getOnboardingEmailHtml(contractLink);
 
     const { data, error } = await resend.emails.send({
-      from: 'Lovebite Fans <onboarding@lovebite.fans>',
+      from: 'Lovdash Fans <onboarding@Lovdash.fans>',
       to: to,
-      subject: 'Sign Your Contract – Complete Your Lovebite Agency Enrollment',
+      subject: 'Sign Your Contract – Complete Your Lovdash Agency Enrollment',
       html: htmlContent,
     });
 

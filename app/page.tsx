@@ -5,8 +5,8 @@ import {
   Process,
   About,
   Earnings,
-  LovebiteAI,
-  LovebiteBio,
+  LovdashAI,
+  LovdashBio,
   Testimonials,
   FAQ,
   Contact,
@@ -25,8 +25,8 @@ export default function Home() {
         <Process />
         <About />
         <Earnings />
-        <LovebiteAI />
-        <LovebiteBio />
+        <LovdashAI />
+        <LovdashBio />
         <Testimonials />
         <FAQ />
         <Contact />

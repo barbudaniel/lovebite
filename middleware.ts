@@ -68,9 +68,9 @@ export async function middleware(request: NextRequest) {
 
   // bites.bio/:username -> /creator/:username
   if (hostname.includes('bites.bio')) {
-    // Root path -> redirect to lovebite.fans
+    // Root path -> redirect to Lovdash.fans
     if (pathname === '/') {
-      return NextResponse.redirect('https://lovebite.fans');
+      return NextResponse.redirect('https://Lovdash.fans');
     }
     
     // API routes should be handled locally (no redirect) to avoid CORS issues
@@ -78,13 +78,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
     
-    // System routes should redirect to lovebite.fans
+    // System routes should redirect to Lovdash.fans
     const systemRoutes = ['/dashboard', '/admin', '/join', '/register', '/bio', '/creator', '/_next'];
     const isSystemRoute = systemRoutes.some(route => pathname.startsWith(route));
     
     if (isSystemRoute) {
-      // Redirect system routes to lovebite.fans
-      return NextResponse.redirect(`https://lovebite.fans${pathname}`);
+      // Redirect system routes to Lovdash.fans
+      return NextResponse.redirect(`https://Lovdash.fans${pathname}`);
     }
     
     // /:username -> rewrite to /creator/:username

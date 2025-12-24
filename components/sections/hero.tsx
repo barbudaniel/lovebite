@@ -95,7 +95,7 @@ export function Hero() {
                   <Zap className="w-4 h-4 text-white" />
                 </div>
                 <div className="text-left">
-                  <p className="text-xs text-slate-400">New: Lovebite AI</p>
+                  <p className="text-xs text-slate-400">New: Lovdash AI</p>
                   <p className="text-sm font-medium flex items-center gap-1">
                     Join the waitlist
                     <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-1" />

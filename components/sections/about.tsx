@@ -89,7 +89,7 @@ export function About() {
           <div className="order-1 lg:order-2">
             <AnimatedSection>
               <span className="text-brand-600 font-semibold text-xs sm:text-sm uppercase tracking-wider">
-                Why Lovebite
+                Why Lovdash
               </span>
               <h2 className="mt-2 sm:mt-3 text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-tight">
                 Let's break it <span className="text-brand-600">down</span>

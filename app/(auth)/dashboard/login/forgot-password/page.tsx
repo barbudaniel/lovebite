@@ -148,7 +148,7 @@ export default function ForgotPasswordPage() {
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div className="text-left">
-              <h1 className="text-2xl font-bold text-white">Lovebite</h1>
+              <h1 className="text-2xl font-bold text-white">Lovdash</h1>
               <p className="text-xs text-slate-400">Creator Dashboard</p>
             </div>
           </Link>

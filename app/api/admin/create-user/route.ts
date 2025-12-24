@@ -39,13 +39,13 @@ export async function POST(request: NextRequest) {
     // Send welcome email with credentials if requested
     if (sendWelcomeEmail && data.user) {
       const name = fullName || email.split("@")[0];
-      const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://lovebite.fans"}/dashboard`;
+      const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://Lovdash.fans"}/dashboard`;
       
       const htmlContent = getAccountCreatedHtml(name, email, password, dashboardUrl);
       await resend.emails.send({
-        from: "Lovebite <welcome@lovebite.fans>",
+        from: "Lovdash <welcome@Lovdash.fans>",
         to: email,
-        subject: "Your Lovebite account is ready!",
+        subject: "Your Lovdash account is ready!",
         html: htmlContent,
       }).catch(err => {
         console.error("Failed to send welcome email:", err);

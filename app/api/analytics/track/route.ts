@@ -26,7 +26,7 @@ const supabase = createClient(
 
 // Hash IP address for privacy
 function hashIP(ip: string): string {
-  return crypto.createHash("sha256").update(ip + "lovebite-salt").digest("hex").slice(0, 16);
+  return crypto.createHash("sha256").update(ip + "Lovdash-salt").digest("hex").slice(0, 16);
 }
 
 // Parse user agent to get device info

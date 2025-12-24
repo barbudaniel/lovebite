@@ -709,7 +709,7 @@ export default function RegisterPage({
             if (url) setFormData(prev => ({ ...prev, selfieWithId: url }));
           }
           // Load signature from localStorage first, then fall back to Supabase
-          const savedSignature = localStorage.getItem(`lovebite-signature-${id}`);
+          const savedSignature = localStorage.getItem(`Lovdash-signature-${id}`);
           if (savedSignature) {
             setSignatureDataUrl(savedSignature);
           } else if (onboardingData.signature_path) {
@@ -717,7 +717,7 @@ export default function RegisterPage({
             if (dataUrl) {
               setSignatureDataUrl(dataUrl);
               // Also save to localStorage for consistency
-              localStorage.setItem(`lovebite-signature-${id}`, dataUrl);
+              localStorage.setItem(`Lovdash-signature-${id}`, dataUrl);
             }
           }
         }
@@ -1000,7 +1000,7 @@ export default function RegisterPage({
       setSignatureDataUrl(dataUrl);
       // Save to localStorage for persistence
       try {
-        localStorage.setItem(`lovebite-signature-${id}`, dataUrl);
+        localStorage.setItem(`Lovdash-signature-${id}`, dataUrl);
       } catch (err) {
         console.error("Error saving signature to localStorage:", err);
       }
@@ -1008,7 +1008,7 @@ export default function RegisterPage({
       setSignatureDataUrl(null);
       // Clear from localStorage
       try {
-        localStorage.removeItem(`lovebite-signature-${id}`);
+        localStorage.removeItem(`Lovdash-signature-${id}`);
       } catch (err) {
         console.error("Error removing signature from localStorage:", err);
       }
@@ -1309,7 +1309,7 @@ export default function RegisterPage({
       
       // Clear signature from localStorage after successful submission
       try {
-        localStorage.removeItem(`lovebite-signature-${id}`);
+        localStorage.removeItem(`Lovdash-signature-${id}`);
       } catch {
         // Ignore localStorage errors
       }
@@ -1367,7 +1367,7 @@ export default function RegisterPage({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `lovebite-contract-${id}.pdf`;
+      a.download = `Lovdash-contract-${id}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1463,7 +1463,7 @@ export default function RegisterPage({
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(14);
       pdf.setFont("helvetica", "bold");
-      pdf.text("LOVEBITE", margin, 13);
+      pdf.text("Lovdash", margin, 13);
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
       pdf.text(title, pageWidth - margin, 13, { align: "right" });
@@ -1783,7 +1783,7 @@ export default function RegisterPage({
       pdf.setFontSize(7);
       pdf.setTextColor(156, 163, 175);
       pdf.text(
-        `Page ${i} of ${totalPages}  •  Lovebite Agency Contract  •  ID: ${id}`,
+        `Page ${i} of ${totalPages}  •  Lovdash Agency Contract  •  ID: ${id}`,
         pageWidth / 2,
         pageHeight - 8,
         { align: "center" }
@@ -1890,7 +1890,7 @@ export default function RegisterPage({
             Registration Complete!
           </h1>
           <p className="text-slate-600 mb-6">
-            Thank you for registering with Lovebite. Our team will review your
+            Thank you for registering with Lovdash. Our team will review your
             application and contact you within 48 hours.
           </p>
           <div className="space-y-3">
@@ -1918,7 +1918,7 @@ export default function RegisterPage({
               className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Back to Lovebite</span>
+              <span className="text-sm font-medium">Back to Lovdash</span>
             </Link>
             <div className="flex items-center gap-4">
              

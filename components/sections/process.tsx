@@ -47,7 +47,7 @@ export function Process() {
             How it <span className="text-brand-600">works?</span>
           </h2>
           <p className="mt-3 sm:mt-4 text-base sm:text-lg text-slate-500 max-w-2xl mx-auto">
-            Lovebite helps independent models earn money by selling content on
+            Lovdash helps independent models earn money by selling content on
             subscription platforms. The way it works is smart.
           </p>
         </AnimatedSection>

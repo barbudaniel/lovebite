@@ -90,7 +90,7 @@ const platforms = [
   "OnlyFans", "Chaturbate", "Fansly", "LoyalFans", "ManyVids", "Stripchat", "CamSoda", "Pornhub"
 ];
 
-export default function LovebiteBioPage() {
+export default function LovdashBioPage() {
   const [domainQuery, setDomainQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResult, setSearchResult] = useState<null | string>(null);
@@ -308,7 +308,7 @@ export default function LovebiteBioPage() {
             className="text-center mb-12"
           >
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-              Join Top Creators on Lovebite BIO
+              Join Top Creators on Lovdash BIO
             </h2>
             <p className="text-slate-400">
               See how others are using their bio links to grow their fanbase.
@@ -409,7 +409,7 @@ export default function LovebiteBioPage() {
               Want your own <span className="text-product-400">.com</span> domain?
             </h2>
             <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto">
-              Stand out with a professional domain name like <strong>yourname.com</strong> that redirects straight to your Lovebite Bio.
+              Stand out with a professional domain name like <strong>yourname.com</strong> that redirects straight to your Lovdash Bio.
               We handle the setup, SSL, and hosting.
             </p>
             <Button

@@ -192,17 +192,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   
   if (dbCreator) {
     return {
-      title: `${dbCreator.name} | Your Private Fantasy Live - Lovebite Bio`,
+      title: `${dbCreator.name} | Your Private Fantasy Live - Lovdash Bio`,
       description: `${dbCreator.tagline}. ${dbCreator.subtitle}. Join me for exclusive content.`,
       openGraph: {
-        title: `${dbCreator.name} | Lovebite Bio`,
+        title: `${dbCreator.name} | Lovdash Bio`,
         description: `${dbCreator.tagline}. ${dbCreator.subtitle}`,
         images: dbCreator.profileImage ? [dbCreator.profileImage] : [],
         type: 'profile',
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${dbCreator.name} | Lovebite Bio`,
+        title: `${dbCreator.name} | Lovdash Bio`,
         description: `${dbCreator.tagline}. ${dbCreator.subtitle}`,
         images: dbCreator.profileImage ? [dbCreator.profileImage] : [],
       },
@@ -214,23 +214,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!creator) {
     return {
-      title: 'Bio Not Found | Lovebite',
+      title: 'Bio Not Found | Lovdash',
       description: 'This creator profile does not exist.',
     };
   }
 
   return {
-    title: `${creator.name} | Your Private Fantasy Live - Lovebite Bio`,
+    title: `${creator.name} | Your Private Fantasy Live - Lovdash Bio`,
     description: `${creator.tagline}. ${creator.subtitle}. Join me for exclusive content.`,
     openGraph: {
-      title: `${creator.name} | Lovebite Bio`,
+      title: `${creator.name} | Lovdash Bio`,
       description: `${creator.tagline}. ${creator.subtitle}`,
       images: [creator.profileImage],
       type: 'profile',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${creator.name} | Lovebite Bio`,
+      title: `${creator.name} | Lovdash Bio`,
       description: `${creator.tagline}. ${creator.subtitle}`,
       images: [creator.profileImage],
     },

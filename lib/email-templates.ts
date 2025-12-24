@@ -1,5 +1,5 @@
 // ============================================
-// EMAIL TEMPLATES - Lovebite Design System
+// EMAIL TEMPLATES - Lovdash Design System
 // ============================================
 
 const BRAND_COLOR = "#db2777"; // pink-600
@@ -17,7 +17,7 @@ function emailWrapper(content: string, preheaderText: string): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lovebite</title>
+    <title>Lovdash</title>
     <!--[if mso]>
     <noscript>
     <xml>
@@ -65,7 +65,7 @@ function emailWrapper(content: string, preheaderText: string): string {
                                         </div>
                                     </td>
                                     <td>
-                                        <span style="font-size: 24px; font-weight: 700; color: ${TEXT_PRIMARY}; letter-spacing: -0.5px;">Lovebite</span>
+                                        <span style="font-size: 24px; font-weight: 700; color: ${TEXT_PRIMARY}; letter-spacing: -0.5px;">Lovdash</span>
                                     </td>
                                 </tr>
                             </table>
@@ -75,7 +75,7 @@ function emailWrapper(content: string, preheaderText: string): string {
                     <tr>
                         <td style="background-color: ${DARK_BG}; padding: 40px 30px; text-align: center;">
                             <p style="margin: 0 0 25px 0;">
-                                <a href="https://lovebite.fans" style="color: ${TEXT_MUTED}; text-decoration: none; font-size: 13px;">www.lovebite.fans</a>
+                                <a href="https://Lovdash.fans" style="color: ${TEXT_MUTED}; text-decoration: none; font-size: 13px;">www.Lovdash.fans</a>
                             </p>
                             <div style="height: 1px; background-color: #374151; width: 100%; max-width: 200px; margin: 0 auto 25px auto;"></div>
                             <p style="margin: 0; color: #6b7280; font-size: 11px; line-height: 1.6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
@@ -151,7 +151,7 @@ export function getEmailVerificationHtml(code: string, name?: string): string {
             </h2>
             
             <p style="margin: 0 0 10px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: ${TEXT_SECONDARY};">
-                ${name ? `Hi ${name},` : 'Hi there,'} welcome to Lovebite!
+                ${name ? `Hi ${name},` : 'Hi there,'} welcome to Lovdash!
             </p>
             
             <p style="margin: 0 0 0 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: ${TEXT_SECONDARY};">
@@ -170,7 +170,7 @@ export function getEmailVerificationHtml(code: string, name?: string): string {
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Need help?<br>
-                            <a href="mailto:support@lovebite.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
+                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
                         </p>
                     </td>
                 </tr>
@@ -218,7 +218,7 @@ export function getPasswordResetHtml(code: string, resetLink: string, name?: str
                 <tr>
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #d97706; background-color: #fffbeb; padding: 12px 20px; border-radius: 8px; display: inline-block;">
-                            ⚠️ Never share this code with anyone. Lovebite will never ask for it.
+                            ⚠️ Never share this code with anyone. Lovdash will never ask for it.
                         </p>
                     </td>
                 </tr>
@@ -242,7 +242,7 @@ export function getWelcomeHtml(name: string, dashboardUrl: string): string {
             </div>
             
             <h2 class="mobile-font-size" style="margin: 0 0 20px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: ${TEXT_PRIMARY}; letter-spacing: -0.5px;">
-                Welcome to Lovebite!
+                Welcome to Lovdash!
             </h2>
             
             <p style="margin: 0 0 30px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: ${TEXT_SECONDARY};">
@@ -293,7 +293,7 @@ export function getWelcomeHtml(name: string, dashboardUrl: string): string {
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Questions? We're here to help!<br>
-                            <a href="mailto:support@lovebite.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">support@lovebite.fans</a>
+                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">support@Lovdash.fans</a>
                         </p>
                     </td>
                 </tr>
@@ -302,7 +302,7 @@ export function getWelcomeHtml(name: string, dashboardUrl: string): string {
     </tr>
   `;
 
-  return emailWrapper(content, `Welcome to Lovebite, ${name}! Your account is ready. Let's get started.`);
+  return emailWrapper(content, `Welcome to Lovdash, ${name}! Your account is ready. Let's get started.`);
 }
 
 // ============================================
@@ -321,7 +321,7 @@ export function getAccountCreatedHtml(name: string, email: string, tempPassword:
             </h2>
             
             <p style="margin: 0 0 30px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: ${TEXT_SECONDARY};">
-                Hi ${name}, your Lovebite account has been created.<br>
+                Hi ${name}, your Lovdash account has been created.<br>
                 Use the credentials below to sign in.
             </p>
 
@@ -359,7 +359,7 @@ export function getAccountCreatedHtml(name: string, email: string, tempPassword:
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Need help?<br>
-                            <a href="mailto:support@lovebite.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
+                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
                         </p>
                     </td>
                 </tr>
@@ -368,7 +368,7 @@ export function getAccountCreatedHtml(name: string, email: string, tempPassword:
     </tr>
   `;
 
-  return emailWrapper(content, `Your Lovebite account is ready! Sign in with your temporary password.`);
+  return emailWrapper(content, `Your Lovdash account is ready! Sign in with your temporary password.`);
 }
 
 // ============================================
@@ -392,7 +392,7 @@ export function getPasswordChangedHtml(name: string): string {
             </p>
 
             <p style="margin: 0 0 0 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #dc2626; background-color: #fef2f2; padding: 15px 20px; border-radius: 8px; display: inline-block;">
-                ⚠️ If you didn't make this change, please <a href="mailto:security@lovebite.fans" style="color: #dc2626; font-weight: bold;">contact us immediately</a>.
+                ⚠️ If you didn't make this change, please <a href="mailto:security@Lovdash.fans" style="color: #dc2626; font-weight: bold;">contact us immediately</a>.
             </p>
 
             <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 35px; border-top: 1px solid #f3f4f6; padding-top: 25px;">
@@ -400,7 +400,7 @@ export function getPasswordChangedHtml(name: string): string {
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Need help?<br>
-                            <a href="mailto:support@lovebite.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
+                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
                         </p>
                     </td>
                 </tr>
@@ -409,7 +409,7 @@ export function getPasswordChangedHtml(name: string): string {
     </tr>
   `;
 
-  return emailWrapper(content, `Your Lovebite password has been successfully changed.`);
+  return emailWrapper(content, `Your Lovdash password has been successfully changed.`);
 }
 
 // ============================================
@@ -428,7 +428,7 @@ export function getPhoneVerificationHtml(code: string): string {
             </h2>
             
             <p style="margin: 0 0 0 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.7; color: ${TEXT_SECONDARY};">
-                Use this code to sign in to your Lovebite account:
+                Use this code to sign in to your Lovdash account:
             </p>
 
             ${codeBox(code)}
@@ -443,7 +443,7 @@ export function getPhoneVerificationHtml(code: string): string {
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Need help?<br>
-                            <a href="mailto:support@lovebite.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
+                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
                         </p>
                     </td>
                 </tr>
@@ -452,7 +452,7 @@ export function getPhoneVerificationHtml(code: string): string {
     </tr>
   `;
 
-  return emailWrapper(content, `Your Lovebite login code is ${code}.`);
+  return emailWrapper(content, `Your Lovdash login code is ${code}.`);
 }
 
 // ============================================
@@ -486,7 +486,7 @@ export function getStudioInviteHtml(studioName: string, inviterName: string, acc
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Questions about this invitation?<br>
-                            <a href="mailto:support@lovebite.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
+                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
                         </p>
                     </td>
                 </tr>
@@ -495,6 +495,6 @@ export function getStudioInviteHtml(studioName: string, inviterName: string, acc
     </tr>
   `;
 
-  return emailWrapper(content, `${inviterName} has invited you to join ${studioName} on Lovebite.`);
+  return emailWrapper(content, `${inviterName} has invited you to join ${studioName} on Lovdash.`);
 }
 

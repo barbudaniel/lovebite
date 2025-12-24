@@ -211,7 +211,7 @@ function EmptyState() {
       <div className="w-20 h-20 bg-gradient-to-br from-violet-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-violet-500/30">
         <Sparkles className="w-10 h-10 text-white" />
       </div>
-      <h3 className="text-2xl font-bold text-slate-900 mb-3">Welcome to Lovebite</h3>
+      <h3 className="text-2xl font-bold text-slate-900 mb-3">Welcome to Lovdash</h3>
       <p className="text-slate-600 mb-8 max-w-md mx-auto">
         Start building your presence by uploading content or creating your bio link page.
       </p>
