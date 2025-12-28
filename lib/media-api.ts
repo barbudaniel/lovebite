@@ -8,6 +8,10 @@
 // The proxy forwards requests to the actual Media API on port 3002
 const API_BASE_URL = '/api/media-proxy';
 
+// For file uploads, bypass the proxy and go directly to the backend
+// to avoid Vercel's 4.5MB serverless function body size limit
+const DIRECT_API_URL = process.env.NEXT_PUBLIC_MEDIA_API_URL || 'https://api.lovdash.com';
+
 interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -439,7 +443,8 @@ export class MediaApiClient {
 
     return new Promise((resolve) => {
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', `${API_BASE_URL}/api/v1/media/upload`);
+      // Upload directly to backend API to bypass Vercel's 4.5MB body size limit
+      xhr.open('POST', `${DIRECT_API_URL}/api/v1/media/upload`);
       xhr.setRequestHeader('X-API-Key', this.apiKey);
 
       if (params.onProgress) {
@@ -586,6 +591,8 @@ export function getServerApiClient(): MediaApiClient {
 export function createApiClient(apiKey: string): MediaApiClient {
   return new MediaApiClient(apiKey);
 }
+
+
 
 
 

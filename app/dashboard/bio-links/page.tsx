@@ -41,6 +41,8 @@ import {
   MoreHorizontal,
   Rocket,
   ArrowRight,
+  QrCode,
+  Download,
 } from "lucide-react";
 import {
   Dialog,
@@ -51,6 +53,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog-centered";
+import { QRCodeSVG } from "qrcode.react";
 
 // ============================================
 // TYPES
@@ -1162,15 +1165,201 @@ function StatusPill({ isPublished }: { isPublished: boolean }) {
 }
 
 // ============================================
+// QR CODE MODAL
+// ============================================
+
+function QRCodeModal({
+  bioLink,
+  isOpen,
+  onClose,
+}: {
+  bioLink: BioLink;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const [selectedDomain, setSelectedDomain] = useState<"default" | "custom">("default");
+  const qrCodeRef = useRef<HTMLDivElement>(null);
+  
+  const defaultUrl = `https://bites.bio/${bioLink.slug}`;
+  const customUrl = bioLink.custom_domain ? `https://${bioLink.custom_domain}` : null;
+  const qrCodeUrl = selectedDomain === "custom" && customUrl ? customUrl : defaultUrl;
+  
+  const hasCustomDomain = Boolean(customUrl);
+  
+  // Reset to default when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedDomain("default");
+    }
+  }, [isOpen]);
+  
+  const handleDownload = () => {
+    const svg = qrCodeRef.current?.querySelector("svg");
+    if (!svg) return;
+    
+    // Create a canvas to convert SVG to PNG
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    // Set canvas size (increase for better quality)
+    const size = 1000;
+    canvas.width = size;
+    canvas.height = size;
+    
+    // White background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, size, size);
+    
+    // Convert SVG to image
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const img = new Image();
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      
+      // Download as PNG
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `${bioLink.slug}-qr-code.png`;
+        a.click();
+        URL.revokeObjectURL(downloadUrl);
+        toast.success("QR Code downloaded!");
+      });
+    };
+    
+    img.src = url;
+  };
+  
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(qrCodeUrl);
+    toast.success("URL copied to clipboard!");
+  };
+  
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>Download QR Code</DialogTitle>
+          <DialogDescription>
+            Generate a QR code for your bio link
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody className="space-y-6">
+          {/* Domain Selection */}
+          {hasCustomDomain && (
+            <div className="space-y-3">
+              <Label>Select Domain</Label>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setSelectedDomain("default")}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                    selectedDomain === "default"
+                      ? "border-violet-500 bg-violet-50"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    selectedDomain === "default"
+                      ? "border-violet-500"
+                      : "border-slate-300"
+                  }`}>
+                    {selectedDomain === "default" && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-violet-500" />
+                    )}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="font-medium text-slate-900">bites.bio</p>
+                    <p className="text-xs text-slate-500">{defaultUrl}</p>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => setSelectedDomain("custom")}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                    selectedDomain === "custom"
+                      ? "border-violet-500 bg-violet-50"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    selectedDomain === "custom"
+                      ? "border-violet-500"
+                      : "border-slate-300"
+                  }`}>
+                    {selectedDomain === "custom" && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-violet-500" />
+                    )}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="font-medium text-slate-900">Custom Domain</p>
+                    <p className="text-xs text-slate-500">{customUrl}</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* QR Code Preview */}
+          <div className="space-y-3">
+            <Label>QR Code Preview</Label>
+            <div className="flex flex-col items-center p-6 bg-slate-50 rounded-xl border border-slate-200">
+              <div ref={qrCodeRef} className="bg-white p-4 rounded-lg shadow-sm">
+                <QRCodeSVG
+                  value={qrCodeUrl}
+                  size={200}
+                  level="H"
+                  includeMargin={true}
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-3 text-center break-all max-w-full px-2">
+                {qrCodeUrl}
+              </p>
+            </div>
+          </div>
+          
+          {/* URL Copy Button */}
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleCopyUrl}
+          >
+            <Copy className="w-4 h-4 mr-2" />
+            Copy URL
+          </Button>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          <Button onClick={handleDownload} className="bg-violet-600 hover:bg-violet-700">
+            <Download className="w-4 h-4 mr-2" />
+            Download PNG
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
 // QUICK ACTIONS MENU
 // ============================================
 
 function QuickActionsMenu({
   bioLink,
   onOpenSettings,
+  onOpenQRCode,
 }: {
   bioLink: BioLink;
   onOpenSettings: () => void;
+  onOpenQRCode: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -1211,6 +1400,13 @@ function QuickActionsMenu({
             >
               <Settings className="w-4 h-4 text-slate-400" />
               Settings
+            </button>
+            <button
+              onClick={() => { onOpenQRCode(); setIsOpen(false); }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <QrCode className="w-4 h-4 text-slate-400" />
+              QR Code
             </button>
             <Link
               href="/dashboard/statistics"
@@ -1267,6 +1463,7 @@ export default function BioLinksPage() {
   const [editingItem, setEditingItem] = useState<BioLinkItem | null>(null);
   const [showLinkEditor, setShowLinkEditor] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
   
   // Admin/Studio can select which creator to edit
   const [creators, setCreators] = useState<CreatorOption[]>([]);
@@ -1574,7 +1771,11 @@ export default function BioLinksPage() {
             </Button>
           </a>
           {bioLink && (
-            <QuickActionsMenu bioLink={bioLink} onOpenSettings={() => setShowSettings(true)} />
+            <QuickActionsMenu 
+              bioLink={bioLink} 
+              onOpenSettings={() => setShowSettings(true)}
+              onOpenQRCode={() => setShowQRCode(true)}
+            />
           )}
         </div>
       </div>
@@ -1689,14 +1890,22 @@ export default function BioLinksPage() {
       )}
 
       {bioLink && (
-        <LinkEditor
-          isOpen={showLinkEditor}
-          item={editingItem}
-          bioLinkId={bioLink.id}
-          onSave={fetchBioLink}
-          onClose={() => { setShowLinkEditor(false); setEditingItem(null); }}
-          creatorId={effectiveCreatorId!}
-        />
+        <>
+          <LinkEditor
+            isOpen={showLinkEditor}
+            item={editingItem}
+            bioLinkId={bioLink.id}
+            onSave={fetchBioLink}
+            onClose={() => { setShowLinkEditor(false); setEditingItem(null); }}
+            creatorId={effectiveCreatorId!}
+          />
+          
+          <QRCodeModal
+            isOpen={showQRCode}
+            bioLink={bioLink}
+            onClose={() => setShowQRCode(false)}
+          />
+        </>
       )}
     </div>
   );
