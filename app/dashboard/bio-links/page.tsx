@@ -1168,6 +1168,15 @@ function StatusPill({ isPublished }: { isPublished: boolean }) {
 // QR CODE MODAL
 // ============================================
 
+const QR_COLOR_PRESETS = [
+  { name: "Black", fg: "#000000", bg: "#FFFFFF" },
+  { name: "Violet", fg: "#7C3AED", bg: "#FFFFFF" },
+  { name: "Pink", fg: "#EC4899", bg: "#FFFFFF" },
+  { name: "Blue", fg: "#3B82F6", bg: "#FFFFFF" },
+  { name: "Green", fg: "#10B981", bg: "#FFFFFF" },
+  { name: "Red", fg: "#EF4444", bg: "#FFFFFF" },
+];
+
 function QRCodeModal({
   bioLink,
   isOpen,
@@ -1178,6 +1187,9 @@ function QRCodeModal({
   onClose: () => void;
 }) {
   const [selectedDomain, setSelectedDomain] = useState<"default" | "custom">("default");
+  const [qrColor, setQrColor] = useState("#000000");
+  const [bgColor, setBgColor] = useState("#FFFFFF");
+  const [transparentBg, setTransparentBg] = useState(false);
   const qrCodeRef = useRef<HTMLDivElement>(null);
   
   const defaultUrl = `https://bites.bio/${bioLink.slug}`;
@@ -1185,11 +1197,15 @@ function QRCodeModal({
   const qrCodeUrl = selectedDomain === "custom" && customUrl ? customUrl : defaultUrl;
   
   const hasCustomDomain = Boolean(customUrl);
+  const effectiveBgColor = transparentBg ? "transparent" : bgColor;
   
   // Reset to default when modal opens
   useEffect(() => {
     if (isOpen) {
       setSelectedDomain("default");
+      setQrColor("#000000");
+      setBgColor("#FFFFFF");
+      setTransparentBg(false);
     }
   }, [isOpen]);
   
@@ -1207,9 +1223,11 @@ function QRCodeModal({
     canvas.width = size;
     canvas.height = size;
     
-    // White background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, size, size);
+    // Only add background if not transparent
+    if (!transparentBg) {
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, size, size);
+    }
     
     // Convert SVG to image
     const svgData = new XMLSerializer().serializeToString(svg);
@@ -1244,14 +1262,14 @@ function QRCodeModal({
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent size="md">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>Download QR Code</DialogTitle>
           <DialogDescription>
-            Generate a QR code for your bio link
+            Customize and download a QR code for your bio link
           </DialogDescription>
         </DialogHeader>
-        <DialogBody className="space-y-6">
+        <DialogBody className="space-y-6 max-h-[70vh] overflow-y-auto">
           {/* Domain Selection */}
           {hasCustomDomain && (
             <div className="space-y-3">
@@ -1306,16 +1324,137 @@ function QRCodeModal({
             </div>
           )}
           
+          {/* Color Customization */}
+          <div className="space-y-3">
+            <Label>QR Code Style</Label>
+            
+            {/* Color Presets */}
+            <div className="flex flex-wrap gap-2">
+              {QR_COLOR_PRESETS.map((preset) => (
+                <button
+                  key={preset.name}
+                  onClick={() => {
+                    setQrColor(preset.fg);
+                    setBgColor(preset.bg);
+                    setTransparentBg(false);
+                  }}
+                  className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all ${
+                    qrColor === preset.fg && bgColor === preset.bg && !transparentBg
+                      ? "border-violet-500 bg-violet-50 text-violet-700"
+                      : "border-slate-200 hover:border-slate-300 text-slate-600"
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <div 
+                      className="w-3 h-3 rounded border border-slate-300"
+                      style={{ backgroundColor: preset.fg }}
+                    />
+                    {preset.name}
+                  </div>
+                </button>
+              ))}
+            </div>
+            
+            {/* Custom Color Pickers */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-slate-600">QR Code Color</Label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    value={qrColor}
+                    onChange={(e) => setQrColor(e.target.value)}
+                    className="h-10 w-14 rounded border border-slate-300 cursor-pointer"
+                  />
+                  <Input
+                    value={qrColor}
+                    onChange={(e) => setQrColor(e.target.value)}
+                    className="flex-1 text-xs font-mono"
+                    placeholder="#000000"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-1.5">
+                <Label className="text-xs text-slate-600">Background</Label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    value={bgColor}
+                    onChange={(e) => {
+                      setBgColor(e.target.value);
+                      setTransparentBg(false);
+                    }}
+                    disabled={transparentBg}
+                    className="h-10 w-14 rounded border border-slate-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <Input
+                    value={transparentBg ? "transparent" : bgColor}
+                    onChange={(e) => {
+                      if (e.target.value !== "transparent") {
+                        setBgColor(e.target.value);
+                        setTransparentBg(false);
+                      }
+                    }}
+                    disabled={transparentBg}
+                    className="flex-1 text-xs font-mono"
+                    placeholder="#FFFFFF"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Transparent Background Toggle */}
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded border border-slate-300 bg-white relative overflow-hidden">
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: "linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%)",
+                    backgroundSize: "8px 8px",
+                    backgroundPosition: "0 0, 0 4px, 4px -4px, -4px 0px"
+                  }} />
+                </div>
+                <Label className="text-sm font-medium text-slate-700 cursor-pointer">
+                  Transparent Background
+                </Label>
+              </div>
+              <button
+                onClick={() => setTransparentBg(!transparentBg)}
+                className={`w-11 h-6 rounded-full transition-colors relative ${
+                  transparentBg ? "bg-violet-500" : "bg-slate-300"
+                }`}
+              >
+                <div
+                  className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                    transparentBg ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+          
           {/* QR Code Preview */}
           <div className="space-y-3">
-            <Label>QR Code Preview</Label>
-            <div className="flex flex-col items-center p-6 bg-slate-50 rounded-xl border border-slate-200">
-              <div ref={qrCodeRef} className="bg-white p-4 rounded-lg shadow-sm">
+            <Label>Preview</Label>
+            <div className="flex flex-col items-center p-6 rounded-xl border border-slate-200" style={{
+              background: transparentBg 
+                ? "linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%)"
+                : "#f8fafc",
+              backgroundSize: transparentBg ? "16px 16px" : "auto",
+              backgroundPosition: transparentBg ? "0 0, 0 8px, 8px -8px, -8px 0px" : "0 0"
+            }}>
+              <div 
+                ref={qrCodeRef} 
+                className="p-4 rounded-lg shadow-sm" 
+                style={{ backgroundColor: effectiveBgColor }}
+              >
                 <QRCodeSVG
                   value={qrCodeUrl}
                   size={200}
                   level="H"
                   includeMargin={true}
+                  fgColor={qrColor}
+                  bgColor={effectiveBgColor}
                 />
               </div>
               <p className="text-xs text-slate-500 mt-3 text-center break-all max-w-full px-2">
