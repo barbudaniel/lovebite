@@ -220,6 +220,12 @@ const toolsNavItems: NavItem[] = [
     icon: MessageCircle,
   },
   {
+    label: "WhatsApp Groups",
+    href: "/dashboard/groups",
+    icon: MessageSquare,
+    roles: ["admin", "business"],
+  },
+  {
     label: "WhatsApp Bot",
     href: "/dashboard/whatsapp",
     icon: Bot,
