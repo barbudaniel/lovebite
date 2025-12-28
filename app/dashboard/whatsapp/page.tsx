@@ -412,10 +412,22 @@ function GroupsModal({
       try {
         const response = await fetch(`${apiUrl}/groups`);
         if (!response.ok) throw new Error("Failed to fetch groups");
-        const data = await response.json();
-        setGroups(data || []);
+        const result = await response.json();
+        
+        // Ensure we always get an array from the response
+        const groupsData = Array.isArray(result.groups) 
+          ? result.groups 
+          : Array.isArray(result.data) 
+          ? result.data 
+          : Array.isArray(result) 
+          ? result 
+          : [];
+        
+        setGroups(groupsData);
       } catch (err) {
+        console.error("Failed to load groups:", err);
         setError("Failed to load groups");
+        setGroups([]); // Ensure groups is always an array
       } finally {
         setIsLoading(false);
       }
@@ -1378,9 +1390,12 @@ export default function WhatsAppBotPage() {
     try {
       const response = await fetch("/api/whatsapp/groups");
       if (response.ok) {
-        const data = await response.json();
+        const result = await response.json();
+        // API returns { success: true, data: [...] }
+        const groupsData = Array.isArray(result.data) ? result.data : [];
+        
         // Transform the response to match our WhatsAppGroup type
-        const groups: WhatsAppGroup[] = (data.groups || []).map((g: any) => ({
+        const groups: WhatsAppGroup[] = groupsData.map((g: any) => ({
           id: g.id || g.whatsapp_id,
           whatsapp_id: g.whatsapp_id || g.id,
           name: g.name || 'Unnamed Group',

@@ -201,6 +201,30 @@ export interface PlatformOverview {
   timestamp: string;
 }
 
+export interface LinkedEntity {
+  type: 'creator' | 'studio';
+  id: string;
+  name: string;
+  enabled: boolean;
+}
+
+export interface WhatsAppGroup {
+  id: string;
+  name: string;
+  participantCount?: number;
+  type?: 'creator' | 'studio' | 'other';
+  linked_to?: LinkedEntity | null;
+}
+
+export interface GroupsResponse {
+  success: boolean;
+  data: WhatsAppGroup[];
+  count: number;
+  bot_online: boolean;
+  bot_error?: string;
+  message?: string;
+}
+
 // ============================================
 // API CLIENT CLASS
 // ============================================
@@ -564,6 +588,112 @@ export class MediaApiClient {
     
     const query = searchParams.toString();
     return this.request(`/api/v1/stats/leaderboard${query ? `?${query}` : ''}`);
+  }
+
+  // ============================================
+  // WHATSAPP GROUPS ENDPOINTS
+  // ============================================
+
+  /**
+   * List all WhatsApp groups with their linkage status
+   * Returns groups from bot if online, otherwise from database
+   */
+  async listGroups(): Promise<GroupsResponse> {
+    const response = await this.request<WhatsAppGroup[]>('/api/v1/groups');
+    
+    // Ensure data is always an array
+    if (!response.success || !Array.isArray(response.data)) {
+      return {
+        success: false,
+        data: [],
+        count: 0,
+        bot_online: false,
+        message: response.error || 'Failed to fetch groups',
+      };
+    }
+    
+    return {
+      success: response.success,
+      data: response.data,
+      count: response.data.length,
+      bot_online: true,
+    };
+  }
+
+  /**
+   * Get details for a specific WhatsApp group
+   */
+  async getGroup(groupId: string): Promise<ApiResponse<{
+    group_id: string;
+    type: 'creator' | 'studio' | 'unknown';
+    creator?: Creator & { stats: any };
+    studio?: Studio & { creator_count: number; creators: Creator[] };
+  }>> {
+    return this.request(`/api/v1/groups/${groupId}`);
+  }
+
+  /**
+   * Create a new WhatsApp group
+   */
+  async createGroup(params: {
+    name: string;
+    participants: string[];
+    creatorId?: string;
+  }): Promise<ApiResponse<{
+    groupId: string;
+    groupName: string;
+  }>> {
+    return this.request('/api/v1/groups/create', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  /**
+   * Link a WhatsApp group to a creator
+   */
+  async linkGroupToCreator(groupId: string, creatorId: string): Promise<ApiResponse<Creator>> {
+    return this.request(`/api/v1/groups/${groupId}/link/creator`, {
+      method: 'POST',
+      body: JSON.stringify({ creator_id: creatorId }),
+    });
+  }
+
+  /**
+   * Link a WhatsApp group to a studio
+   */
+  async linkGroupToStudio(groupId: string, studioId: string): Promise<ApiResponse<Studio>> {
+    return this.request(`/api/v1/groups/${groupId}/link/studio`, {
+      method: 'POST',
+      body: JSON.stringify({ studio_id: studioId }),
+    });
+  }
+
+  /**
+   * Unlink a WhatsApp group from its creator or studio
+   */
+  async unlinkGroup(groupId: string): Promise<ApiResponse<{
+    type: 'creator' | 'studio';
+    id: string;
+    username?: string;
+    name?: string;
+  }>> {
+    return this.request(`/api/v1/groups/${groupId}/link`, {
+      method: 'DELETE',
+    });
+  }
+
+  /**
+   * Get only configured groups (linked to creators/studios)
+   */
+  async getConfiguredGroups(): Promise<ApiResponse<Array<{
+    group_id: string;
+    type: 'creator' | 'studio';
+    linked_id: string;
+    linked_name: string;
+    enabled: boolean;
+  }>>> {
+    return this.request('/api/v1/groups/configured');
   }
 }
 

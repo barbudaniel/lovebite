@@ -80,7 +80,12 @@ export async function GET() {
         if (groupIds.length > 0) {
           query = query.in("id", groupIds);
         } else {
-          return NextResponse.json({ groups: [], bot_online: false });
+          return NextResponse.json({ 
+            success: true,
+            data: [],
+            count: 0,
+            bot_online: false 
+          });
         }
       }
 
@@ -94,22 +99,31 @@ export async function GET() {
         );
       }
 
-      groups = (dbGroups || []).map((g: { id: string; whatsapp_id: string; name: string | null; type: string; participant_count: number | null }) => ({
+      groups = Array.isArray(dbGroups) ? dbGroups.map((g: { id: string; whatsapp_id: string; name: string | null; type: string; participant_count: number | null }) => ({
         ...g,
         name: g.name || "Unnamed Group",
         participant_count: g.participant_count || 0,
         id: g.whatsapp_id, // Use whatsapp_id for sending messages
-      }));
+      })) : [];
     }
 
     return NextResponse.json({ 
-      groups,
+      success: true,
+      data: groups, // Always an array
+      count: groups.length,
       bot_online: botOnline,
     });
   } catch (error) {
     console.error("Error in groups GET:", error);
+    // Return empty array on error instead of throwing
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        success: false,
+        data: [], // Always return an array
+        count: 0,
+        bot_online: false,
+        error: "Internal server error" 
+      },
       { status: 500 }
     );
   }
