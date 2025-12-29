@@ -225,6 +225,21 @@ export interface GroupsResponse {
   message?: string;
 }
 
+export interface BulkSendResponse {
+  success: boolean;
+  message: string;
+  results: {
+    groupId: string;
+    success: boolean;
+    error?: string;
+  }[];
+  summary: {
+    total: number;
+    successful: number;
+    failed: number;
+  };
+}
+
 // ============================================
 // API CLIENT CLASS
 // ============================================
@@ -694,6 +709,43 @@ export class MediaApiClient {
     enabled: boolean;
   }>>> {
     return this.request('/api/v1/groups/configured');
+  }
+
+  /**
+   * Send message to a single group
+   */
+  async sendToGroup(
+    groupId: string, 
+    message: string, 
+    imageUrl?: string, 
+    caption?: string
+  ): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    return this.request(`/api/v1/groups/${groupId}/send`, {
+      method: 'POST',
+      body: JSON.stringify({ message, image_url: imageUrl, caption }),
+    });
+  }
+
+  /**
+   * Send message to multiple groups (bulk)
+   */
+  async sendToMultipleGroups(
+    groupIds: string[], 
+    message: string, 
+    imageUrl?: string, 
+    caption?: string, 
+    delayMs?: number
+  ): Promise<ApiResponse<BulkSendResponse>> {
+    return this.request('/api/v1/groups/bulk-send', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        group_ids: groupIds, 
+        message, 
+        image_url: imageUrl, 
+        caption,
+        delay_ms: delayMs 
+      }),
+    });
   }
 }
 

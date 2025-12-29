@@ -37,10 +37,12 @@ import {
   CheckCircle,
   AlertCircle,
   ExternalLink,
+  Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createApiClient, type WhatsAppGroup, type Creator, type Studio } from '@/lib/media-api';
 import { CreateGroupModal } from '@/components/whatsapp/create-group-modal';
+import { BulkMessageModal } from '@/components/whatsapp/bulk-message-modal';
 
 export default function GroupsPage() {
   const { user, apiKey } = useDashboard();
@@ -54,6 +56,7 @@ export default function GroupsPage() {
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showBulkMessageModal, setShowBulkMessageModal] = useState(false);
   const [linkingGroup, setLinkingGroup] = useState<WhatsAppGroup | null>(null);
   const [unlinkingGroup, setUnlinkingGroup] = useState<WhatsAppGroup | null>(null);
 
@@ -182,10 +185,20 @@ export default function GroupsPage() {
             Manage WhatsApp groups and link them to creators or studios
           </p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Group
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowBulkMessageModal(true)}
+            disabled={!botOnline || groups.length === 0}
+          >
+            <Send className="w-4 h-4 mr-2" />
+            Bulk Message
+          </Button>
+          <Button onClick={() => setShowCreateModal(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Group
+          </Button>
+        </div>
       </div>
 
       {/* Status Bar */}
@@ -342,6 +355,13 @@ export default function GroupsPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Bulk Message Modal */}
+      <BulkMessageModal
+        isOpen={showBulkMessageModal}
+        onClose={() => setShowBulkMessageModal(false)}
+        apiKey={apiKey || ''}
+      />
     </div>
   );
 }
