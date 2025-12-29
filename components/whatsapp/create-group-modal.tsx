@@ -45,7 +45,7 @@ export function CreateGroupModal({
 }: CreateGroupModalProps) {
   const [name, setName] = useState('');
   const [participants, setParticipants] = useState<string[]>(['']);
-  const [creatorId, setCreatorId] = useState<string>(preselectedCreatorId || '');
+  const [creatorId, setCreatorId] = useState<string>(preselectedCreatorId || 'none');
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingCreators, setLoadingCreators] = useState(true);
@@ -128,7 +128,7 @@ export function CreateGroupModal({
       const response = await client.createGroup({
         name: name.trim(),
         participants: validParticipants,
-        creatorId: creatorId || undefined,
+        creatorId: creatorId && creatorId !== 'none' ? creatorId : undefined,
       });
 
       if (response.success && response.data) {
@@ -194,7 +194,7 @@ export function CreateGroupModal({
                     <SelectValue placeholder="Don't link now" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Don't link now</SelectItem>
+                    <SelectItem value="none">Don't link now</SelectItem>
                     {creators.map((creator) => (
                       <SelectItem key={creator.id} value={creator.id}>
                         {creator.username}
@@ -208,7 +208,7 @@ export function CreateGroupModal({
                   </SelectContent>
                 </Select>
               )}
-              {creatorId && (
+              {creatorId && creatorId !== 'none' && (
                 <p className="text-xs text-slate-600">
                   The group will be automatically linked to this creator after creation
                 </p>
