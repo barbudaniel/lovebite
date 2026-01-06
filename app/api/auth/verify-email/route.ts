@@ -60,11 +60,11 @@ export async function POST(request: NextRequest) {
     // Send welcome email if requested and user exists
     if (sendWelcome && dashboardUser) {
       const name = dashboardUser.display_name || "Creator";
-      const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://Lovdash.fans"}/dashboard`;
+      const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://lovdash.com"}/dashboard`;
       
       const htmlContent = getWelcomeHtml(name, dashboardUrl);
       await resend.emails.send({
-        from: "Lovdash <welcome@Lovdash.fans>",
+        from: "Lovdash <welcome@lovdash.com>",
         to: email,
         subject: `Welcome to Lovdash, ${name}! 🎉`,
         html: htmlContent,

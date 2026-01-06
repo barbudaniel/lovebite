@@ -75,7 +75,7 @@ function emailWrapper(content: string, preheaderText: string): string {
                     <tr>
                         <td style="background-color: ${DARK_BG}; padding: 40px 30px; text-align: center;">
                             <p style="margin: 0 0 25px 0;">
-                                <a href="https://Lovdash.fans" style="color: ${TEXT_MUTED}; text-decoration: none; font-size: 13px;">www.Lovdash.fans</a>
+                                <a href="https://lovdash.com" style="color: ${TEXT_MUTED}; text-decoration: none; font-size: 13px;">www.lovdash.com</a>
                             </p>
                             <div style="height: 1px; background-color: #374151; width: 100%; max-width: 200px; margin: 0 auto 25px auto;"></div>
                             <p style="margin: 0; color: #6b7280; font-size: 11px; line-height: 1.6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
@@ -170,7 +170,7 @@ export function getEmailVerificationHtml(code: string, name?: string): string {
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Need help?<br>
-                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
+                            <a href="mailto:support@lovdash.com" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
                         </p>
                     </td>
                 </tr>
@@ -293,7 +293,7 @@ export function getWelcomeHtml(name: string, dashboardUrl: string): string {
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Questions? We're here to help!<br>
-                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">support@Lovdash.fans</a>
+                            <a href="mailto:support@lovdash.com" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">support@lovdash.com</a>
                         </p>
                     </td>
                 </tr>
@@ -359,7 +359,7 @@ export function getAccountCreatedHtml(name: string, email: string, tempPassword:
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Need help?<br>
-                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
+                            <a href="mailto:support@lovdash.com" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
                         </p>
                     </td>
                 </tr>
@@ -392,7 +392,7 @@ export function getPasswordChangedHtml(name: string): string {
             </p>
 
             <p style="margin: 0 0 0 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #dc2626; background-color: #fef2f2; padding: 15px 20px; border-radius: 8px; display: inline-block;">
-                ⚠️ If you didn't make this change, please <a href="mailto:security@Lovdash.fans" style="color: #dc2626; font-weight: bold;">contact us immediately</a>.
+                ⚠️ If you didn't make this change, please <a href="mailto:security@lovdash.com" style="color: #dc2626; font-weight: bold;">contact us immediately</a>.
             </p>
 
             <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 35px; border-top: 1px solid #f3f4f6; padding-top: 25px;">
@@ -400,7 +400,7 @@ export function getPasswordChangedHtml(name: string): string {
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Need help?<br>
-                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
+                            <a href="mailto:support@lovdash.com" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
                         </p>
                     </td>
                 </tr>
@@ -443,7 +443,7 @@ export function getPhoneVerificationHtml(code: string): string {
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Need help?<br>
-                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
+                            <a href="mailto:support@lovdash.com" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
                         </p>
                     </td>
                 </tr>
@@ -486,7 +486,7 @@ export function getStudioInviteHtml(studioName: string, inviterName: string, acc
                     <td align="center">
                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${TEXT_MUTED};">
                             Questions about this invitation?<br>
-                            <a href="mailto:support@Lovdash.fans" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
+                            <a href="mailto:support@lovdash.com" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">Contact Support</a>
                         </p>
                     </td>
                 </tr>

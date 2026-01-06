@@ -82,13 +82,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate reset link with code
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://Lovdash.fans";
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lovdash.com";
     const resetLink = `${baseUrl}/dashboard/login/reset-password?email=${encodeURIComponent(email)}&code=${code}`;
 
     // Send email
     const htmlContent = getPasswordResetHtml(code, resetLink, dashboardUser.display_name);
     const { error: emailError } = await resend.emails.send({
-      from: "Lovdash <security@Lovdash.fans>",
+      from: "Lovdash <security@lovdash.com>",
       to: email,
       subject: `${code} - Reset your Lovdash password`,
       html: htmlContent,

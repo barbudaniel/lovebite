@@ -566,7 +566,7 @@ export default function CreatorBioClient({ creator }: CreatorBioClientProps) {
 
           {/* Lovdash Badge - Create your bio */}
           <motion.a
-            href="https://www.Lovdash.fans/"
+            href="https://www.lovdash.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 py-3 text-center"

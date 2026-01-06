@@ -53,7 +53,7 @@ function getSuccessEmailHtml(creatorName: string): string {
                     <tr>
                         <td align="center" class="mobile-header" style="padding: 40px 0 20px 0; background-color: #ffffff;">
                             <h1 style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #111827;">
-                                <a href="https://Lovdash.fans" target="_blank" style="color: #111827; text-decoration: none;">Lovdash<span style="color: #db2777;">FANS</span></a>
+                                <a href="https://lovdash.com" target="_blank" style="color: #111827; text-decoration: none;">Lovdash<span style="color: #db2777;">FANS</span></a>
                             </h1>
                         </td>
                     </tr>
@@ -101,7 +101,7 @@ function getSuccessEmailHtml(creatorName: string): string {
                                     <td align="center" style="border-top: 1px solid #f3f4f6; padding-top: 25px;">
                                         <p style="margin: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #9ca3af;">
                                             Questions? We're here to help.<br>
-                                            <a href="mailto:support@Lovdash.fans" style="color: #db2777; text-decoration: none; font-weight: 500;">Contact Support</a>
+                                            <a href="mailto:support@lovdash.com" style="color: #db2777; text-decoration: none; font-weight: 500;">Contact Support</a>
                                         </p>
                                     </td>
                                 </tr>
@@ -113,7 +113,7 @@ function getSuccessEmailHtml(creatorName: string): string {
                         <td style="background-color: #111827; padding: 40px 30px; text-align: center;">
                             <p style="margin: 0 0 15px 0; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 1px;">Lovdash FANS</p>
                             <p style="margin: 0 0 25px 0;">
-                                <a href="https://Lovdash.fans" style="color: #9ca3af; text-decoration: none; font-size: 13px;">www.Lovdash.fans</a>
+                                <a href="https://lovdash.com" style="color: #9ca3af; text-decoration: none; font-size: 13px;">www.lovdash.com</a>
                             </p>
                             <div style="height: 1px; background-color: #374151; width: 100%; max-width: 200px; margin: 0 auto 25px auto;"></div>
                             <p style="margin: 0; color: #6b7280; font-size: 11px; line-height: 1.6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
@@ -186,7 +186,7 @@ export async function POST(request: Request) {
     }
 
     const { data, error } = await resend.emails.send({
-      from: 'Lovdash Fans <onboarding@Lovdash.fans>',
+      from: 'Lovdash Fans <onboarding@lovdash.com>',
       to: to,
       subject: 'Welcome to Lovdash Fans – Your Signed Contract',
       html: htmlContent,

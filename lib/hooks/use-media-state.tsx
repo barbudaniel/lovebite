@@ -80,87 +80,36 @@ export function MediaStateProvider({
   // Track if counts have been loaded initially
   const countsLoadedRef = useRef(false);
 
-  // Fetch media counts
+  // Fetch media counts using the dedicated counts endpoint
   const refreshCounts = useCallback(async () => {
     if (!apiKey) return;
 
     setIsCountsLoading(true);
     try {
       const api = createApiClient(apiKey);
-      const counts: CreatorMediaCounts = {};
-      let totalImage = 0, totalVideo = 0, totalAudio = 0;
-
-      // Determine filters based on user role
+      
+      // Determine studio filter based on user role
       const studioIdParam = userRole === "business" ? userStudioId || undefined : undefined;
-      const creatorIdParam = userRole === "independent" ? userCreatorId || undefined : undefined;
-
-      // For independent users, only fetch their own media
-      if (userRole === "independent" && creatorIdParam) {
-        const response = await api.listMedia({
-          creator_id: creatorIdParam,
-          limit: 5000,
-        });
-        
-        if (response.success && response.data) {
-          response.data.forEach((m: Media) => {
-            if (!counts[creatorIdParam]) {
-              counts[creatorIdParam] = { image: 0, video: 0, audio: 0, total: 0 };
-            }
-            if (m.media_type === "image") {
-              counts[creatorIdParam].image++;
-              totalImage++;
-            } else if (m.media_type === "video") {
-              counts[creatorIdParam].video++;
-              totalVideo++;
-            } else if (m.media_type === "audio") {
-              counts[creatorIdParam].audio++;
-              totalAudio++;
-            }
-            counts[creatorIdParam].total++;
-          });
-        }
-      } else {
-        // For admin/business, fetch all accessible media
-        const response = await api.listMedia({
-          studio_id: studioIdParam,
-          limit: 5000,
-        });
-        
-        if (response.success && response.data) {
-          response.data.forEach((m: Media) => {
-            const creatorId = m.creator_id;
-            if (!counts[creatorId]) {
-              counts[creatorId] = { image: 0, video: 0, audio: 0, total: 0 };
-            }
-            if (m.media_type === "image") {
-              counts[creatorId].image++;
-              totalImage++;
-            } else if (m.media_type === "video") {
-              counts[creatorId].video++;
-              totalVideo++;
-            } else if (m.media_type === "audio") {
-              counts[creatorId].audio++;
-              totalAudio++;
-            }
-            counts[creatorId].total++;
-          });
-        }
-      }
-
-      setCreatorMediaCounts(counts);
-      setGlobalCounts({
-        image: totalImage,
-        video: totalVideo,
-        audio: totalAudio,
-        total: totalImage + totalVideo + totalAudio,
+      
+      // Use the dedicated counts endpoint for efficiency
+      const response = await api.getMediaCounts({
+        studio_id: studioIdParam,
       });
+      
+      if (response.success && response.data) {
+        setCreatorMediaCounts(response.data.data);
+        setGlobalCounts(response.data.totals);
+      } else {
+        console.error("Failed to fetch media counts:", response.error);
+      }
+      
       countsLoadedRef.current = true;
     } catch (err) {
       console.error("Error refreshing media counts:", err);
     } finally {
       setIsCountsLoading(false);
     }
-  }, [apiKey, userRole, userCreatorId, userStudioId]);
+  }, [apiKey, userRole, userStudioId]);
 
   // Load counts on mount
   useEffect(() => {

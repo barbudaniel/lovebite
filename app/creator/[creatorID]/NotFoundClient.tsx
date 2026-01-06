@@ -82,7 +82,7 @@ export default function NotFoundClient() {
         >
           {/* Primary CTA - Create */}
           <motion.a
-            href="https://www.Lovdash.fans/#contact"
+            href="https://www.lovdash.com/#contact"
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-gradient-to-r from-rose-500 to-rose-600 text-white font-semibold text-[15px] shadow-xl shadow-rose-500/25"
             whileHover={{ scale: 1.03, boxShadow: "0 20px 40px rgba(244, 63, 94, 0.3)" }}
             whileTap={{ scale: 0.98 }}
@@ -93,7 +93,7 @@ export default function NotFoundClient() {
 
           {/* Secondary CTA - Visit Lovdash */}
           <motion.a
-            href="https://www.Lovdash.fans/"
+            href="https://www.lovdash.com/"
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-full border border-slate-700 text-slate-300 font-medium text-[15px] hover:bg-slate-800/50 hover:border-slate-600 transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -116,6 +116,7 @@ export default function NotFoundClient() {
     </div>
   );
 }
+
 
 
 

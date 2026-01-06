@@ -766,6 +766,15 @@ function MediaCard({
                   alt={media.file_name}
                   className="w-full h-full relative"
                 />
+              ) : media.media_type === "video" && media.thumbnail_url ? (
+                <div className="relative w-full h-full">
+                  <LazyImage
+                    src={media.thumbnail_url}
+                    alt={media.file_name}
+                    className="w-full h-full relative"
+                  />
+                  <Video className="absolute bottom-0.5 right-0.5 w-3 h-3 text-white drop-shadow-lg" />
+                </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <TypeIcon className="w-5 h-5 text-slate-400" />
@@ -779,7 +788,7 @@ function MediaCard({
               )}
               <p className="font-medium text-sm text-slate-900 truncate">{toTitleCase(media.category || "uncategorized")}</p>
               <p className="text-xs text-slate-500">
-                {formatFileSize(media.file_size_bytes)} • {format(new Date(media.created_at), "MMM d")}
+                {format(new Date(media.created_at), "MMM d, yyyy")}
               </p>
             </div>
 
@@ -830,6 +839,15 @@ function MediaCard({
                 alt={media.file_name}
                 className="w-full h-full relative"
               />
+            ) : media.media_type === "video" && media.thumbnail_url ? (
+              <div className="relative w-full h-full">
+                <LazyImage
+                  src={media.thumbnail_url}
+                  alt={media.file_name}
+                  className="w-full h-full relative"
+                />
+                <Video className="absolute bottom-1 right-1 w-4 h-4 text-white drop-shadow-lg" />
+              </div>
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <TypeIcon className="w-6 h-6 text-slate-400" />
@@ -842,9 +860,6 @@ function MediaCard({
               <p className="text-xs font-semibold text-brand-600 truncate mb-0.5">@{creatorName}</p>
             )}
             <p className="font-medium text-slate-900 truncate">{toTitleCase(media.category || "uncategorized")}</p>
-            <p className="text-sm text-slate-500">
-              {formatFileSize(media.file_size_bytes)} • {format(new Date(media.created_at), "MMM d")}
-            </p>
           </div>
 
           <p className="text-sm text-slate-500">
@@ -916,9 +931,25 @@ function MediaCard({
             className="w-full h-full relative transition-transform group-hover:scale-105"
           />
         ) : media.media_type === "video" ? (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-purple-50">
-            <Video className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-purple-400" />
-          </div>
+          media.thumbnail_url ? (
+            <div className="relative w-full h-full">
+              <LazyImage
+                src={media.thumbnail_url}
+                alt={media.file_name}
+                className="w-full h-full relative transition-transform group-hover:scale-105"
+              />
+              {/* Video play indicator overlay */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 flex items-center justify-center">
+                  <Video className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-purple-50">
+              <Video className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-purple-400" />
+            </div>
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50">
             <Music className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-orange-400" />
@@ -1363,17 +1394,24 @@ function UploadModal({
             onRemoveUploadingItem(sharedStateId);
           }, 1500);
         } else {
+          const errorMessage = response.error || "Upload failed";
           setFiles((prev) =>
             prev.map((f) =>
               f.id === uploadFile.id
-                ? { ...f, status: "error", error: response.error || "Upload failed" }
+                ? { ...f, status: "error", error: errorMessage }
                 : f
             )
           );
           onUpdateUploadingItem(sharedStateId, { 
             status: "error", 
-            error: response.error || "Upload failed" 
+            error: errorMessage 
           });
+          // Show immediate toast for individual file errors (especially corrupted files)
+          if (errorMessage.toLowerCase().includes('corrupt') || 
+              errorMessage.toLowerCase().includes('invalid') ||
+              errorMessage.toLowerCase().includes('too small')) {
+            toast.error(`${uploadFile.file.name}: ${errorMessage}`);
+          }
         }
       } catch (err) {
         setFiles((prev) =>
@@ -1804,6 +1842,10 @@ export default function MediaPage() {
   }, [router]);
   const [isGlobalDragging, setIsGlobalDragging] = useState(false);
   const dragCounter = useRef(0);
+  
+  // Pending media state (admin only)
+  const [pendingMediaCount, setPendingMediaCount] = useState(0);
+  const [isProcessingPending, setIsProcessingPending] = useState(false);
 
   // Global drag and drop handlers
   const handleGlobalDragEnter = useCallback((e: DragEvent) => {
@@ -1875,6 +1917,46 @@ export default function MediaPage() {
       console.error("Error fetching creators:", err);
     }
   }, [apiKey, isAdminOrBusiness, user, permissionsLoaded]);
+
+  // Fetch pending media count (admin only)
+  const fetchPendingCount = useCallback(async () => {
+    if (!apiKey || !isAdmin) return;
+
+    try {
+      const api = createApiClient(apiKey);
+      const response = await api.listPendingMedia();
+      if (response.success && response.data) {
+        setPendingMediaCount(response.data.length);
+      }
+    } catch (err) {
+      console.error("Error fetching pending media:", err);
+    }
+  }, [apiKey, isAdmin]);
+
+  // Process pending media (admin only)
+  const handleProcessPending = useCallback(async () => {
+    if (!apiKey || !isAdmin || pendingMediaCount === 0) return;
+
+    setIsProcessingPending(true);
+    try {
+      const api = createApiClient(apiKey);
+      const response = await api.processPendingMedia({ all: true, limit: 50 });
+      if (response.success && response.data) {
+        toast.success(`Processed ${response.data.processed} pending files`);
+        setPendingMediaCount(0);
+        // Refresh media list to show newly processed media
+        fetchMedia(true);
+        refreshCounts();
+      } else {
+        toast.error(response.error || "Failed to process pending media");
+      }
+    } catch (err) {
+      console.error("Error processing pending media:", err);
+      toast.error("Failed to process pending media");
+    } finally {
+      setIsProcessingPending(false);
+    }
+  }, [apiKey, isAdmin, pendingMediaCount, fetchMedia, refreshCounts]);
 
   // Fetch studio creators for permission filtering
   useEffect(() => {
@@ -2018,7 +2100,7 @@ export default function MediaPage() {
 
           // Client-side filtering for multiple categories
           if (filters.categories.size > 1) {
-            newData = newData.filter((m: Media) => filters.categories.has(m.category || ""));
+            newData = newData.filter((m: Media) => filters.categories.has(m.category || "uncategorized"));
           }
 
           // Deduplicate media by ID when appending
@@ -2131,7 +2213,7 @@ export default function MediaPage() {
 
         // Client-side filtering for multiple categories
         if (filters.categories.size > 1) {
-          newData = newData.filter((m: Media) => filters.categories.has(m.category || ""));
+          newData = newData.filter((m: Media) => filters.categories.has(m.category || "uncategorized"));
         }
 
         // Deduplicate and append
@@ -2160,6 +2242,13 @@ export default function MediaPage() {
       fetchCreators();
     }
   }, [fetchCreators, permissionsLoaded]);
+
+  // Fetch pending count on load (admin only)
+  useEffect(() => {
+    if (isAdmin && permissionsLoaded) {
+      fetchPendingCount();
+    }
+  }, [fetchPendingCount, isAdmin, permissionsLoaded]);
 
   useEffect(() => {
     // Only fetch media once permissions are loaded
@@ -2228,6 +2317,17 @@ export default function MediaPage() {
     
     return activeItems;
   }, [uploadingItems, selectedCreator, user?.role, user?.creator_id]);
+
+  // Calculate accurate counts from the current media array (for display)
+  const currentViewCounts = useMemo(() => {
+    let image = 0, video = 0, audio = 0;
+    media.forEach(m => {
+      if (m.media_type === "image") image++;
+      else if (m.media_type === "video") video++;
+      else if (m.media_type === "audio") audio++;
+    });
+    return { image, video, audio, total: image + video + audio };
+  }, [media]);
 
   const handleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -2451,14 +2551,66 @@ export default function MediaPage() {
         )}
       </AnimatePresence>
 
+      {/* Pending Media Alert Banner (Admin only) */}
+      {isAdmin && pendingMediaCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"
+        >
+          <div className="flex items-center gap-3 flex-1">
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-amber-900">
+                {pendingMediaCount} pending media files
+              </h3>
+              <p className="text-sm text-amber-700">
+                These files are waiting to be processed. They may be stuck due to RabbitMQ worker issues.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchPendingCount}
+              className="text-amber-700 border-amber-300 hover:bg-amber-100"
+            >
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Check
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleProcessPending}
+              disabled={isProcessingPending}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {isProcessingPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Process Now
+                </>
+              )}
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Media Library</h1>
           <p className="text-sm sm:text-base text-slate-500">
-            {/* Use calculated totals for accuracy */}
-            {(currentPath.length > 0 && selectedCreator && creatorMediaCounts[selectedCreator]
-              ? creatorMediaCounts[selectedCreator].total
+            {/* Use pagination.total when viewing filtered results, otherwise use calculated counts */}
+            {(selectedCreator 
+              ? (pagination.total > 0 ? pagination.total : (creatorMediaCounts[selectedCreator]?.total || 0))
               : globalCounts.total
             ).toLocaleString()} items
             {selectedCreator && currentPath[0] && ` in ${currentPath[0].name}`}
@@ -2507,8 +2659,8 @@ export default function MediaPage() {
           <MediaTypeFilter
             selectedTypes={filters.types}
             onToggle={toggleTypeFilter}
-            counts={currentPath.length > 0 && selectedCreator && creatorMediaCounts[selectedCreator]
-              ? creatorMediaCounts[selectedCreator]
+            counts={selectedCreator
+              ? (pagination.total > 0 ? currentViewCounts : (creatorMediaCounts[selectedCreator] || { image: 0, video: 0, audio: 0 }))
               : globalCounts
             }
           />
@@ -2753,7 +2905,25 @@ export default function MediaPage() {
             <div className="-mx-3 sm:-mx-4 md:mx-0">
               <DraggableScroll className="overflow-x-auto pb-2 px-3 sm:px-4 md:px-0 cursor-grab active:cursor-grabbing scrollbar-hide">
                 <div className="flex items-center gap-1.5 sm:gap-2">
+                {/* Add Uncategorized filter button */}
+                {categories.some(cat => cat.name === "uncategorized") && (
+                  <button
+                    onClick={() => toggleCategoryFilter("uncategorized")}
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                      filters.categories.has("uncategorized")
+                        ? "bg-brand-500 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span>Uncategorized</span>
+                    <span className={`text-[10px] sm:text-xs ${filters.categories.has("uncategorized") ? "opacity-70" : "opacity-60"}`}>
+                      {categories.find(cat => cat.name === "uncategorized")?.count || 0}
+                    </span>
+                  </button>
+                )}
                 {[...categories]
+                  .filter(cat => cat.name !== "uncategorized") // Don't show uncategorized in the sorted list
                   .sort((a, b) => b.count - a.count)
                   .map((cat) => {
                     const isSelected = filters.categories.has(cat.name);

@@ -415,21 +415,30 @@ function ModelCard({
 // ADD/EDIT MODEL MODAL
 // ============================================
 
+interface Studio {
+  id: string;
+  name: string;
+}
+
 function ModelModal({
   mode,
   creator,
   studioId,
+  isAdmin,
   onClose,
   onSaved,
 }: {
   mode: "add" | "edit";
   creator?: Creator;
-  studioId: string;
+  studioId: string | null;
+  isAdmin?: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [isSaving, setIsSaving] = useState(false);
   const [createDashboardAccess, setCreateDashboardAccess] = useState(mode === "add");
+  const [studios, setStudios] = useState<Studio[]>([]);
+  const [selectedStudioId, setSelectedStudioId] = useState<string | null>(studioId || creator?.studio_id || null);
   const [formData, setFormData] = useState({
     username: creator?.username || "",
     displayName: creator?.display_name || "",
@@ -439,6 +448,21 @@ function ModelModal({
     active: creator?.active ?? true,
   });
   const [tempPassword, setTempPassword] = useState("");
+
+  // Fetch studios for admin to select from
+  useEffect(() => {
+    if (isAdmin && mode === "add") {
+      const fetchStudios = async () => {
+        const supabase = getSupabaseBrowserClient();
+        const { data } = await supabase
+          .from("studios")
+          .select("id, name")
+          .order("name");
+        setStudios(data || []);
+      };
+      fetchStudios();
+    }
+  }, [isAdmin, mode]);
 
   useEffect(() => {
     if (mode === "add") {
@@ -460,6 +484,10 @@ function ModelModal({
       toast.error("Email is required for new models");
       return;
     }
+    if (mode === "add" && isAdmin && !selectedStudioId) {
+      toast.error("Please select a studio");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -468,6 +496,7 @@ function ModelModal({
       if (mode === "add") {
         // Generate storage folder from username (lowercase, alphanumeric with dashes)
         const storageFolder = formData.username.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        const targetStudioId = isAdmin ? selectedStudioId : studioId;
         
         const { data: newCreator, error: creatorError } = await supabase
           .from("creators")
@@ -479,7 +508,7 @@ function ModelModal({
             bio: formData.bio || null,
             group_id: crypto.randomUUID(),
             storage_folder: storageFolder,
-            studio_id: studioId,
+            studio_id: targetStudioId,
             active: formData.active,
             enabled: true,
           })
@@ -507,7 +536,7 @@ function ModelModal({
             role: "independent",
             display_name: formData.displayName || formData.username,
             creator_id: newCreator.id,
-            studio_id: studioId,
+            studio_id: targetStudioId,
             enabled: true,
           });
 
@@ -616,6 +645,25 @@ function ModelModal({
               className="w-full px-3 py-2 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900"
             />
           </div>
+
+          {/* Studio selector for admins */}
+          {isAdmin && mode === "add" && (
+            <div className="space-y-2">
+              <Label>Assign to Studio *</Label>
+              <select
+                value={selectedStudioId || ""}
+                onChange={(e) => setSelectedStudioId(e.target.value || null)}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 bg-white"
+              >
+                <option value="">Select a studio...</option>
+                {studios.map((studio) => (
+                  <option key={studio.id} value={studio.id}>
+                    {studio.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 transition-colors">
             <input
@@ -1839,10 +1887,11 @@ export default function ModelsPage() {
 
       {/* Modals */}
       <AnimatePresence>
-        {showAddModal && studioId && (
+        {showAddModal && (isAdmin || studioId) && (
           <ModelModal
             mode="add"
-            studioId={studioId}
+            studioId={studioId || null}
+            isAdmin={isAdmin}
             onClose={() => setShowAddModal(false)}
             onSaved={() => {
               setShowAddModal(false);
@@ -1866,7 +1915,8 @@ export default function ModelsPage() {
           <ModelModal
             mode="edit"
             creator={selectedModel}
-            studioId={getEditStudioId(selectedModel) || ""}
+            studioId={getEditStudioId(selectedModel)}
+            isAdmin={isAdmin}
             onClose={() => {
               setShowEditModal(false);
               setSelectedModel(null);

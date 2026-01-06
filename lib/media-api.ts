@@ -84,6 +84,7 @@ export interface Media {
   content_hash: string | null;
   category: string | null;
   file_size_bytes: number | null;
+  thumbnail_url: string | null;
   created_at: string;
   creator?: {
     id: string;
@@ -417,6 +418,20 @@ export class MediaApiClient {
     return this.request<MediaCategory[]>(`/api/v1/media/categories${query ? `?${query}` : ''}`);
   }
 
+  /**
+   * Get media counts per creator
+   * Returns counts of images, videos, and audio grouped by creator ID
+   */
+  async getMediaCounts(params?: { studio_id?: string }): Promise<ApiResponse<{
+    data: Record<string, { image: number; video: number; audio: number; total: number }>;
+    totals: { image: number; video: number; audio: number; total: number };
+  }>> {
+    const searchParams = new URLSearchParams();
+    if (params?.studio_id) searchParams.set('studio_id', params.studio_id);
+    const query = searchParams.toString();
+    return this.request(`/api/v1/media/counts${query ? `?${query}` : ''}`);
+  }
+
   async searchMedia(query: string, params?: {
     creator_id?: string;
     limit?: number;
@@ -464,6 +479,56 @@ export class MediaApiClient {
     return this.request(`/api/v1/media/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ category }),
+    });
+  }
+
+  // ============================================
+  // PENDING MEDIA ENDPOINTS
+  // ============================================
+
+  /**
+   * List pending media files in storage that haven't been processed yet
+   */
+  async listPendingMedia(params?: {
+    creator_id?: string;
+    storage_folder?: string;
+  }): Promise<ApiResponse<Array<{
+    key: string;
+    storage_folder: string;
+    creator_id: string | null;
+    creator_username: string;
+    file_name: string;
+    content_hash: string;
+    url: string;
+    size: number;
+    last_modified: string;
+  }>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.creator_id) searchParams.set('creator_id', params.creator_id);
+    if (params?.storage_folder) searchParams.set('storage_folder', params.storage_folder);
+    
+    const query = searchParams.toString();
+    return this.request(`/api/v1/media/pending${query ? `?${query}` : ''}`);
+  }
+
+  /**
+   * Process pending media files manually (when RabbitMQ workers aren't available)
+   * Moves files from pending to uncategorized folder
+   */
+  async processPendingMedia(params: {
+    keys?: string[];
+    creator_id?: string;
+    all?: boolean;
+    limit?: number;
+  }): Promise<ApiResponse<{
+    processed: number;
+    failed: number;
+    errors: string[];
+    media: Media[];
+  }>> {
+    return this.request('/api/v1/media/pending/process', {
+      method: 'POST',
+      body: JSON.stringify(params),
     });
   }
 

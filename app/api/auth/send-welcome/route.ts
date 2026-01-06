@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Recipient email and name are required" }, { status: 400 });
     }
 
-    const baseUrl = dashboardUrl || `${process.env.NEXT_PUBLIC_SITE_URL || "https://Lovdash.fans"}/dashboard`;
+    const baseUrl = dashboardUrl || `${process.env.NEXT_PUBLIC_SITE_URL || "https://lovdash.com"}/dashboard`;
     
     let htmlContent: string;
     let subject: string;
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { error: emailError } = await resend.emails.send({
-      from: "Lovdash <welcome@Lovdash.fans>",
+      from: "Lovdash <welcome@lovdash.com>",
       to,
       subject,
       html: htmlContent,

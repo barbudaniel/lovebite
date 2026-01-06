@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     // Send email
     const htmlContent = getEmailVerificationHtml(code, name);
     const { error: emailError } = await resend.emails.send({
-      from: "Lovdash <noreply@Lovdash.fans>",
+      from: "Lovdash <noreply@lovdash.com>",
       to: email,
       subject: `${code} is your Lovdash verification code`,
       html: htmlContent,

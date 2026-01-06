@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
 
       // Send email notification
       if (modelUser.email) {
-        const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://Lovdash.fans"}/dashboard`;
+        const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://lovdash.com"}/dashboard`;
         const htmlContent = getStudioInviteHtml(
           studio?.name || "A business",
           inviter?.display_name || "Someone",
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
         );
         
         await resend.emails.send({
-          from: "Lovdash <notifications@Lovdash.fans>",
+          from: "Lovdash <notifications@lovdash.com>",
           to: modelUser.email,
           subject: `You've been invited to join ${studio?.name || "a business"} on Lovdash!`,
           html: htmlContent,

@@ -621,10 +621,11 @@ export default function DashboardPage() {
               {(() => {
                 // Use shared state counts for real-time accuracy
                 const userCreatorId = user?.creator_id;
-                const counts = userCreatorId && creatorMediaCounts[userCreatorId]
+                const defaultCounts = { image: 0, video: 0, audio: 0, total: 0 };
+                const counts = (userCreatorId && creatorMediaCounts[userCreatorId])
                   ? creatorMediaCounts[userCreatorId]
-                  : globalCounts;
-                const hasMedia = counts.total > 0;
+                  : (globalCounts ?? defaultCounts);
+                const hasMedia = (counts?.total ?? 0) > 0;
                 
                 if (hasMedia) {
                   return (

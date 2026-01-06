@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     const name = dashboardUser.display_name || "User";
     const htmlContent = getPasswordChangedHtml(name);
     await resend.emails.send({
-      from: "Lovdash <security@Lovdash.fans>",
+      from: "Lovdash <security@lovdash.com>",
       to: email,
       subject: "Your Lovdash password has been changed",
       html: htmlContent,

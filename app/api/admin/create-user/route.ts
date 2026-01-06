@@ -39,11 +39,11 @@ export async function POST(request: NextRequest) {
     // Send welcome email with credentials if requested
     if (sendWelcomeEmail && data.user) {
       const name = fullName || email.split("@")[0];
-      const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://Lovdash.fans"}/dashboard`;
+      const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://lovdash.com"}/dashboard`;
       
       const htmlContent = getAccountCreatedHtml(name, email, password, dashboardUrl);
       await resend.emails.send({
-        from: "Lovdash <welcome@Lovdash.fans>",
+        from: "Lovdash <welcome@lovdash.com>",
         to: email,
         subject: "Your Lovdash account is ready!",
         html: htmlContent,

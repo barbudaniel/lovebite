@@ -1,0 +1,42 @@
+# Node modules
+node_modules
+npm-debug.log
+
+# Next.js
+.next
+out
+.vercel
+
+# Environment files (will be copied separately)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Build info
+.tsbuildinfo

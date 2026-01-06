@@ -171,3 +171,4 @@ COMMENT ON COLUMN public.whatsapp_message_history.whatsapp_group_id IS 'The actu
 
 
 
+
