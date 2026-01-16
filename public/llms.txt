@@ -1,0 +1,140 @@
+# Lovdash - The Creator Operating System
+
+## About Lovdash
+Lovdash is an AI-powered creator management platform designed for content creators and agencies. It serves as a comprehensive "Creator Operating System" that helps creators manage, publish, and grow their business across multiple platforms.
+
+## Target Audience
+- Individual content creators (OnlyFans, Fansly, social media influencers)
+- Creator agencies and studios managing multiple talent
+- Adult content creators seeking professional management tools
+
+## Company Information
+- Company: TRUST CHARGE SOLUTIONS LTD
+- Company Number: 16584325 (UK)
+- Website: https://lovdash.com
+- Dashboard App: https://app.lovdash.com
+- Bio Links: https://bites.bio
+
+## Core Features
+
+### Media Library
+- Unlimited cloud storage for photos, videos, and files
+- AI-powered auto-organization and categorization
+- Quick search and filtering capabilities
+- Support for all media types
+
+### AI Tagging (Bite)
+- Automatic content analysis using AI
+- Auto-generated tags and descriptions
+- Smart categorization of content
+- Semantic search capabilities
+
+### Multi-Platform Publishing
+- Supported platforms: OnlyFans, Fansly, Twitter/X, Instagram
+- One-click cross-platform posting
+- Platform-specific optimization
+- Bulk scheduling capabilities
+
+### Content Scheduling
+- Queue posts across all platforms
+- Optimal timing recommendations
+- Calendar view for content planning
+- Automated posting
+
+### Analytics Dashboard
+- Revenue tracking across platforms
+- Engagement metrics and insights
+- Growth analytics and trends
+- Audience demographics
+
+### Bio Links (bites.bio)
+- Customizable link-in-bio pages
+- Custom domain support
+- Click tracking and analytics
+- Live status sync with platforms
+
+### AI Assistant
+- 24/7 automated fan messaging
+- Smart pricing optimization
+- Revenue optimization suggestions
+- Natural conversation capabilities
+
+### Team Access
+- Role-based permissions system
+- Multi-creator management for agencies
+- Activity logs and audit trails
+- Secure credential sharing
+
+## Pricing Tiers
+
+### Creator Plan
+For individual content creators:
+- All core features included
+- Unlimited media storage
+- Multi-platform publishing
+- AI tagging and organization
+- Analytics dashboard
+- Bio link page
+
+### Agency Plan
+For studios managing multiple creators:
+- Everything in Creator plan
+- Unlimited team members
+- Role-based permissions
+- Multi-creator management
+- Cross-creator analytics
+- White-label options (planned)
+- Dedicated account manager
+
+## Key Value Propositions
+1. "Upload once, publish everywhere" - Streamlined multi-platform workflow
+2. AI-powered automation saves hours per week
+3. Centralized management for all creator activities
+4. Professional tools designed for adult creators
+5. Agency-friendly with team management features
+
+## Technical Information
+- Platform: Web-based SaaS application
+- Built with: Next.js, React, TypeScript
+- Authentication: Supabase Auth
+- Data Storage: MongoDB
+- Media Storage: DigitalOcean Spaces
+
+## Current Status
+- Status: Early access / Waitlist phase
+- Primary CTA: "Join Waitlist"
+
+## Contact and Links
+- Main Website: https://lovdash.com
+- AI Feature Page: https://lovdash.com/ai
+- Bio Links Product: https://lovdash.com/bio
+- Features Overview: https://lovdash.com/features
+- Pricing: https://lovdash.com/pricing
+- For Creators: https://lovdash.com/creator
+- For Agencies: https://lovdash.com/studio
+- Privacy Policy: https://lovdash.com/privacy
+- Terms of Service: https://lovdash.com/terms
+
+## Frequently Asked Questions
+
+Q: What platforms does Lovdash support?
+A: Lovdash supports OnlyFans, Fansly, Twitter/X, and Instagram, with more platforms planned.
+
+Q: Is Lovdash suitable for adult content creators?
+A: Yes, Lovdash is specifically designed for adult content creators with OnlyFans and Fansly as primary integrations.
+
+Q: How does the AI tagging work?
+A: Our AI analyzes uploaded content and automatically generates relevant tags, descriptions, and categories to help organize your media library.
+
+Q: Can agencies manage multiple creators?
+A: Yes, the Agency plan includes multi-creator management, role-based permissions, and cross-creator analytics.
+
+Q: Is there a free trial?
+A: Lovdash is currently in early access. Join the waitlist to be notified when trials become available.
+
+Q: What makes Lovdash different from other tools?
+A: Lovdash combines media management, AI automation, multi-platform publishing, and analytics into one unified platform specifically designed for content creators.
+
+---
+Last Updated: January 2026
+Version: 1.0

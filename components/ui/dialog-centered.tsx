@@ -56,13 +56,27 @@ const DialogContent = React.forwardRef<
           "fixed z-50 bg-white shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           isFullscreen
             ? "inset-0 rounded-none"
-            : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full rounded-2xl data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] max-h-[90vh]",
+            : [
+                // Mobile: Bottom sheet style
+                "inset-x-0 bottom-0 sm:inset-auto",
+                "sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2",
+                "w-full rounded-t-2xl sm:rounded-2xl",
+                "max-h-[85vh] sm:max-h-[90vh]",
+                // Mobile animation (slide from bottom)
+                "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+                // Desktop animation (zoom + fade)
+                "sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
+                "sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%]",
+                "sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
+              ],
           sizeClasses[size],
-          "flex flex-col",
+          "flex flex-col safe-area-inset",
           className
         )}
         {...props}
       >
+        {/* Mobile drag handle indicator */}
+        <div className="sm:hidden w-10 h-1 bg-slate-300 rounded-full mx-auto mt-2 mb-1 flex-shrink-0" />
         {children}
       </DialogPrimitive.Content>
     </DialogPortal>
@@ -76,7 +90,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-1.5 p-6 border-b border-slate-200 shrink-0",
+      "flex flex-col space-y-1 sm:space-y-1.5 px-4 py-3 sm:p-6 border-b border-slate-200 shrink-0",
       className
     )}
     {...props}
@@ -89,7 +103,7 @@ const DialogBody = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("flex-1 overflow-y-auto p-6", className)}
+    className={cn("flex-1 overflow-y-auto p-4 sm:p-6 mobile-scroll", className)}
     {...props}
   />
 );
@@ -101,7 +115,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 border-t border-slate-200 shrink-0",
+      "flex flex-row justify-end gap-2 px-4 py-3 sm:p-6 border-t border-slate-200 shrink-0",
       className
     )}
     {...props}

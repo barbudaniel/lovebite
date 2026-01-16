@@ -19,17 +19,18 @@ export default {
   		},
   		colors: {
   			brand: {
-  				'50': '#fdf2f8',
-  				'100': '#fce7f3',
-  				'200': '#fbcfe8',
-  				'300': '#f9a8d4',
-  				'400': '#f472b6',
-  				'500': '#ec4899',
-  				'600': '#db2777',
-  				'700': '#be185d',
-  				'800': '#9d174d',
-  				'900': '#831843',
-  				'950': '#500724'
+  				// Rose palette - warmer, more premium
+  				'50': '#fff1f2',
+  				'100': '#ffe4e6',
+  				'200': '#fecdd3',
+  				'300': '#fda4af',
+  				'400': '#fb7185',
+  				'500': '#f43f5e',
+  				'600': '#e11d48',
+  				'700': '#be123c',
+  				'800': '#9f1239',
+  				'900': '#881337',
+  				'950': '#4c0519'
   			},
   			product: {
   				'50': '#f5f3ff',
@@ -79,23 +80,6 @@ export default {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
-  			chart: {
-  				'1': 'hsl(var(--chart-1))',
-  				'2': 'hsl(var(--chart-2))',
-  				'3': 'hsl(var(--chart-3))',
-  				'4': 'hsl(var(--chart-4))',
-  				'5': 'hsl(var(--chart-5))'
-  			},
-  			sidebar: {
-  				DEFAULT: 'hsl(var(--sidebar-background))',
-  				foreground: 'hsl(var(--sidebar-foreground))',
-  				primary: 'hsl(var(--sidebar-primary))',
-  				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-  				accent: 'hsl(var(--sidebar-accent))',
-  				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-  				border: 'hsl(var(--sidebar-border))',
-  				ring: 'hsl(var(--sidebar-ring))'
-  			}
   		},
   		animation: {
   			'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
@@ -116,7 +100,7 @@ export default {
   		},
   		backgroundImage: {
   			'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-  			'hero-pattern': 'radial-gradient(#ec4899 0.5px, transparent 0.5px), radial-gradient(#ec4899 0.5px, #fdf2f8 0.5px)'
+  			'hero-pattern': 'radial-gradient(#f43f5e 0.5px, transparent 0.5px), radial-gradient(#f43f5e 0.5px, #fff1f2 0.5px)'
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

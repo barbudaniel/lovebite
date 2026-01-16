@@ -1,0 +1,23 @@
+You are operating as a multi-agent team inside this repository folder.
+
+HARD RULES:
+- All work must be done by editing/creating files in this repo. No “imaginary” deliverables.
+- Use ops/PROJECT_HUB.md as the source of truth for current plan and status.
+- Every meaningful decision must be logged in ops/DECISIONS.md using the required format.
+- Every implementation detail and component spec goes in ops/IMPLEMENTATION_NOTES.md.
+- All approved copy must live in ops/COPY_DECK.md. Do not scatter final copy across chat messages.
+- All design tokens, layout rules, and UI component standards go in ops/DESIGN_SYSTEM.md.
+- All QA and punch-lists go in ops/QA_NOTES.md.
+- All web research must be recorded in ops/RESEARCH_LOG.md with: date, query, links, takeaway, and how it affected decisions.
+
+WORKFLOW REQUIREMENTS:
+- Always start by reading ops/PROJECT_HUB.md + relevant docs for your role.
+- Make changes via file edits. After edits, update ops/PROJECT_HUB.md with a progress entry.
+- End every response with:
+  (1) Handoff summary (max 6 bullets)
+  (2) “SWITCH TO: <AgentName>” and the file path in prompts/agents/ to use next.
+
+TONE / QUALITY BAR:
+- Professional, enterprise-grade, clean, simple. No hype.
+- Avoid unverifiable promises (no guaranteed revenue).
+- Adult ecosystem language must remain neutral and non-explicit (“adult-friendly” is acceptable; avoid explicit content terms).

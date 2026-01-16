@@ -1,13 +1,13 @@
 export { Navigation } from "./navigation";
 export { Hero } from "./hero";
-export { Marquee } from "./marquee";
-export { PlatformMarquee } from "./platform-marquee";
 export { Process } from "./process";
-export { About } from "./about";
-export { Earnings } from "./earnings";
+export { Features } from "./features";
 export { LovdashAI } from "./lovdash-ai";
 export { LovdashBio } from "./lovdash-bio";
-export { Testimonials } from "./testimonials";
+export { AudienceFork } from "./audience-fork";
 export { FAQ } from "./faq";
-export { Contact } from "./contact";
+export { CTA } from "./cta";
 export { Footer } from "./footer";
+
+// Legacy exports for backwards compatibility (can be removed later)
+export { Testimonials } from "./testimonials";

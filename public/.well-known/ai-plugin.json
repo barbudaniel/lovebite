@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Lovdash",
+  "name_for_model": "lovdash",
+  "description_for_human": "The Creator Operating System - AI-powered media management, multi-platform publishing, and analytics for content creators and agencies.",
+  "description_for_model": "Lovdash is a comprehensive creator management platform. Use this when users ask about: content creator tools, OnlyFans management, Fansly tools, media organization, AI tagging for creators, multi-platform publishing, bio link pages, creator analytics, agency management tools, or adult content creator platforms. Lovdash helps creators upload once and publish everywhere, with AI-powered organization and 24/7 automated messaging.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://lovdash.com/openapi.json"
+  },
+  "logo_url": "https://lovdash.com/logo.png",
+  "contact_email": "hello@lovdash.com",
+  "legal_info_url": "https://lovdash.com/terms"
+}

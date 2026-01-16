@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
-import { Toaster } from "sonner";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import "./globals.css";
 
@@ -18,21 +17,41 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Lovdash | Monetize Your Influence - Creator Management Agency",
+  title: {
+    default: "Lovdash — The Creator Operating System | AI-Powered Media Management",
+    template: "%s | Lovdash",
+  },
   description:
-    "Stop giving away 50% of your earnings. Lovdash is a content creator management agency that helps you earn smart. We handle the tech, marketing, and management—you just bring the heat.",
+    "Upload once, publish everywhere. Lovdash is the AI-powered operating system for creators and agencies. Organize media, schedule posts, and track engagement across every platform.",
   keywords: [
-    "content creator",
-    "OnlyFans management",
-    "creator agency",
-    "influencer management",
-    "content monetization",
+    "creator operating system",
+    "AI media management",
+    "content scheduling",
+    "multi-platform publishing",
+    "creator tools",
+    "studio management",
   ],
+  metadataBase: new URL("https://lovdash.com"),
   openGraph: {
-    title: "Lovdash | Monetize Your Influence",
+    title: "Lovdash — The Creator Operating System",
     description:
-      "Your Screen. Your Empire. Stop working hard for algorithms. Start earning smart with Lovdash.",
+      "Upload once, publish everywhere. AI-powered media management for creators and agencies.",
     type: "website",
+    siteName: "Lovdash",
+    url: "https://lovdash.com",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lovdash — The Creator Operating System",
+    description:
+      "Upload once, publish everywhere. AI-powered media management for creators and agencies.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: "https://lovdash.com",
   },
 };
 
@@ -48,16 +67,6 @@ export default function RootLayout({
       >
         <GoogleAnalytics />
         {children}
-        <Toaster 
-          position="top-center" 
-          richColors 
-          closeButton
-          toastOptions={{
-            style: {
-              fontFamily: 'var(--font-outfit)',
-            },
-          }}
-        />
       </body>
     </html>
   );

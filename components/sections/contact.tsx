@@ -63,16 +63,6 @@ export function Contact() {
         <div className="max-w-xl mx-auto">
           <AnimatedSection delay={0.1}>
             <div className="bg-white rounded-2xl p-5 sm:p-7 lg:p-8 border border-slate-200">
-              {/* 18+ Badge */}
-              <div className="flex items-center justify-center gap-2 mb-6">
-                <div className="bg-brand-100 text-brand-700 px-3 py-1.5 rounded-full text-xs font-bold">
-                  18+
-                </div>
-                <span className="text-slate-500 text-xs sm:text-sm">
-                  Our services are for adults only.
-                </span>
-              </div>
-
               <form className="space-y-4 sm:space-y-5" autoComplete="off">
                 {/* Interest Selection - Tag Style Buttons */}
                 <div className="space-y-2">

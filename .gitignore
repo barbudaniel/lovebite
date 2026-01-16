@@ -69,3 +69,6 @@ next-env.d.ts
 
 
 
+
+# Ralph config (may contain API key)
+.cursor/ralph-config.json

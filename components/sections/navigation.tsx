@@ -1,18 +1,91 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState, useEffect, useRef } from "react";
+import {
+  motion,
+  AnimatePresence,
+  useDragControls,
+  useMotionValue,
+  animate,
+} from "motion/react";
 import Link from "next/link";
-import { Heart, Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import {
+  Menu,
+  X,
+  Sparkles,
+  Link2,
+  LayoutGrid,
+  Users,
+  Building2,
+  ArrowRight,
+  ChevronRight,
+  ChevronDown,
+  Plus,
+  Image as ImageIcon,
+  Calendar,
+  BarChart3,
+  Send,
+  FileText,
+  Shield,
+  HelpCircle,
+  Zap,
+  User,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const navLinks: { href: string; label: string; isNew?: boolean }[] = [
-  { href: "#about", label: "About" },
-  { href: "#earnings", label: "Earnings" },
-  { href: "/ai", label: "AI" },
-  { href: "/bio", label: "BIO", isNew: true },
-  { href: "#faq", label: "FAQ" },
+// Feature items for the full-screen menu
+const featureItems = [
+  {
+    icon: ImageIcon,
+    title: "Media Library",
+    description: "Organize all your content in one place",
+    href: "/features/media-library",
+    color: "text-blue-500",
+  },
+  {
+    icon: Sparkles,
+    title: "AI Tagging",
+    description: "Auto-tag and describe your media",
+    href: "/features/ai-tagging",
+    color: "text-purple-500",
+  },
+  {
+    icon: Send,
+    title: "Publishing",
+    description: "Post to multiple platforms at once",
+    href: "/features/publishing",
+    color: "text-green-500",
+  },
+  {
+    icon: Calendar,
+    title: "Scheduling",
+    description: "Plan your content calendar",
+    href: "/features/scheduling",
+    color: "text-orange-500",
+  },
+  {
+    icon: BarChart3,
+    title: "Analytics",
+    description: "Track performance across platforms",
+    href: "/features/analytics",
+    color: "text-pink-500",
+  },
+  {
+    icon: Link2,
+    title: "Bio Links",
+    description: "Create your custom link-in-bio page",
+    href: "/bio",
+    color: "text-cyan-500",
+  },
+];
+
+// Quick links for the menu
+const quickLinks = [
+  { label: "Pricing", href: "/pricing", icon: Zap },
+  { label: "Privacy", href: "/privacy", icon: Shield },
+  { label: "Terms", href: "/terms", icon: FileText },
+  { label: "Help", href: "#", icon: HelpCircle },
 ];
 
 interface NavigationProps {
@@ -21,219 +94,430 @@ interface NavigationProps {
 
 export function Navigation({ variant = "light" }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // When on dark background and not scrolled, use light text
-  const isDarkMode = variant === "dark" && !isScrolled;
+  // Drag controls for sheet
+  const dragControls = useDragControls();
+  const sheetY = useMotionValue(0);
 
+  // Simple scroll handler - only for styling, no hide/show
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
-    if (isMobileMenuOpen) {
+    if (isMenuOpen) {
       document.body.style.overflow = "hidden";
+      // Reset sheetY when opening
+      sheetY.set(0);
     } else {
       document.body.style.overflow = "";
     }
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isMobileMenuOpen]);
+  }, [isMenuOpen, sheetY]);
 
-  // Close menu on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsMobileMenuOpen(false);
+      if (e.key === "Escape") {
+        setIsMenuOpen(false);
+      }
     };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
+  // Check scroll position of sheet content
+  const handleSheetScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const isAtBottom =
+      target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
+    setShowScrollIndicator(!isAtBottom);
+  };
+
+  const handleDragEnd = (
+    _: any,
+    info: { velocity: { y: number }; offset: { y: number } }
+  ) => {
+    if (info.velocity.y > 300 || info.offset.y > 150) {
+      setIsMenuOpen(false);
+    } else {
+      // Use tween instead of spring to avoid bounce
+      animate(sheetY, 0, { duration: 0.2, ease: "easeOut" });
+    }
+  };
+
   return (
     <>
-      <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "bg-white/95 backdrop-blur-sm border-b border-slate-200"
-            : "bg-transparent"
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-18">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 group z-10">
-            <Image src="/logo.png" alt="Lovdash" width={125} height={30} />
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`relative px-4 py-2 font-medium transition-all duration-200 rounded-lg group ${
-                    link.isNew
-                      ? isDarkMode 
-                        ? "text-violet-300 hover:text-violet-200 hover:bg-violet-500/20"
-                        : "text-violet-600 hover:text-violet-700 hover:bg-violet-50"
-                      : isDarkMode
-                        ? "text-slate-300 hover:text-white hover:bg-white/10"
-                        : "text-slate-600 hover:text-brand-600 hover:bg-brand-50"
-                  }`}
-                >
-                  <span className="relative">
-                    {link.label}
-                    <span className={`absolute -bottom-0.5 left-0 h-0.5 w-0 transition-all duration-200 group-hover:w-full ${
-                      link.isNew ? "bg-violet-500" : "bg-brand-500"
-                    }`} />
-                  </span>
-                  {link.isNew && (
-                    <span className={`ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase badge-bounce ${
-                      isDarkMode 
-                        ? "bg-violet-500/30 text-violet-300"
-                        : "bg-violet-100 text-violet-600"
-                    }`}>
-                      New
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Desktop CTA */}
-            <div className="hidden lg:flex items-center gap-3">
-              <Link
-                href="/register"
-                className={`px-4 py-2 font-medium transition-colors ${
-                  isDarkMode 
-                    ? "text-slate-300 hover:text-white"
-                    : "text-slate-600 hover:text-brand-600"
-                }`}
-              >
-                Apply
+      {/* Desktop Top Navigation - Always visible */}
+      <nav className="fixed top-0 left-0 right-0 z-50 hidden lg:block">
+        <div
+          className={cn(
+            "transition-all duration-300",
+            isScrolled
+              ? "bg-white border-b border-slate-200 shadow-sm"
+              : "bg-white/80 backdrop-blur-md"
+          )}
+        >
+          <div className="mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-[72px]">
+              {/* Logo */}
+              <Link href="/" className="flex-shrink-0">
+                <Image
+                  src="/logo.png"
+                  alt="Lovdash"
+                  width={100}
+                  height={30}
+                  className="transition-all duration-300"
+                  priority
+                />
               </Link>
-              <Button
-                asChild
-                className="bg-brand-600 hover:bg-brand-700 text-white px-5 rounded-full"
-              >
-                <Link href="#contact">Contact us</Link>
-              </Button>
-            </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`lg:hidden w-10 h-10 flex items-center justify-center rounded-lg active:scale-95 transition-all duration-200 z-10 ${
-                isDarkMode 
-                  ? "bg-white/10 hover:bg-white/20"
-                  : "bg-slate-100 hover:bg-brand-100"
-              }`}
-              aria-label="Toggle menu"
-              aria-expanded={isMobileMenuOpen}
-            >
-              <span className={`transition-transform duration-200 ${isMobileMenuOpen ? 'rotate-90' : 'rotate-0'}`}>
-                {isMobileMenuOpen ? (
-                  <X className={`w-5 h-5 ${isDarkMode ? "text-white" : "text-slate-700"}`} />
-                ) : (
-                  <Menu className={`w-5 h-5 ${isDarkMode ? "text-white" : "text-slate-700"}`} />
-                )}
-              </span>
-            </button>
+              {/* Desktop Navigation - Centered icons */}
+              <nav className="flex items-center justify-center absolute left-1/2 -translate-x-1/2">
+                <div className="flex items-center gap-8">
+                  <Link
+                    href="/features"
+                    className="group flex flex-col items-center justify-center transition-all duration-200 text-slate-600 hover:text-slate-900"
+                  >
+                    <LayoutGrid
+                      className="w-5 h-5 mb-1 transition-transform duration-200 group-hover:scale-110"
+                      strokeWidth={1.5}
+                    />
+                    <span className="text-[11px] font-medium tracking-tight">
+                      Features
+                    </span>
+                  </Link>
+                  <Link
+                    href="/ai"
+                    className="group flex flex-col items-center justify-center transition-all duration-200 text-slate-600 hover:text-slate-900"
+                  >
+                    <Sparkles
+                      className="w-5 h-5 mb-1 transition-transform duration-200 group-hover:scale-110"
+                      strokeWidth={1.5}
+                    />
+                    <span className="text-[11px] font-medium tracking-tight">
+                      AI
+                    </span>
+                  </Link>
+                  <Link
+                    href="/creator"
+                    className="group flex flex-col items-center justify-center transition-all duration-200 text-slate-600 hover:text-slate-900"
+                  >
+                    <Users
+                      className="w-5 h-5 mb-1 transition-transform duration-200 group-hover:scale-110"
+                      strokeWidth={1.5}
+                    />
+                    <span className="text-[11px] font-medium tracking-tight">
+                      Creator
+                    </span>
+                  </Link>
+                  <Link
+                    href="/studio"
+                    className="group flex flex-col items-center justify-center transition-all duration-200 text-slate-600 hover:text-slate-900"
+                  >
+                    <Building2
+                      className="w-5 h-5 mb-1 transition-transform duration-200 group-hover:scale-110"
+                      strokeWidth={1.5}
+                    />
+                    <span className="text-[11px] font-medium tracking-tight">
+                      Agency
+                    </span>
+                  </Link>
+                </div>
+              </nav>
+
+              {/* Desktop CTA */}
+              <div className="flex items-center gap-3">
+                <Link
+                  href="#cta"
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-brand-500 text-white rounded-full hover:bg-brand-600 transition-all duration-200 shadow-lg shadow-brand-500/20"
+                >
+                  Get Started
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 lg:hidden"
+      {/* Mobile Top Header - Always visible */}
+      <header
+        className={cn(
+          "fixed top-0 left-0 right-0 z-50 lg:hidden transition-all duration-300",
+          isScrolled
+            ? "bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm"
+            : "bg-white/80 backdrop-blur-sm"
+        )}
+      >
+        <div className="flex items-center justify-between h-14 px-4">
+          {/* Left - Logo Icon */}
+          <Link href="/">
+            <motion.div whileTap={{ scale: 0.95 }}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 183.37 158.1"
+                className="w-8 h-8"
+              >
+                <path fill="#ef3b4e" d="M168.47,86.82l-15.82,15.82c-2.44,2.44-5.64,3.66-8.84,3.66s-6.4-1.22-8.84-3.66c-4.89-4.88-4.89-12.79-.01-17.68,4.79-4.78,10.67-10.67,15.42-15.42,10-9.99,10.6-26.3.83-36.53-5.1-5.34-12.09-8.2-19.48-7.99-6.75.2-13.13,3.18-17.91,7.96l-14.87,14.88c-4.02,4.02-10.52,4.02-14.54,0l-10.41-10.41-4.87-4.88c-5.98-5.97-14.35-8.66-22.93-7.17-3.6.63-7.04,2.06-10.04,4.16-13.56,9.5-14.76,28.41-3.59,39.57l19.17,19.18.05-.04,26.92,26.92,7.56,7.56,15.44,15.44c1.49,2.07,2.35,4.6,2.35,7.33,0,6.96-5.64,12.59-12.59,12.58-3.26.01-6.23-1.23-8.46-3.26-.05-.05-.1-.09-.15-.13l-.57-.58s-.09-.09-.14-.14l-14.92-14.92-.38-.39s-.09-.09-.14-.14l-5.67-5.67-9.25-9.25-.05.04L14.9,86.81C-4.97,66.95-4.97,34.75,14.9,14.9,24.83,4.96,37.84,0,50.85,0s26.02,4.96,35.95,14.9l4.88,4.87,4.87-4.87C106.49,4.97,119.51,0,132.52,0s26.03,4.96,35.96,14.89c19.86,19.87,19.86,52.05,0,71.92Z" />
+              </svg>
+            </motion.div>
+          </Link>
+
+          {/* Right - Publish Media CTA */}
+          <Link
+            href="#cta"
+            className="text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors"
           >
+            Publish Media
+          </Link>
+        </div>
+      </header>
+
+      {/* Mobile Bottom Navigation - Simple 3 Button Layout */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden pb-[env(safe-area-inset-bottom)]">
+        {/* Background blur layer */}
+        <div className="absolute inset-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/50" />
+
+        <div className="relative flex items-center justify-between h-20 px-6">
+          {/* Menu Button - Left */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsMenuOpen(true)}
+            className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center"
+          >
+            <Menu className="w-5 h-5 text-slate-700" />
+          </motion.button>
+
+          {/* Center: Upload CTA Button */}
+          <motion.div whileTap={{ scale: 0.95 }}>
+            <Link
+              href="#cta"
+              className="flex items-center gap-2 px-3.5 py-3.5 bg-brand-500 rounded-full shadow-lg shadow-brand-500/30"
+            >
+              <Plus className="w-5 h-5 text-white" strokeWidth={2.5} />
+              {/* <span className="text-sm font-semibold text-white">Upload</span> */}
+            </Link>
+          </motion.div>
+
+          {/* Sign In Button - Right */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center"
+          >
+            <User className="w-5 h-5 text-slate-700" />
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Full-Screen Menu Sheet */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <>
             {/* Backdrop */}
-            <div
-              className="absolute inset-0 bg-black/20"
-              onClick={() => setIsMobileMenuOpen(false)}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm lg:hidden"
+              onClick={() => setIsMenuOpen(false)}
             />
 
-            {/* Menu Panel */}
+            {/* Sheet */}
             <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="absolute top-0 right-0 bottom-0 w-full max-w-xs bg-white border-l border-slate-200"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+              drag="y"
+              dragControls={dragControls}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.3 }}
+              onDragEnd={handleDragEnd}
+              style={{ y: sheetY }}
+              className="fixed inset-x-0 bottom-0 z-50 lg:hidden max-h-[90vh] bg-white rounded-t-3xl overflow-hidden"
             >
-              <div className="flex flex-col h-full pt-20 pb-6 px-5">
-                <nav className="flex-1 space-y-1">
-                  {navLinks.map((link, i) => (
-                    <motion.div
-                      key={link.href}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 + 0.1 }}
-                    >
-                      <Link
-                        href={link.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={`block px-4 py-3.5 text-base font-medium rounded-lg transition-colors ${
-                          link.isNew
-                            ? "text-violet-600 hover:text-violet-700 hover:bg-violet-50"
-                            : "text-slate-700 hover:text-brand-600 hover:bg-brand-50"
-                        }`}
-                      >
-                        {link.label}
-                        {link.isNew && (
-                          <span className="ml-2 text-[10px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full font-semibold uppercase">
-                            New
-                          </span>
-                        )}
-                      </Link>
-                    </motion.div>
-                  ))}
-                </nav>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25 }}
-                  className="pt-4 border-t border-slate-100 space-y-3"
-                >
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    className="w-full rounded-lg h-12"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Link href="/register">Apply as Model</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    size="lg"
-                    className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-lg h-12"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Link href="#contact">Contact us</Link>
-                  </Button>
-                  <p className="text-center text-xs text-slate-400 pt-2">
-                    18+ Only
-                  </p>
-                </motion.div>
+              {/* Drag Handle */}
+              <div
+                onPointerDown={(e) => dragControls.start(e)}
+                className="flex justify-center py-3 cursor-grab active:cursor-grabbing bg-white sticky top-0 z-10"
+              >
+                <div className="w-10 h-1 bg-slate-300 rounded-full" />
               </div>
+
+              {/* Sheet Content */}
+              <div
+                ref={scrollContainerRef}
+                onScroll={handleSheetScroll}
+                className="overflow-y-auto max-h-[calc(90vh-40px)] overscroll-contain relative"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 pb-4">
+                  <h2 className="text-xl font-bold text-slate-900">Features</h2>
+                  <button
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
+                  >
+                    <X className="w-4 h-4 text-slate-600" />
+                  </button>
+                </div>
+
+                {/* Feature Grid */}
+                <div className="px-4 pb-6">
+                  <div className="grid grid-cols-2 gap-3">
+                    {featureItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        className="group relative bg-slate-50 rounded-2xl p-4 hover:bg-slate-100 transition-colors active:scale-[0.98] aspect-video overflow-hidden"
+                      >
+                        <div className="relative z-20">
+
+                        <h3 className="font-semibold text-black text-sm mb-1 flex items-center gap-2">
+                        <item.icon className={cn("w-4 h-4", item.color)}  />
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          {item.description}
+                        </p>
+                        <ChevronRight className="absolute top-4 right-4 w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                        
+                        
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="h-2 bg-slate-100" />
+
+                {/* For You Section */}
+                <div className="px-5 py-4">
+                  <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                    For You
+                  </h3>
+                  <div className="space-y-2">
+                    <Link
+                      href="/creator"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-white border border-brand-100 hover:border-brand-200 transition-colors"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-brand-500 flex items-center justify-center">
+                        <Users className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-slate-900">
+                          For Creators
+                        </h4>
+                        <p className="text-sm text-slate-500">
+                          Manage your content empire
+                        </p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-slate-400" />
+                    </Link>
+
+                    <Link
+                      href="/studio"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-slate-50 to-white border border-slate-200 hover:border-slate-300 transition-colors"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-slate-700 flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-slate-900">
+                          For Agencies
+                        </h4>
+                        <p className="text-sm text-slate-500">
+                          Scale your creator business
+                        </p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-slate-400" />
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Quick Links */}
+                <div className="px-5 py-4 border-t border-slate-100">
+                  <div className="flex flex-wrap gap-2">
+                    {quickLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors"
+                      >
+                        <link.icon className="w-4 h-4 text-slate-500" />
+                        <span className="text-sm font-medium text-slate-700">
+                          {link.label}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CTA */}
+                <div className="px-5 pt-4 pb-8">
+                  <Link
+                    href="#cta"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full py-4 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-semibold transition-all shadow-lg shadow-brand-500/20 active:scale-[0.98]"
+                  >
+                    Get Started Free
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+
+                {/* Extra padding for safe area */}
+                <div className="h-[env(safe-area-inset-bottom)]" />
+              </div>
+
+              {/* Scroll Indicator - Gradient fade with arrow */}
+              <AnimatePresence>
+                {showScrollIndicator && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute bottom-0 left-0 right-0 pointer-events-none"
+                  >
+                    {/* Gradient */}
+                    <div className="h-24 bg-gradient-to-t from-white via-white/90 to-transparent" />
+
+                    {/* Arrow indicator */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
+                      <motion.div
+                        animate={{ y: [0, 4, 0] }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <ChevronDown className="w-5 h-5 text-slate-400" />
+                      </motion.div>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        Scroll for more
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
-          </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>
