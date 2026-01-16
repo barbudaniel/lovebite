@@ -1,12 +1,26 @@
 "use client";
 
 import { motion, AnimatePresence } from "motion/react";
-import { Globe, Link2, Users, ArrowRight, Calendar, BarChart3, MousePointer, TrendingUp, Check } from "lucide-react";
+import { Globe, Link2, Users, ArrowRight, Calendar, BarChart3, MousePointer, TrendingUp, Check, MessageSquareText, Sparkles, Brain, Target, Repeat } from "lucide-react";
 import { AnimatedSection } from "@/components/motion/animated-section";
 import { useRef, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 
 const features = [
+  {
+    id: "ai-chat",
+    icon: MessageSquareText,
+    label: "AI Chat Assistant",
+    title: "Your AI co-pilot for every conversation",
+    description: "Bite learns your voice, your fans, and what converts. Get context-aware suggestions, media recommendations, and PPV optimization—all while staying authentically you.",
+    gradient: "from-violet-500 to-purple-500",
+    pillBg: "bg-violet-50",
+    iconColor: "text-violet-600",
+    labelColor: "text-violet-700",
+    linkColor: "text-violet-600 hover:text-violet-700",
+    benefits: ["Context-aware suggestions", "Media recommendations", "PPV optimization", "Persona consistency", "Continuous learning"],
+    link: "/ai",
+  },
   {
     id: "publish",
     icon: Globe,
@@ -19,6 +33,7 @@ const features = [
     labelColor: "text-brand-700",
     linkColor: "text-brand-600 hover:text-brand-700",
     benefits: ["5+ platforms", "Smart scheduling", "Platform-optimized captions", "Bulk posting"],
+    link: "/features/publishing",
   },
   {
     id: "bio",
@@ -32,6 +47,7 @@ const features = [
     labelColor: "text-cyan-700",
     linkColor: "text-cyan-600 hover:text-cyan-700",
     benefits: ["Custom themes", "Click tracking", "Revenue attribution", "Mobile-optimized"],
+    link: "/features/bio",
   },
   {
     id: "teams",
@@ -45,6 +61,7 @@ const features = [
     labelColor: "text-amber-700",
     linkColor: "text-amber-600 hover:text-amber-700",
     benefits: ["Role-based access", "Activity logs", "Shared templates", "Cross-account reporting"],
+    link: "/studio",
   },
 ];
 
@@ -225,8 +242,66 @@ function TeamsVisualCard() {
   );
 }
 
+// AI Chat Visual Card
+function AIChatVisualCard() {
+  return (
+    <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 p-5 sm:p-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
+          <MessageSquareText className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <p className="font-semibold text-slate-900">Bite <span className="text-slate-500 font-light">Chat Assistant</span></p>
+          <p className="text-xs text-slate-500">Always learning, always ready</p>
+        </div>
+      </div>
+
+      {/* Chat Preview */}
+      <div className="space-y-3 mb-4">
+        {/* Fan message */}
+        <div className="flex justify-start">
+          <div className="bg-slate-100 rounded-2xl rounded-tl-md px-4 py-2 max-w-[80%]">
+            <p className="text-sm text-slate-700">Hey! Do you have any new content coming out soon? 👀</p>
+          </div>
+        </div>
+
+        {/* AI suggestion */}
+        <div className="flex justify-end">
+          <div className="bg-gradient-to-br from-violet-500 to-purple-500 rounded-2xl rounded-tr-md px-4 py-2 max-w-[85%]">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Sparkles className="w-3 h-3 text-violet-200" />
+              <span className="text-xs text-violet-200">Bite suggestion</span>
+            </div>
+            <p className="text-sm text-white">Yes! I&apos;ve got something special dropping tomorrow 💕 Want me to send you a sneak peek?</p>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Features */}
+      <div className="bg-violet-50 rounded-xl p-4 space-y-2.5">
+        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">AI-powered features</p>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { icon: Brain, label: "Context-aware" },
+            { icon: Target, label: "PPV optimized" },
+            { icon: Repeat, label: "Learns your voice" },
+            { icon: Sparkles, label: "Smart media picks" },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-2 p-2 bg-white rounded-lg">
+              <item.icon className="w-4 h-4 text-violet-500" />
+              <span className="text-xs text-slate-700 font-medium">{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Feature visual components map
 const featureVisuals: Record<string, React.ReactNode> = {
+  "ai-chat": <AIChatVisualCard />,
   publish: <PublishVisualCard />,
   bio: <BioVisualCard />,
   teams: <TeamsVisualCard />,
@@ -285,7 +360,7 @@ function FeatureSection({
 
         {/* CTA Link */}
         <motion.a
-          href={`/features/${feature.id}`}
+          href={feature.link}
           className={`inline-flex items-center gap-2 ${feature.linkColor} font-medium transition-colors group pt-1`}
           whileHover={{ x: 4 }}
         >

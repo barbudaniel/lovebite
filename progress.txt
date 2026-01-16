@@ -112,3 +112,50 @@ Design tokens:
   - Platform brand colors: OnlyFans #00AFF0, Fansly #1FA3F3, LoyalFans #FF5722, Instagram #E4405F
   - Use sr-only spans for accessibility on icon-only elements
   - Stat counters use slate-700 for emphasis with slate-300 for separators
+
+---
+
+### 2026-01-17 - US-004: Add Problem Statement Section
+
+- What was implemented:
+  - Created new `ProblemStatement` section component
+  - Headline: "Running a creator business shouldn't feel like chaos."
+  - Four pain points in 2-column grid with ❌ emoji prefix
+  - Framer Motion animations for fade-in on scroll
+  - Added section to homepage between Hero and Process sections
+
+- Files changed:
+  - `components/sections/problem-statement.tsx` (new)
+  - `components/sections/index.ts`
+  - `app/(marketing)/page.tsx`
+
+- **Learnings for future iterations:**
+  - New section components go in `components/sections/` and must be exported from `index.ts`
+  - Homepage section order defined in `app/(marketing)/page.tsx`
+  - Use `&apos;` for apostrophes in JSX (React/Next.js requirement)
+  - Pain point sections use light slate-50 background with white cards
+  - Section padding follows pattern: `py-20 lg:py-28`
+
+---
+
+### 2026-01-17 - US-005: Feature AI Chat Assistant Prominently
+
+- What was implemented:
+  - Added AI Chat Assistant as the FIRST feature in the Features section
+  - Title: "Your AI co-pilot for every conversation"
+  - Description highlights Bite learning user voice, fans, and what converts
+  - Benefits: Context-aware suggestions, Media recommendations, PPV optimization, Persona consistency, Continuous learning
+  - Created visual card with chat preview and AI feature badges
+  - Added custom `link` property to features array to support different page routes
+
+- Files changed:
+  - `components/sections/features.tsx`
+
+- **Learnings for future iterations:**
+  - Features section uses scroll-based sticky visual on desktop
+  - Add new features to the `features` array - order in array = display order
+  - Feature visual cards need to be added to `featureVisuals` Record mapping
+  - Use `link` property for custom routing (AI Chat links to `/ai`, not `/features/ai-chat`)
+  - Violet/purple gradient (`from-violet-500 to-purple-500`) works well for AI-related features
+  - Chat preview UI uses: left-aligned for incoming (slate-100), right-aligned gradient for AI suggestions
+  - Icons from lucide-react: MessageSquareText for chat, Brain/Target/Repeat/Sparkles for AI capabilities
