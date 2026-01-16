@@ -6,6 +6,7 @@ export { Features } from "./features";
 export { LovdashAI } from "./lovdash-ai";
 export { LovdashBio } from "./lovdash-bio";
 export { AudienceFork } from "./audience-fork";
+export { AgencySection } from "./agency-section";
 export { FAQ } from "./faq";
 export { CTA } from "./cta";
 export { Footer } from "./footer";

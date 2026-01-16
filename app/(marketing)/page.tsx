@@ -7,6 +7,7 @@ import {
   LovdashAI,
   LovdashBio,
   AudienceFork,
+  AgencySection,
   FAQ,
   CTA,
   Footer,
@@ -130,6 +131,7 @@ export default function Home() {
         <LovdashAI />
         <LovdashBio />
         <AudienceFork />
+        <AgencySection />
         <FAQ />
         <CTA />
       </main>
