@@ -4,16 +4,20 @@ import { motion } from "motion/react";
 
 const painPoints = [
   {
-    title: "Platform juggling",
-    description: "Posting to 5 platforms means 5 logins, 5 uploads, 5 captions. By the time you're done, you've lost hours—and your creative energy.",
+    title: "Content chaos",
+    description: "Photos on your phone. Videos in Dropbox. That good set from last month? Who knows where it went. Finding the right content takes forever.",
   },
   {
-    title: "Time drain",
-    description: "You didn't become a creator to spend your days formatting posts and checking analytics dashboards. Yet here we are.",
+    title: "Inconsistent posting",
+    description: "You know consistency matters, but 5 platforms means 5 logins, 5 uploads, 5 captions. Keeping up feels impossible.",
   },
   {
-    title: "Growth guesswork",
-    description: "You're posting consistently, but is it working? Without real data, you're flying blind and hoping for the best.",
+    title: "Flying blind",
+    description: "You're posting, but is it working? Without clear analytics, you can't tell what converts and what's just noise.",
+  },
+  {
+    title: "Bio link black hole",
+    description: "Your link-in-bio sends fans somewhere, but where do they actually go? No tracking means no clue what's driving revenue.",
   },
 ];
 
@@ -32,7 +36,7 @@ export function CreatorPainPoints() {
         </motion.p>
 
         {/* Pain Point Cards */}
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-12">
+        <div className="grid sm:grid-cols-2 gap-6 lg:gap-8 mb-12">
           {painPoints.map((point, i) => (
             <motion.div
               key={i}
