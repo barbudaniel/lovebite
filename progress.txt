@@ -159,3 +159,73 @@ Design tokens:
   - Violet/purple gradient (`from-violet-500 to-purple-500`) works well for AI-related features
   - Chat preview UI uses: left-aligned for incoming (slate-100), right-aligned gradient for AI suggestions
   - Icons from lucide-react: MessageSquareText for chat, Brain/Target/Repeat/Sparkles for AI capabilities
+
+---
+
+### 2026-01-17 - US-006: Add Agency-Focused Section on Homepage
+
+- What was implemented:
+  - Created `AgencySection` component in `components/sections/agency-section.tsx`
+  - Section includes: 'For Agencies' pill badge, compelling headline, security badges row
+  - 6-feature grid: Multi-Creator Dashboard, Team Management, Role-Based Access, Audit Logs, Cross-Creator Analytics, Gamification
+  - Each feature card has icon, title, and description with hover animation
+  - CTA section with 'Book a Demo' emerald button linking to `/contact?type=demo`
+  - Trust signal: "No credit card required. See the platform before you commit."
+  - Added section to homepage after AudienceFork
+
+- Files changed:
+  - `components/sections/agency-section.tsx` (new)
+  - `components/sections/index.ts`
+  - `app/(marketing)/page.tsx`
+
+- **Learnings for future iterations:**
+  - Agency sections use slate-900 dark background (different from creator light sections)
+  - Use emerald-500/10 bg with emerald-500/20 border for pill badges on dark backgrounds
+  - Security badges use slate-800/50 bg with slate-700 border for subtle appearance
+  - Feature cards on dark bg: slate-800/50 bg, slate-700 border, hover:border-emerald-500/50
+  - Import icons from lucide-react: Building2, Users, ShieldCheck, FileText, BarChart3, Trophy, Lock, UserCog, Eye
+  - Use `whileHover={{ y: -4 }}` with spring transition for card hover lift effect
+
+---
+
+### 2026-01-17 - US-007: Update Creator Page Hero
+
+- What was implemented:
+  - Updated subheadline with proper em dash spacing: "what you love — creating"
+  - Changed primary CTA from "Join Waitlist" to "Start Free Trial" 
+  - Changed CTA href from "#cta" to "/join" for proper navigation
+  - Applied emerald gradient styling to CTA button per design system
+  - All existing acceptance criteria were already met (headline, pill badge, platform icons)
+
+- Files changed:
+  - `components/sections/creator/CreatorHero.tsx`
+
+- **Learnings for future iterations:**
+  - Creator hero already had most elements correct from initial implementation
+  - CTA text/styling updates follow same pattern as main homepage hero
+  - Creator pages use light gradient backgrounds (rose-tinted) vs agency dark backgrounds
+  - Platform logos component `PlatformLogosRow` supports different variants: "colored", "stacked"
+
+---
+
+### 2026-01-17 - US-008: Update Creator Value Props
+
+- What was implemented:
+  - Replaced generic features with outcome-focused value propositions
+  - 4 value props: Save Time, Earn More, Post Smarter, Stay Secure
+  - Each includes specific stat text per requirements:
+    - "5+ hours saved every week"
+    - "Know exactly what content converts"
+    - "Right content, right platform, right time"
+    - "Your content, your control"
+  - Icons: Clock, TrendingUp, Target, Shield from lucide-react
+  - Section header updated to "Why Creators Choose Lovdash"
+
+- Files changed:
+  - `components/sections/creator/CreatorFeatures.tsx`
+
+- **Learnings for future iterations:**
+  - Value props differ from features: focus on outcomes/benefits not capabilities
+  - Use `stat` property to display highlighted benefit text with emerald color
+  - Changed icon container from brand-100/brand-600 to emerald-100/emerald-600 for consistency with CTA theme
+  - Value prop structure: title, stat (highlighted), description (supporting detail)
