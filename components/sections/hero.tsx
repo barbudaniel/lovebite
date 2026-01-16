@@ -636,11 +636,26 @@ export function Hero() {
               <Button
                 asChild
                 size="lg"
-                className="bg-slate-900 hover:bg-slate-800 text-white px-8 h-14 text-base rounded-full shadow-lg font-semibold"
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-8 h-14 text-base rounded-full shadow-lg shadow-emerald-500/25 font-semibold"
               >
                 <Link href="/join">
                   <span>Start Free Trial</span>
                   <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+            </motion.div>
+            <motion.div 
+              whileHover={{ scale: 1.02, y: -2 }} 
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-900 px-8 h-14 text-base rounded-full font-semibold"
+              >
+                <Link href="/contact?type=demo">
+                  <span>Book a Demo</span>
                 </Link>
               </Button>
             </motion.div>
