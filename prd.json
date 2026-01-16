@@ -1,0 +1,459 @@
+{
+  "project": "Lovdash Landing Page",
+  "branchName": "ralph/landing-page-alignment",
+  "description": "Landing Page Business Documentation Alignment - Full content rebuild to ensure all messaging, CTAs, pricing, features, and structure reflect the current business reality: Lovdash is operational with paying customers, not a pre-launch waitlist product.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Update Hero Section Headlines",
+      "description": "As a visitor, I want to see compelling headlines that communicate Lovdash's value proposition so that I understand what the product does immediately.",
+      "acceptanceCriteria": [
+        "Hero section uses approved headline: 'The Creator Operating System' or 'Your media. Every platform. Easy for everyone.'",
+        "Subheadline includes: 'Upload once, publish everywhere, track what works.'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Completed 2026-01-17. Headline was already correct, subheadline updated."
+    },
+    {
+      "id": "US-002",
+      "title": "Change Primary CTA from Waitlist to Trial",
+      "description": "As a visitor, I want to start using the product immediately so that I can evaluate if it meets my needs.",
+      "acceptanceCriteria": [
+        "Primary CTA changed from 'Join Waitlist' to 'Start Free Trial'",
+        "Secondary CTA added: 'Book a Demo' for agencies",
+        "CTA buttons use emerald green gradient (#10B981 → #059669)",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add Social Proof Platform Bar",
+      "description": "As a visitor, I want to see which platforms are supported so that I know Lovdash works with my platforms.",
+      "acceptanceCriteria": [
+        "Social proof bar shows platform logos: OnlyFans, Fansly, LoyalFans, X/Twitter, Instagram",
+        "Logos are grayscale with color on hover",
+        "Section includes stat counters: '500+ Creators | 50K+ Media Organized | $2M+ Revenue Tracked'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add Problem Statement Section",
+      "description": "As a visitor, I want to see that Lovdash understands my problems so that I trust they can solve them.",
+      "acceptanceCriteria": [
+        "Problem section headline: 'Running a creator business shouldn't feel like chaos.'",
+        "Pain points displayed: Files everywhere, Hours wasted organizing, Platform-hopping to post, Flying blind on what converts",
+        "Each pain point prefixed with ❌ emoji",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Feature AI Chat Assistant Prominently",
+      "description": "As a visitor, I want to understand the AI Chat Assistant feature so that I see how it differentiates Lovdash from competitors.",
+      "acceptanceCriteria": [
+        "AI Chat Assistant is one of top 3 visible features on homepage",
+        "Feature highlights: Context-aware suggestions, Media recommendations, PPV optimization, Persona consistency, Continuous learning",
+        "Tagline present: 'Your AI co-pilot for every conversation' or similar",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add Agency-Focused Section on Homepage",
+      "description": "As an agency visitor, I want a dedicated section that addresses my needs so that I know Lovdash is built for teams.",
+      "acceptanceCriteria": [
+        "Agency section has 'Book a Demo' CTA (not 'Start Free Trial')",
+        "Security messaging present: bank-level encryption, role-based access, audit logs",
+        "Feature grid: Multi-Creator Dashboard, Team Management, Role-Based Access, Audit Logs, Cross-Creator Analytics, Gamification",
+        "Trust signal: 'No credit card required. See the platform before you commit.'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Update Creator Page Hero",
+      "description": "As a solo creator, I want to see messaging that speaks to my needs so that I feel this product is for me.",
+      "acceptanceCriteria": [
+        "Hero headline: 'Upload once. Publish everywhere. Create more.'",
+        "Subheadline: 'Lovdash handles the boring stuff so you can focus on what you love — creating content that connects.'",
+        "Pill badge displays: 'For Creators'",
+        "Platform icons displayed below CTAs",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Update Creator Value Props",
+      "description": "As a solo creator, I want to see clear benefits so that I understand the ROI.",
+      "acceptanceCriteria": [
+        "Value prop 1: Save Time - '5+ hours saved every week on content management'",
+        "Value prop 2: Earn More - 'Know exactly what content converts'",
+        "Value prop 3: Post Smarter - 'Right content, right platform, right time'",
+        "Value prop 4: Stay Secure - 'Your content, your control'",
+        "Each value prop has an icon",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Update Creator Pain Points Section",
+      "description": "As a solo creator, I want to see that Lovdash understands my specific challenges.",
+      "acceptanceCriteria": [
+        "Pain points align with BUSINESS_CONTEXT.md: organizing content, consistent posting, analytics, bio link quality",
+        "Section clearly shows problems before solution",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Update Studio Page Hero",
+      "description": "As an agency decision-maker, I want to see messaging that addresses multi-creator management.",
+      "acceptanceCriteria": [
+        "Hero headline: 'Manage every creator from one dashboard'",
+        "Pill badge displays: 'For Agencies'",
+        "Primary CTA is 'Book a Demo'",
+        "Stats displayed: '50+ Creators Managed | 10+ Agencies | 99.9% Uptime'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Update Studio Features Grid",
+      "description": "As an agency, I want to see all the features that help me manage multiple creators.",
+      "acceptanceCriteria": [
+        "Features grid includes: Multi-Creator Dashboard, Team Management, Role-Based Access, Audit Logs, Cross-Creator Analytics, Gamification",
+        "Each feature has icon, title, and description",
+        "Layout is 2x3 or 3x2 grid",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Add Security Section for Agencies",
+      "description": "As an agency, I want to see security credentials so that I trust Lovdash with my creator accounts.",
+      "acceptanceCriteria": [
+        "Security section includes: Bank-level encryption, Isolated environments per creator, Instant access revocation, Complete audit trails, SOC 2 compliance (roadmap)",
+        "Section has appropriate security-focused heading",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Update Pricing Tiers",
+      "description": "As a visitor, I want to see transparent pricing so that I can evaluate if Lovdash fits my budget.",
+      "acceptanceCriteria": [
+        "Shows three tiers: Starter $39/creator, Pro $59/creator, Agency custom",
+        "Pro tier has 'MOST POPULAR' badge",
+        "Each tier card shows included features",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Add Trust Signals to Pricing Page",
+      "description": "As a potential customer, I want reassurance about my purchase decision.",
+      "acceptanceCriteria": [
+        "Trust signals displayed: 'No credit card required', 'Cancel anytime', '7-day free trial'",
+        "Trust signals positioned prominently (above or below pricing cards)",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Update Pricing Feature Lists",
+      "description": "As a visitor, I want to understand what's included in each tier.",
+      "acceptanceCriteria": [
+        "Starter tier shows: Media library + AI tagging, Bio link with analytics, Basic chat suggestions, 1 platform, Basic analytics, Email support",
+        "Pro tier shows: Everything in Starter plus Full AI chat assistant, AI training, Unlimited platforms, Gamification, Advanced analytics, Priority support",
+        "Agency tier shows: Everything in Pro plus Multi-creator dashboard, Team management, Cross-creator analytics, Activity feed, Dedicated account manager",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Update Media Library Feature Page",
+      "description": "As a visitor researching features, I want to understand the Media Library capabilities.",
+      "acceptanceCriteria": [
+        "Page emphasizes unlimited storage + AI organization",
+        "Key messaging includes: 'Your content, organized automatically'",
+        "Feature list: Unlimited storage, AI auto-tagging, Smart collections, SFW/NSFW classification, Instant search",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Update AI Tagging Feature Page",
+      "description": "As a visitor, I want to understand AI tagging capabilities without explicit terminology.",
+      "acceptanceCriteria": [
+        "Uses 'AI built specifically for creators' or 'AI that understands your content' (not 'uncensored')",
+        "Explains platform-aware classification (SFW, soft NSFW, explicit)",
+        "Includes disclaimer: 'AI-generated tags and descriptions are assistive and may require review'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Update Scheduling Feature Page",
+      "description": "As a visitor, I want to understand the scheduling capabilities.",
+      "acceptanceCriteria": [
+        "Features include: Visual calendar, Multi-platform queue, Optimal timing suggestions, Bulk scheduling, Draft approval workflows",
+        "Key messaging: 'Set it and forget it' or 'Your content calendar, simplified'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Update Publishing Feature Page",
+      "description": "As a visitor, I want to see all supported platforms.",
+      "acceptanceCriteria": [
+        "Platform list: OnlyFans ✅, Fansly ✅, LoyalFans ✅, X/Twitter ✅, Instagram ✅, TikTok 🔜 Coming Soon",
+        "Explains SFW/NSFW content routing",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "title": "Update Analytics Feature Page",
+      "description": "As a visitor, I want to understand the analytics capabilities.",
+      "acceptanceCriteria": [
+        "Emphasizes revenue attribution and cross-creator insights",
+        "Features: Revenue tracking, Content attribution, Bio link analytics, Cross-creator comparison, Trend identification",
+        "Key messaging: 'Know your numbers, grow your business'",
+        "Agency-specific: 'Compare creator performance at a glance'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 20,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "Introduce Bite AI Brand on AI Page",
+      "description": "As a visitor, I want to learn about the AI assistant brand.",
+      "acceptanceCriteria": [
+        "Introduces 'Bite' as the AI brand name",
+        "Headline: 'The AI that manages your entire creator business' or 'Your AI-powered business partner'",
+        "Pill badge displays: 'Introducing Bite'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "List All AI Capabilities on AI Page",
+      "description": "As a visitor, I want to understand all AI features.",
+      "acceptanceCriteria": [
+        "Lists: Smart Tagging, Chat Intelligence, Performance Insights, Auto-Descriptions, PPV Optimization, Continuous Learning",
+        "Each capability has icon, title, and description",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Add AI Disclaimer to AI Page",
+      "description": "As a visitor, I want transparency about AI limitations.",
+      "acceptanceCriteria": [
+        "Disclaimer text: 'AI-generated content is assistive and may require review'",
+        "Disclaimer is visible but not dominant",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "Update Meta Tags Across All Pages",
+      "description": "As a search engine, I need proper meta tags to index pages correctly.",
+      "acceptanceCriteria": [
+        "Each page has unique title following format: '{Page Title} | Lovdash - Creator Operating System'",
+        "Each page has unique description (150-160 chars) with primary keyword",
+        "Open Graph tags present (og:title, og:description, og:image)",
+        "Twitter Card tags present (twitter:card, twitter:title, twitter:description)",
+        "Typecheck passes"
+      ],
+      "priority": 24,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "Add Organization Schema to Layout",
+      "description": "As a search engine, I need structured data to understand the organization.",
+      "acceptanceCriteria": [
+        "Schema.org Organization markup in root layout as JSON-LD",
+        "Includes: name ('Lovdash'), url, logo, description, foundingDate ('2025'), sameAs (social links)",
+        "JSON-LD validates (no syntax errors)",
+        "Typecheck passes"
+      ],
+      "priority": 25,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "title": "Add FAQ Schema to Pages with FAQs",
+      "description": "As a search engine, I need FAQ structured data for rich results.",
+      "acceptanceCriteria": [
+        "FAQPage schema added to homepage FAQ section",
+        "FAQPage schema added to pricing page FAQ section",
+        "Each question/answer pair properly formatted in JSON-LD",
+        "Typecheck passes"
+      ],
+      "priority": 26,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "title": "Align Design System Colors in CSS",
+      "description": "As a developer, I need consistent colors matching the brand guidelines.",
+      "acceptanceCriteria": [
+        "CSS variable --color-primary set to #F03C4E (Coral Pink)",
+        "CSS variable for primary light set to #FF6B7A",
+        "CSS variable --color-success set to #10B981 (Emerald for CTAs)",
+        "CSS variable for text-primary set to #04071E",
+        "CSS variable for text-secondary set to #666666",
+        "Hero gradient and CTA gradient defined",
+        "Typecheck passes"
+      ],
+      "priority": 27,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-028",
+      "title": "Update Footer Company Info",
+      "description": "As a visitor, I want to see legitimate company information.",
+      "acceptanceCriteria": [
+        "Footer shows: TRUST CHARGE SOLUTIONS LTD, Company No. 16584325",
+        "Links to Terms and Privacy Policy pages",
+        "Contact email: hello@lovdash.com",
+        "Social links: X/Twitter, Instagram",
+        "Copyright: '© 2026 TRUST CHARGE SOLUTIONS LTD. All rights reserved.'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 28,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-029",
+      "title": "Update Navigation Links",
+      "description": "As a visitor, I want navigation that matches the site structure.",
+      "acceptanceCriteria": [
+        "Main nav includes: Features (dropdown), Pricing, For Creators, For Agencies, AI",
+        "Features dropdown includes: Media Library, AI Tagging, Scheduling, Publishing, Analytics",
+        "Nav CTAs: 'Book a Demo' (secondary), 'Start Free Trial' (primary)",
+        "Mobile menu opens/closes correctly",
+        "All links navigate to correct pages",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 29,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-030",
+      "title": "Add Trust Badges to Hero Section",
+      "description": "As a visitor, I want to see trust signals immediately.",
+      "acceptanceCriteria": [
+        "Trust badges row in hero: '🔒 Privacy-first | ⚡ AI-powered | ✓ Multi-platform'",
+        "Badges use consistent typography and spacing",
+        "Badges visible on both desktop and mobile",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 30,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

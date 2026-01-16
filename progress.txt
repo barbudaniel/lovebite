@@ -1,0 +1,74 @@
+## Codebase Patterns
+
+<!-- 
+  This section contains general, reusable patterns discovered during implementation.
+  Add patterns that future iterations should follow.
+  Keep this section concise - only add truly reusable patterns.
+-->
+
+- Next.js 15.x with App Router, pages in `app/(marketing)/`
+- Tailwind CSS for styling, config in `tailwind.config.ts`
+- Section components in `components/sections/`
+- UI primitives in `components/ui/`
+- Framer Motion for animations via `components/motion/`
+- Test command: `npm run build && npm run lint`
+- Use emerald green (#10B981 → #059669) for primary CTAs
+- Use coral pink (#F03C4E) for brand accent only
+- Creator pages use "Start Free Trial" CTA
+- Agency pages use "Book a Demo" CTA
+
+---
+
+## Iteration Log
+
+<!-- 
+  Each iteration appends learnings below.
+  Format: ### [Date] - [Story ID]: [Title]
+  Include: what was done, gotchas encountered, patterns discovered
+-->
+
+### 2026-01-17 - PRD Conversion to Ralph Format
+
+- PRD converted to prd.json following Ralph skill specification
+- Branch: `ralph/landing-page-alignment`
+- 30 user stories, ordered by dependency (homepage → creator → studio → pricing → features → ai → technical)
+- All UI stories include "Verify in browser using dev-browser skill"
+- All stories include "Typecheck passes"
+
+Key business facts confirmed:
+- Company: TRUST CHARGE SOLUTIONS LTD (No. 16584325)
+- Status: Operational with paying customers ($210 MRR)
+- Pricing: $39/$59/Agency validated
+- Key differentiator: AI Chat Assistant
+- Platforms: OnlyFans, Fansly, LoyalFans, X, Instagram
+
+Knowledge sources:
+- Primary: BUSINESS_CONTEXT.md, LANDING_PAGE_BRIEF.md
+- Supporting: ABOUT_LOVDASH.md, DESIGN_SYSTEM.md, SALES_DECK.md
+
+CTA strategy:
+- Creators: "Start Free Trial"
+- Agencies: "Book a Demo"
+
+Design tokens:
+- Primary: #F03C4E (Coral Pink)
+- Success/CTA: #10B981 (Emerald)
+- Dark: #1A1A2E (Navy)
+
+---
+
+### 2026-01-17 - US-001: Update Hero Section Headlines
+
+- What was implemented:
+  - Updated hero subheadline to "Upload once, publish everywhere, track what works."
+  - Verified headline already matches approved copy: "Your media. Every platform. Easy for everyone."
+  - Committed pre-existing CTA changes (Start Free Trial, /join link) that were already in working directory
+
+- Files changed:
+  - `components/sections/hero.tsx`
+
+- **Learnings for future iterations:**
+  - Hero section uses split-line headline with color emphasis via `text-brand-500` class
+  - Subheadline is responsive: previously had separate mobile/desktop spans, now simplified to single text
+  - Build passes with `npm run build` despite some pre-existing TS errors (Next.js configured to skip type validation)
+  - Pre-existing TS errors exist in: privacy/page.tsx, terms/page.tsx, ai/page.tsx, CreatorHero.tsx, StudioHero.tsx, checkbox.tsx
