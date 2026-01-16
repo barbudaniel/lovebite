@@ -37,12 +37,17 @@ export function StudioHero() {
     kicker: "For Agencies",
     headline: "Manage every creator from one dashboard.",
     subheadline: "Lovdash for Agencies gives you the tools to organize, schedule, and track content across your entire roster—without the chaos.",
-    primaryCta: { text: "Book a Demo", href: "#studio-cta" },
+    primaryCta: { text: "Book a Demo", href: "/contact?type=demo" },
     secondaryCta: { text: "See Agency Features", href: "#studio-features" },
     trustBadges: [
       { icon: Users, text: "2 to 200+ creators" },
       { icon: Shield, text: "Role-based access" },
       { icon: Building2, text: "Built for teams" },
+    ],
+    stats: [
+      { value: "50+", label: "Creators Managed" },
+      { value: "10+", label: "Agencies" },
+      { value: "99.9%", label: "Uptime" },
     ],
   };
 
@@ -124,16 +129,10 @@ export function StudioHero() {
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <Button asChild size="lg" className="bg-brand-500 hover:bg-brand-600 text-white h-14 px-8 text-lg rounded-xl shadow-lg shadow-brand-500/25 group relative overflow-hidden">
+                <Button asChild size="lg" className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white h-14 px-8 text-lg rounded-xl shadow-lg shadow-emerald-500/25 group">
                   <Link href={content.primaryCta.href}>
-                    <span className="relative z-10">{content.primaryCta.text}</span>
-                    <motion.div 
-                      className="absolute inset-0 bg-brand-600"
-                      initial={{ x: "-100%" }}
-                      whileHover={{ x: 0 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                    <ArrowRight className="w-5 h-5 ml-2 relative z-10 group-hover:translate-x-1 transition-transform" />
+                    {content.primaryCta.text}
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
               </motion.div>
@@ -167,6 +166,30 @@ export function StudioHero() {
                 >
                   <badge.icon className="w-4 h-4 text-brand-500" />
                   <span>{badge.text}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Stats row */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+              className="mt-8 flex flex-wrap items-center gap-4 justify-center lg:justify-start text-sm"
+            >
+              {content.stats.map((stat, i) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 + i * 0.1 }}
+                  className="flex items-center gap-1"
+                >
+                  <span className="font-bold text-slate-800">{stat.value}</span>
+                  <span className="text-slate-600">{stat.label}</span>
+                  {i < content.stats.length - 1 && (
+                    <span className="ml-4 text-slate-300">|</span>
+                  )}
                 </motion.div>
               ))}
             </motion.div>
