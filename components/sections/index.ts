@@ -1,5 +1,6 @@
 export { Navigation } from "./navigation";
 export { Hero } from "./hero";
+export { ProblemStatement } from "./problem-statement";
 export { Process } from "./process";
 export { Features } from "./features";
 export { LovdashAI } from "./lovdash-ai";

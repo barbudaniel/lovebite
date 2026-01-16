@@ -1,6 +1,7 @@
 import {
   Navigation,
   Hero,
+  ProblemStatement,
   Process,
   Features,
   LovdashAI,
@@ -123,6 +124,7 @@ export default function Home() {
       <Navigation />
       <main>
         <Hero />
+        <ProblemStatement />
         <Process />
         <Features />
         <LovdashAI />
