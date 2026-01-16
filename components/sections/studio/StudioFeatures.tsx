@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { LayoutDashboard, Shield, FileText, TrendingUp, Activity, Layers } from "lucide-react";
+import { LayoutDashboard, Users, Shield, FileText, BarChart3, Trophy } from "lucide-react";
 
 const features = [
   {
@@ -10,29 +10,29 @@ const features = [
     description: "See all creators at a glance. Filter by status, platform, or performance. Switch between accounts in one click.",
   },
   {
+    icon: Users,
+    title: "Team Management",
+    description: "Assign team members to creators. Manage workloads and responsibilities. Keep everyone aligned and accountable.",
+  },
+  {
     icon: Shield,
     title: "Role-Based Access",
     description: "Admins, managers, uploaders—set permissions for every role. Control who sees what and who can do what.",
   },
   {
     icon: FileText,
-    title: "Template Library",
-    description: "Create posting templates once. Apply them across creators with one click. Consistent branding, faster execution.",
+    title: "Audit Logs",
+    description: "See who did what, when. Full accountability for your team. Complete audit trails for compliance and security.",
   },
   {
-    icon: TrendingUp,
+    icon: BarChart3,
     title: "Cross-Creator Analytics",
     description: "Compare performance across your roster. Identify top performers. Spot trends before they disappear.",
   },
   {
-    icon: Activity,
-    title: "Activity Logs",
-    description: "See who did what, when. Full accountability for your team. No more \"I thought you posted that.\"",
-  },
-  {
-    icon: Layers,
-    title: "Bulk Operations",
-    description: "Upload, tag, and schedule for multiple creators at once. What took hours now takes minutes.",
+    icon: Trophy,
+    title: "Gamification",
+    description: "Leaderboards, streaks, and achievements. Motivate creators with friendly competition. Celebrate wins together.",
   },
 ];
 
