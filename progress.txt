@@ -287,3 +287,27 @@ Design tokens:
   - Feature cards have hover effect: `hover:border-brand-300 hover:shadow-lg`
 
 ---
+
+### 2026-01-17 - US-012: Add Security Section for Agencies
+
+- What was implemented:
+  - Created `StudioSecurity` component in `components/sections/studio/StudioSecurity.tsx`
+  - Headline: "Security your agency can trust" with "Enterprise Security" pill badge
+  - 5 security features in grid: Bank-level encryption, Isolated environments, Instant access revocation, Complete audit trails, SOC 2 compliance (with "Roadmap" badge)
+  - Dark theme (slate-900 background) with emerald accents for icons and badges
+  - Trust message footer: "Your data. Your control. Always."
+  - Added section to Studio page after StudioFeatures
+
+- Files changed:
+  - `components/sections/studio/StudioSecurity.tsx` (new)
+  - `components/sections/studio/index.ts`
+  - `app/(marketing)/studio/page.tsx`
+
+- **Learnings for future iterations:**
+  - Security sections work well with dark slate-900 backgrounds for trust/authority feel
+  - Use amber-500/amber-400 colors for "Roadmap" badges to distinguish from complete features
+  - Feature cards support optional `badge` property for status indicators
+  - Icons for security: Lock (encryption), Server (environments), KeyRound (access), FileSearch (audit), BadgeCheck (compliance)
+  - Add section between StudioFeatures and StudioProcess - features first, then security for trust building
+
+---
