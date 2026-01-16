@@ -34,8 +34,8 @@ export function CreatorHero() {
   const content = {
     kicker: "For Creators",
     headline: ["Upload once.", "Publish everywhere.", "Create more."],
-    subheadline: "Lovdash handles the boring stuff so you can focus on what you love—creating content that connects.",
-    primaryCta: { text: "Join Waitlist", href: "#cta" },
+    subheadline: "Lovdash handles the boring stuff so you can focus on what you love — creating content that connects.",
+    primaryCta: { text: "Start Free Trial", href: "/join" },
     secondaryCta: { text: "See How It Works", href: "#process" },
   };
 
@@ -135,11 +135,11 @@ export function CreatorHero() {
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <Button asChild size="lg" className="bg-brand-500 hover:bg-brand-600 text-white h-14 px-8 text-lg rounded-xl shadow-lg shadow-brand-500/25 group relative overflow-hidden">
+                <Button asChild size="lg" className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white h-14 px-8 text-lg rounded-xl shadow-lg shadow-emerald-500/25 group relative overflow-hidden">
                   <Link href={content.primaryCta.href}>
                     <span className="relative z-10">{content.primaryCta.text}</span>
                     <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-brand-600 to-brand-500"
+                      className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-500"
                       initial={{ x: "100%" }}
                       whileHover={{ x: 0 }}
                       transition={{ duration: 0.3 }}
