@@ -248,3 +248,22 @@ Design tokens:
   - Use `sm:grid-cols-2` for 4-item grids (2x2 on tablet+)
   - Pain points should map to specific documented problems, not be generic
   - Keep pain point descriptions conversational and relatable
+
+### 2026-01-17 - US-010: Update Studio Page Hero
+
+- What was implemented:
+  - Updated primary CTA href from `#studio-cta` to `/contact?type=demo`
+  - Applied emerald gradient styling to Book a Demo button (`from-emerald-500 to-emerald-600`)
+  - Added stats row with 50+ Creators Managed | 10+ Agencies | 99.9% Uptime
+  - Stats use animated appearance with staggered delay
+
+- Files changed:
+  - `components/sections/studio/StudioHero.tsx`
+
+- **Learnings for future iterations:**
+  - Studio/Agency pages already had most content correct (headline, pill badge, subheadline)
+  - Agency CTA links should go to `/contact?type=demo` for proper tracking
+  - Stats row pattern: array of {value, label} objects with pipe separator between items
+  - Use emerald gradient for all agency CTAs per design system
+
+---
