@@ -619,9 +619,7 @@ export function Hero() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="text-base sm:text-lg md:text-xl text-slate-600 max-w-xl mx-auto mb-6 leading-relaxed px-4"
           >
-            Upload your content once. Let AI organize it. 
-            <span className="hidden sm:inline"> Publish everywhere. Track what works.</span>
-            <span className="sm:hidden"> Publish everywhere.</span>
+            Upload once, publish everywhere, track what works.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -640,8 +638,8 @@ export function Hero() {
                 size="lg"
                 className="bg-slate-900 hover:bg-slate-800 text-white px-8 h-14 text-base rounded-full shadow-lg font-semibold"
               >
-                <Link href="#cta">
-                  <span>Join Waitlist</span>
+                <Link href="/join">
+                  <span>Start Free Trial</span>
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
