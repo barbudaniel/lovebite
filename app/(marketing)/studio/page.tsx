@@ -4,6 +4,7 @@ import {
   PainPoints,
   StudioSolution,
   StudioFeatures,
+  StudioSecurity,
   StudioProcess,
   StudioFAQ,
   StudioCTA,
@@ -103,6 +104,7 @@ export default function StudioPage() {
         <PainPoints />
         <StudioSolution />
         <StudioFeatures />
+        <StudioSecurity />
         <StudioProcess />
         {/* Social Proof: SKIPPED per DEC-014 until real studio testimonials collected */}
         {/* Pricing: Use "Book a Demo" CTA instead */}
