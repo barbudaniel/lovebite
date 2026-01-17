@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import { PlatformLogosRow } from "@/components/ui/platform-logos";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Twitter, Instagram, Mail } from "lucide-react";
 
 const footerLinks = [
   { href: "/#features", label: "Features" },
@@ -18,6 +18,13 @@ const legalLinks = [
   { href: "/terms", label: "Terms & Conditions" },
   { href: "/privacy", label: "Privacy Policy" },
 ];
+
+const socialLinks = [
+  { href: "https://x.com/lovdash", label: "X/Twitter", icon: Twitter },
+  { href: "https://instagram.com/lovdash", label: "Instagram", icon: Instagram },
+];
+
+const contactEmail = "hello@lovdash.com";
 
 export function Footer() {
   return (
@@ -117,6 +124,40 @@ export function Footer() {
             ))}
           </motion.nav>
 
+          {/* Contact & Social Links */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.28 }}
+            className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 mb-8"
+          >
+            {/* Contact Email */}
+            <a
+              href={`mailto:${contactEmail}`}
+              className="flex items-center gap-2 text-sm text-slate-600 hover:text-brand-500 transition-colors"
+            >
+              <Mail className="w-4 h-4" />
+              {contactEmail}
+            </a>
+
+            {/* Social Links */}
+            <div className="flex items-center gap-4">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-600 hover:text-brand-500 transition-colors"
+                  aria-label={link.label}
+                >
+                  <link.icon className="w-5 h-5" />
+                </a>
+              ))}
+            </div>
+          </motion.div>
+
           {/* Divider */}
           <div className="w-full max-w-xs h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent mb-8" />
 
@@ -134,16 +175,21 @@ export function Footer() {
             </p>
           </motion.div>
 
-          {/* Copyright */}
-          <motion.p
+          {/* Company Info & Copyright */}
+          <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.35 }}
-            className="text-xs text-slate-400 mt-8"
+            className="text-center mt-8 space-y-1"
           >
-            © {new Date().getFullYear()} TRUST CHARGE SOLUTIONS LTD (Company No. 16584325). All rights reserved.
-          </motion.p>
+            <p className="text-xs text-slate-500">
+              TRUST CHARGE SOLUTIONS LTD | Company No. 16584325
+            </p>
+            <p className="text-xs text-slate-400">
+              © 2026 TRUST CHARGE SOLUTIONS LTD. All rights reserved.
+            </p>
+          </motion.div>
         </div>
       </div>
     </footer>
