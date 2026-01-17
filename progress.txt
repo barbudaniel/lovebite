@@ -597,3 +597,24 @@ Design tokens:
   - All layouts already existed for feature pages - just needed Twitter card additions
 
 ---
+
+### 2026-01-17 - US-025: Add Organization Schema to Layout
+
+- What was implemented:
+  - Added Schema.org Organization structured data as JSON-LD in root layout
+  - Organization includes: name ('Lovdash'), url, logo, description, foundingDate ('2025')
+  - Added sameAs links for Twitter and Instagram social profiles
+  - Added contactPoint with customer service email (hello@lovdash.com)
+  - JSON-LD injected via script tag with dangerouslySetInnerHTML in head element
+
+- Files changed:
+  - `app/layout.tsx`
+
+- **Learnings for future iterations:**
+  - Use `dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}` for JSON-LD in Next.js
+  - Place JSON-LD script in `<head>` element within the html tag
+  - Organization schema supports optional contactPoint for extra SEO value
+  - Keep schema data consistent with existing metadata (description, siteName, etc.)
+  - foundingDate should be YYYY format for Schema.org compliance
+
+---

@@ -372,8 +372,8 @@
         "Typecheck passes"
       ],
       "priority": 25,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed 2026-01-17. Organization schema with name, url, logo, description, foundingDate, sameAs, and contactPoint added to root layout."
     },
     {
       "id": "US-026",
