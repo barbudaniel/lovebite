@@ -541,3 +541,24 @@ Design tokens:
   - PPV = pay-per-view, a key revenue model for creators
 
 ---
+
+### 2026-01-17 - US-023: Add AI Disclaimer to AI Page
+
+- What was implemented:
+  - Added AI disclaimer section after the Features Grid section on the AI page
+  - Disclaimer text: "AI-generated content is assistive and may require review"
+  - Extended text explains Bite provides suggestions while user remains in control
+  - Uses Info icon from lucide-react with subtle dark-theme styling
+  - Positioned after features but before comparison table (visible but not dominant)
+  - Applied Framer Motion fade-in animation consistent with other sections
+
+- Files changed:
+  - `app/ai/page.tsx`
+
+- **Learnings for future iterations:**
+  - For dark-themed pages (slate-950), use `bg-slate-800/50 border-slate-700` for subtle info boxes (vs light theme's slate-50)
+  - Position disclaimers after main content but before comparison/CTA sections for visibility without dominance
+  - Info icon paired with text works well for non-intrusive disclaimers
+  - Use `flex-shrink-0 mt-0.5` on icons to prevent squishing and align with first line of text
+
+---
