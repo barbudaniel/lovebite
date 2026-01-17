@@ -442,3 +442,57 @@ Design tokens:
   - Feature order in benefits array should prioritize most impactful features first
 
 ---
+
+### 2026-01-17 - US-019: Update Publishing Feature Page
+
+- What was implemented:
+  - Added "Supported Platforms" section showing all 6 platforms with status badges
+  - Platform cards display: OnlyFans ✅, Fansly ✅, LoyalFans ✅, X/Twitter ✅, Instagram ✅, TikTok 🔜 Coming Soon
+  - Added dedicated "SFW/NSFW Content Routing" section with dark background
+  - Explains auto-classification: SFW → Instagram/X/TikTok, Adult → OnlyFans/Fansly/LoyalFans
+  - Updated hero PlatformLogosRow to include LoyalFans
+  - Added LoyalFans icon and brand colors (#FF5722) to platform-logos component
+
+- Files changed:
+  - `app/(marketing)/features/publishing/page.tsx`
+  - `components/ui/platform-logos.tsx`
+
+- **Learnings for future iterations:**
+  - Platform status badges use ✅ emoji for active, amber "🔜 Coming Soon" badge for upcoming
+  - Use `cn()` utility for conditional class composition
+  - Content routing section uses dark slate-900 background for emphasis/authority
+  - SFW/NSFW routing cards use green (emerald-400) for SFW, pink (pink-400) for adult content
+  - PlatformLogo component requires platform to be in both PlatformIcons and platformBrandColors
+
+---
+
+### 2026-01-17 - US-020: Update Analytics Feature Page
+
+- What was implemented:
+  - Updated benefits array with all 5 required features:
+    1. Revenue Tracking (with attribution emphasis)
+    2. Content Attribution (new - connects sales to content)
+    3. Bio Link Analytics (new - tracks link performance)
+    4. Cross-Creator Comparison (new - roster analytics)
+    5. Trend Identification (new - pattern recognition)
+    6. Custom Reports (kept from original)
+  - Added agency-specific section with dark theme (slate-900)
+  - Agency headline: "Compare creator performance at a glance"
+  - Stats cards: 50+ Creators Managed, $2M+ Revenue Tracked, 99.9% Uptime
+  - Updated subheadline to emphasize revenue attribution
+  - Added LoyalFans to platform logos row
+  - Updated CTAs to emerald gradient per design system
+  - Changed CTA links: /join for trial, /contact?type=demo for agency demo
+
+- Files changed:
+  - `app/(marketing)/features/analytics/page.tsx`
+
+- **Learnings for future iterations:**
+  - Feature pages follow same pattern: Hero → Benefits Grid → Optional Section → CTA
+  - Agency sections on feature pages use dark slate-900 bg to visually separate from creator content
+  - Stats cards pattern: 3-column grid with emerald-400 text for numbers
+  - Use Building2 icon from lucide-react for agency-related badges
+  - Link2 icon works well for bio link/URL-related features
+  - Keep "Custom Reports" as a general feature even when updating specific feature lists
+
+---
