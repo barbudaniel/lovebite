@@ -4,16 +4,16 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { Navigation, Footer } from "@/components/sections";
 import { PlatformLogosRow } from "@/components/ui/platform-logos";
-import { Calendar, Clock, Globe, Repeat, BarChart3, Zap, ArrowRight, Sparkles } from "lucide-react";
+import { Calendar, Clock, Globe, Repeat, CheckCircle, Zap, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const benefits = [
-  { icon: Globe, title: "Multi-Platform Queues", description: "Schedule to OnlyFans, Fansly, Twitter, Instagram, and more—all at once." },
-  { icon: Clock, title: "Optimal Timing", description: "AI suggests the best times to post based on your audience activity." },
-  { icon: Repeat, title: "Recurring Posts", description: "Set up evergreen content to repost automatically on a schedule." },
   { icon: Calendar, title: "Visual Calendar", description: "See your entire content plan at a glance with our drag-and-drop calendar." },
-  { icon: BarChart3, title: "Performance Tracking", description: "See which scheduled posts perform best and optimize your strategy." },
+  { icon: Globe, title: "Multi-Platform Queue", description: "Schedule to OnlyFans, Fansly, Twitter, Instagram, and more—all at once." },
+  { icon: Clock, title: "Optimal Timing Suggestions", description: "AI suggests the best times to post based on your audience activity." },
   { icon: Zap, title: "Bulk Scheduling", description: "Schedule weeks of content in minutes with bulk upload and queue." },
+  { icon: CheckCircle, title: "Draft Approval Workflows", description: "Review and approve scheduled content before it goes live. Perfect for teams and agencies." },
+  { icon: Repeat, title: "Recurring Posts", description: "Set up evergreen content to repost automatically on a schedule." },
 ];
 
 export default function SchedulingPage() {
@@ -99,10 +99,19 @@ export default function SchedulingPage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-2xl sm:text-3xl font-bold text-slate-900 text-center mb-12"
+              className="text-2xl sm:text-3xl font-bold text-slate-900 text-center mb-4"
             >
-              Scheduling Made Simple
+              Your content calendar, simplified
             </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-slate-600 text-center max-w-2xl mx-auto mb-12"
+            >
+              Set it and forget it. Plan your content once, and let Lovdash publish on autopilot.
+            </motion.p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {benefits.map((item, i) => (
                 <motion.div 

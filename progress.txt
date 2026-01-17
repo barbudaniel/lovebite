@@ -417,3 +417,28 @@ Design tokens:
   - Position disclaimer before CTA section but after benefits grid
 
 ---
+
+### 2026-01-17 - US-018: Update Scheduling Feature Page
+
+- What was implemented:
+  - Reordered and updated benefits array to match acceptance criteria:
+    1. Visual Calendar
+    2. Multi-Platform Queue
+    3. Optimal Timing Suggestions
+    4. Bulk Scheduling
+    5. Draft Approval Workflows (new)
+    6. Recurring Posts
+  - Updated section heading to "Your content calendar, simplified"
+  - Added subheadline: "Set it and forget it. Plan your content once, and let Lovdash publish on autopilot."
+  - Replaced BarChart3 icon with CheckCircle for approval workflows
+
+- Files changed:
+  - `app/(marketing)/features/scheduling/page.tsx`
+
+- **Learnings for future iterations:**
+  - Key messaging phrases can be combined (heading + subheadline) to hit multiple requirements
+  - Draft approval workflows appeals to agency/team use cases
+  - CheckCircle icon works well for approval-related features
+  - Feature order in benefits array should prioritize most impactful features first
+
+---
