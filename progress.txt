@@ -685,3 +685,29 @@ Design tokens:
   - Company info and copyright separated into distinct lines for clarity
 
 ---
+
+### 2026-01-17 - US-029: Update Navigation Links
+
+- What was implemented:
+  - Desktop nav updated from icon-based layout to text links with Features dropdown
+  - Main nav includes: Features (dropdown), Pricing, For Creators, For Agencies, AI
+  - Features dropdown with 5 items: Media Library, AI Tagging, Scheduling, Publishing, Analytics
+  - Updated CTAs: 'Book a Demo' (secondary text link) and 'Start Free Trial' (primary emerald gradient button)
+  - Added click-outside handler for dropdown close behavior
+  - Mobile header CTA updated to "Start Free Trial" with emerald color
+  - Mobile bottom sheet updated with dual CTAs matching desktop
+  - Quick links updated to include AI link, removed Help placeholder
+
+- Files changed:
+  - `components/sections/navigation.tsx`
+
+- **Learnings for future iterations:**
+  - Features dropdown uses AnimatePresence + motion.div for smooth open/close animations
+  - Click-outside detection with useRef + mousedown event listener pattern
+  - Dropdown positioning: `absolute top-full left-1/2 -translate-x-1/2 mt-2` for centered below trigger
+  - Emerald gradient for primary CTAs: `bg-gradient-to-r from-emerald-500 to-emerald-600`
+  - Shadow for emerald buttons: `shadow-emerald-500/25`
+  - Desktop nav uses `absolute left-1/2 -translate-x-1/2` to center in header
+  - Feature items array order = dropdown order; removed Bio Links (not in requirements)
+
+---
