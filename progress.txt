@@ -638,3 +638,28 @@ Design tokens:
   - Homepage has FAQ schema at top level; creator/studio pages also have their own FAQ schemas
 
 ---
+
+### 2026-01-17 - US-027: Align Design System Colors in CSS
+
+- What was implemented:
+  - Added comprehensive design system CSS variables to globals.css :root
+  - Primary colors: --color-primary (#F03C4E), --color-primary-light (#FF6B7A), --color-primary-dark (#D62839)
+  - Success/CTA colors: --color-success (#10B981), --color-success-light, --color-success-dark
+  - Text colors: --text-primary (#04071E), --text-secondary (#666666), --text-muted
+  - Background colors: --bg-dark (#1A1A2E), --bg-light (#F8FAFC)
+  - Gradients: --gradient-hero, --gradient-cta, --gradient-cta-hover, --gradient-brand
+  - Updated Tailwind config with ds-* utility colors referencing CSS variables
+  - Updated brand-500 (#F03C4E) and brand-600 (#D62839) to match design system
+
+- Files changed:
+  - `app/globals.css`
+  - `tailwind.config.ts`
+
+- **Learnings for future iterations:**
+  - CSS variables go in :root section within @layer base
+  - Use `ds-` prefix for design system utility colors in Tailwind to avoid conflicts
+  - Tailwind can reference CSS variables directly: `'ds-primary': 'var(--color-primary)'`
+  - Keep brand palette in Tailwind for compatibility with existing code, but align key values
+  - Gradient CSS variables can be used with Tailwind's backgroundImage extend
+
+---
