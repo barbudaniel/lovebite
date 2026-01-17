@@ -2,10 +2,51 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
+import Script from "next/script";
 import { Navigation, Footer } from "@/components/sections";
 import { PlatformLogosRow } from "@/components/ui/platform-logos";
 import { CheckCircle2, ArrowRight, Sparkles, Building2, Users, Zap, Shield, Clock, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// FAQPage schema for rich results
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "How does the free trial work?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Start with a 7-day free trial on any plan—no credit card required. Explore all features and decide if Lovdash is right for you.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What's the difference between Starter and Pro?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Starter gives you the essentials: media library, AI tagging, and one platform. Pro unlocks the full AI chat assistant, unlimited platforms, advanced analytics, and gamification features.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How does Agency pricing work?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Agency pricing is customized based on the number of creators you manage. Book a demo and we'll create a quote tailored to your needs.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I switch plans later?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes! Upgrade or downgrade anytime. Changes take effect on your next billing cycle, and we'll prorate any differences.",
+      },
+    },
+  ],
+};
 
 const starterFeatures = [
   "Media library + AI tagging",
@@ -38,6 +79,12 @@ const agencyFeatures = [
 export default function PricingPage() {
   return (
     <>
+      {/* FAQ Schema for SEO */}
+      <Script
+        id="pricing-faq-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       <Navigation />
       <main className="min-h-screen bg-white">
         {/* Hero Section */}
