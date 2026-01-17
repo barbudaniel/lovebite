@@ -17,6 +17,7 @@
 - Creator pages use "Start Free Trial" CTA
 - Agency pages use "Book a Demo" CTA
 - Grayscale-to-color hover: use `grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100` with parent `group` class
+- AI/Bite branding uses violet colors: `bg-violet-500/10`, `text-violet-300`, gradient `from-violet-400`
 
 ---
 
@@ -494,5 +495,24 @@ Design tokens:
   - Use Building2 icon from lucide-react for agency-related badges
   - Link2 icon works well for bio link/URL-related features
   - Keep "Custom Reports" as a general feature even when updating specific feature lists
+
+---
+
+### 2026-01-17 - US-021: Introduce Bite AI Brand on AI Page
+
+- What was implemented:
+  - Changed pill badge from "Coming Soon — Join the Waitlist" to "Introducing Bite"
+  - Updated hero headline from "Your Fans Never Sleep. Now, Neither Do You." to "The AI that manages your entire creator business"
+  - Updated subheadline to reference Bite as "AI-powered business partner"
+  - Changed badge styling from product colors to violet for AI/Bite branding
+
+- Files changed:
+  - `app/ai/page.tsx`
+
+- **Learnings for future iterations:**
+  - AI page is at `app/ai/page.tsx` (NOT in marketing route group)
+  - Use violet/purple colors for AI/Bite branding: `bg-violet-500/10`, `border-violet-500/20`, `text-violet-300`
+  - Bite is the AI brand name for Lovdash's AI capabilities
+  - AI page still has waitlist form - may need updating in future stories if product is live
 
 ---
