@@ -355,3 +355,21 @@ Design tokens:
   - Use meaningful icons: Shield for security/no payment, Clock for flexibility, Star for trial benefits
 
 ---
+
+### 2026-01-17 - US-015: Update Pricing Feature Lists
+
+- What was implemented:
+  - Verified feature lists already match acceptance criteria (implemented as part of US-013)
+  - Starter: 6 features covering essentials (media library, AI tagging, bio link, 1 platform, basic analytics, email support)
+  - Pro: 7 features including "Everything in Starter" plus AI chat, AI training, unlimited platforms, gamification, advanced analytics, priority support
+  - Agency: 6 features including "Everything in Pro" plus multi-creator dashboard, team mgmt, cross-creator analytics, activity feed, dedicated account manager
+
+- Files changed:
+  - No changes needed - `app/(marketing)/pricing/page.tsx` already had correct feature lists
+
+- **Learnings for future iterations:**
+  - Feature arrays defined at top of pricing page component for easy updates
+  - Use "Everything in {tier}" as first item for higher tiers to show progression
+  - Keep feature descriptions concise (2-4 words) for clean UI presentation
+
+---
