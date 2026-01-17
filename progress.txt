@@ -663,3 +663,25 @@ Design tokens:
   - Gradient CSS variables can be used with Tailwind's backgroundImage extend
 
 ---
+
+### 2026-01-17 - US-028: Update Footer Company Info
+
+- What was implemented:
+  - Added contact email (hello@lovdash.com) with Mail icon
+  - Added social links for X/Twitter and Instagram with icons
+  - Social links open in new tab with proper rel="noopener noreferrer"
+  - Company info displayed prominently: TRUST CHARGE SOLUTIONS LTD | Company No. 16584325
+  - Copyright updated to exact format: © 2026 TRUST CHARGE SOLUTIONS LTD. All rights reserved.
+  - Terms and Privacy Policy links already present (verified)
+
+- Files changed:
+  - `components/sections/footer.tsx`
+
+- **Learnings for future iterations:**
+  - Footer uses motion.div for animated sections with staggered delays
+  - Social links use dynamic icon rendering: `<link.icon className="..."/>`
+  - Use target="_blank" with rel="noopener noreferrer" for external links
+  - Contact email uses mailto: protocol with Mail icon from lucide-react
+  - Company info and copyright separated into distinct lines for clarity
+
+---
