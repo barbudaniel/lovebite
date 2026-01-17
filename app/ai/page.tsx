@@ -99,14 +99,11 @@ export default function LovdashAIPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 bg-product-500/10 border border-product-500/20 rounded-full px-4 py-2 mb-8"
+            className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-4 py-2 mb-8"
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-product-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-product-500"></span>
-            </span>
-            <span className="text-sm text-product-300 font-medium">
-              Coming Soon — Join the Waitlist
+            <Sparkles className="w-4 h-4 text-violet-400" />
+            <span className="text-sm text-violet-300 font-medium">
+              Introducing Bite
             </span>
           </motion.div>
 
@@ -117,10 +114,10 @@ export default function LovdashAIPage() {
             transition={{ delay: 0.1 }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6"
           >
-            <span className="text-white">Your Fans Never Sleep.</span>
+            <span className="text-white">The AI that manages</span>
             <br />
-            <span className="bg-gradient-to-r from-product-400 via-brand-400 to-pink-400 bg-clip-text text-transparent">
-              Now, Neither Do You.
+            <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              your entire creator business
             </span>
           </motion.h1>
 
@@ -131,8 +128,8 @@ export default function LovdashAIPage() {
             transition={{ delay: 0.2 }}
             className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            Meet Lovdash AI — your smart assistant that chats with fans, 
-            handles messages, and makes sales 24/7. Stop typing. Start living.
+            Meet Bite — your AI-powered business partner that handles tagging, 
+            chat intelligence, and content optimization. Less busywork, more creating.
           </motion.p>
 
           {/* Waitlist Form */}
