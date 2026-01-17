@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/button";
 
 const benefits = [
   { icon: Cloud, title: "Unlimited Storage", description: "Upload as much content as you need. No limits, no extra fees." },
+  { icon: Sparkles, title: "AI Auto-Tagging", description: "Our AI automatically tags and categorizes every upload—no manual work required." },
+  { icon: FolderOpen, title: "Smart Collections", description: "Auto-organize content into collections based on type, date, or custom rules." },
+  { icon: Shield, title: "SFW/NSFW Classification", description: "AI automatically classifies content rating for seamless multi-platform publishing." },
   { icon: Search, title: "Instant Search", description: "Find any file instantly with AI-powered search by tags, dates, or descriptions." },
-  { icon: FolderOpen, title: "Smart Folders", description: "Auto-organize content into collections based on type, date, or custom rules." },
-  { icon: Shield, title: "Secure & Private", description: "Enterprise-grade encryption. Your content stays yours." },
-  { icon: Zap, title: "Fast Uploads", description: "Bulk upload hundreds of files at once with drag-and-drop simplicity." },
-  { icon: Upload, title: "Any File Type", description: "Photos, videos, GIFs, documents—we support everything." },
+  { icon: Zap, title: "Secure & Fast", description: "Enterprise-grade encryption with lightning-fast uploads. Bulk upload hundreds of files at once." },
 ];
 
 export default function MediaLibraryPage() {
@@ -45,9 +45,9 @@ export default function MediaLibraryPage() {
               transition={{ delay: 0.1 }}
               className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-slate-900 mb-6"
             >
-              Your Content,{" "}
+              Your content,{" "}
               <span className="bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                Perfectly Organized
+                organized automatically
               </span>
             </motion.h1>
             
@@ -57,7 +57,7 @@ export default function MediaLibraryPage() {
               transition={{ delay: 0.2 }}
               className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto mb-8"
             >
-              Stop losing files across devices and platforms. Lovdash Media Library keeps everything in one searchable, organized space.
+              Unlimited storage meets AI organization. Upload once and let our AI auto-tag, classify, and organize everything—so you can find any file in seconds.
             </motion.p>
 
             <motion.div
