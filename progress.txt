@@ -618,3 +618,23 @@ Design tokens:
   - foundingDate should be YYYY format for Schema.org compliance
 
 ---
+
+### 2026-01-17 - US-026: Add FAQ Schema to Pages with FAQs
+
+- What was implemented:
+  - Added FAQPage JSON-LD schema to pricing page (`app/(marketing)/pricing/page.tsx`)
+  - Schema includes 4 pricing-specific Q&A pairs matching the visual FAQ section
+  - Homepage already had FAQ schema in place (6 Q&A pairs)
+  - Used Script component from next/script for injection in client component
+
+- Files changed:
+  - `app/(marketing)/pricing/page.tsx`
+
+- **Learnings for future iterations:**
+  - FAQPage schema uses mainEntity array of Question objects with acceptedAnswer
+  - Script component from next/script works in both client and server components
+  - Keep FAQ schema content synchronized with visual FAQ section content
+  - Use unique script IDs when multiple schemas on same page (e.g., "pricing-faq-schema")
+  - Homepage has FAQ schema at top level; creator/studio pages also have their own FAQ schemas
+
+---

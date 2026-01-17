@@ -386,8 +386,8 @@
         "Typecheck passes"
       ],
       "priority": 26,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed 2026-01-17. Homepage already had FAQ schema, added pricing page FAQ schema with 4 Q&A pairs."
     },
     {
       "id": "US-027",
