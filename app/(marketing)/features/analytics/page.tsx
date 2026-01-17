@@ -4,16 +4,16 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { Navigation, Footer } from "@/components/sections";
 import { PlatformLogosRow } from "@/components/ui/platform-logos";
-import { BarChart3, TrendingUp, DollarSign, Users, Target, Zap, ArrowRight, Sparkles } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Link2, Users, Target, ArrowRight, Sparkles, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const benefits = [
-  { icon: DollarSign, title: "Revenue Tracking", description: "See earnings from all platforms in one unified view. Track tips, subscriptions, and PPV." },
-  { icon: TrendingUp, title: "Growth Metrics", description: "Monitor subscriber growth, churn, and retention across all your accounts." },
-  { icon: Users, title: "Audience Insights", description: "Understand who your fans are, when they're active, and what they engage with." },
-  { icon: Target, title: "Content Performance", description: "See which posts drive the most engagement and revenue to optimize your strategy." },
+  { icon: DollarSign, title: "Revenue Tracking", description: "See earnings from all platforms in one unified view. Track tips, subscriptions, and PPV with full attribution." },
+  { icon: Target, title: "Content Attribution", description: "Know exactly which content drives revenue. Connect every sale back to the post that made it happen." },
+  { icon: Link2, title: "Bio Link Analytics", description: "Track every click, tap, and conversion from your bio links. See which links drive the most traffic." },
+  { icon: Users, title: "Cross-Creator Comparison", description: "Compare performance across your roster. Identify top performers and growth opportunities." },
+  { icon: TrendingUp, title: "Trend Identification", description: "Spot patterns in your data. See what&apos;s working, what&apos;s not, and where to focus next." },
   { icon: BarChart3, title: "Custom Reports", description: "Build reports for the metrics that matter to you. Export anytime." },
-  { icon: Zap, title: "Real-Time Data", description: "No more waiting. See your performance update in real-time." },
 ];
 
 export default function AnalyticsPage() {
@@ -57,7 +57,7 @@ export default function AnalyticsPage() {
               transition={{ delay: 0.2 }}
               className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto mb-8"
             >
-              Stop guessing. See exactly how your content performs, where your revenue comes from, and how to grow faster.
+              Stop guessing. See exactly which content drives revenue, track attribution across platforms, and make data-driven decisions that grow your business.
             </motion.p>
 
             <motion.div
@@ -66,9 +66,9 @@ export default function AnalyticsPage() {
               transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row gap-4 justify-center mb-10"
             >
-              <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600 text-white rounded-full px-8 shadow-lg shadow-amber-500/25">
-                <Link href="/#cta">
-                  Try Analytics
+              <Button asChild size="lg" className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-full px-8 shadow-lg shadow-emerald-500/25">
+                <Link href="/join">
+                  Start Free Trial
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
             >
               <p className="text-sm text-slate-500 mb-4">Track performance across all platforms</p>
               <PlatformLogosRow 
-                platforms={["onlyfans", "fansly", "twitter", "instagram"]} 
+                platforms={["onlyfans", "fansly", "loyalfans", "twitter", "instagram"]} 
                 size="lg"
                 variant="color"
                 showLabels
@@ -124,14 +124,87 @@ export default function AnalyticsPage() {
           </div>
         </section>
 
+        {/* Agency Section */}
+        <section className="py-16 sm:py-24 bg-slate-900">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6"
+              >
+                <Building2 className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm font-medium text-emerald-400">For Agencies</span>
+              </motion.div>
+              
+              <motion.h2 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-2xl sm:text-3xl font-bold text-white mb-4"
+              >
+                Compare creator performance at a glance
+              </motion.h2>
+              
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="text-slate-400 max-w-2xl mx-auto"
+              >
+                Managing multiple creators? See everyone&apos;s performance in one dashboard. Identify top performers, spot trends across your roster, and make strategic decisions backed by data.
+              </motion.p>
+            </div>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="grid sm:grid-cols-3 gap-6 mb-12"
+            >
+              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center">
+                <div className="text-3xl font-bold text-emerald-400 mb-2">50+</div>
+                <div className="text-slate-400 text-sm">Creators Managed</div>
+              </div>
+              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center">
+                <div className="text-3xl font-bold text-emerald-400 mb-2">$2M+</div>
+                <div className="text-slate-400 text-sm">Revenue Tracked</div>
+              </div>
+              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center">
+                <div className="text-3xl font-bold text-emerald-400 mb-2">99.9%</div>
+                <div className="text-slate-400 text-sm">Uptime</div>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+              className="text-center"
+            >
+              <Button asChild size="lg" className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-full px-8 shadow-lg shadow-emerald-500/25">
+                <Link href="/contact?type=demo">
+                  Book a Demo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+            </motion.div>
+          </div>
+        </section>
+
         {/* CTA */}
-        <section className="py-16 bg-gradient-to-br from-amber-500 to-orange-500">
+        <section className="py-16 bg-gradient-to-br from-emerald-500 to-emerald-600">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <Sparkles className="w-10 h-10 text-white/80 mx-auto mb-4" />
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Ready to understand your growth?</h2>
             <p className="text-white/80 mb-8">Get insights that help you earn more and grow faster.</p>
-            <Button asChild size="lg" className="bg-white text-amber-600 hover:bg-white/90 rounded-full px-8">
-              <Link href="/#cta">Get Started Free</Link>
+            <Button asChild size="lg" className="bg-white text-emerald-600 hover:bg-white/90 rounded-full px-8">
+              <Link href="/join">Start Free Trial</Link>
             </Button>
           </div>
         </section>
