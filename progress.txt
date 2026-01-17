@@ -311,3 +311,28 @@ Design tokens:
   - Add section between StudioFeatures and StudioProcess - features first, then security for trust building
 
 ---
+
+### 2026-01-17 - US-013: Update Pricing Tiers
+
+- What was implemented:
+  - Changed pricing page from 2-tier (Creator/Agency) to 3-tier structure
+  - Starter tier: $39/creator/mo with basic features (media library, AI tagging, 1 platform, basic analytics)
+  - Pro tier: $59/creator/mo with "MOST POPULAR" badge, full AI, unlimited platforms, gamification
+  - Agency tier: Custom pricing with team management, cross-creator analytics
+  - Updated hero from "Early Access" to "7-Day Free Trial" messaging
+  - Trust indicators: No credit card, Cancel anytime, 7-day trial
+  - Updated FAQ to reflect new pricing model
+
+- Files changed:
+  - `app/(marketing)/pricing/page.tsx`
+
+- **Learnings for future iterations:**
+  - Pricing tiers use 3-column grid: `md:grid-cols-3` for responsive layout
+  - "MOST POPULAR" tier uses dark bg (slate-900) with emerald border accent
+  - Emerald gradient for CTA buttons: `from-emerald-500 to-emerald-600`
+  - Pro tier icon container uses `bg-emerald-500/20` for subtle highlight
+  - Starter/Agency tiers use white bg with slate-100 icon containers
+  - Use `&apos;` for apostrophes in FAQ text (JSX requirement)
+  - Agency CTA links to `/contact?type=demo` for demo bookings
+
+---
