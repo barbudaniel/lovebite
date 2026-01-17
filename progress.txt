@@ -711,3 +711,24 @@ Design tokens:
   - Feature items array order = dropdown order; removed Bio Links (not in requirements)
 
 ---
+
+### 2026-01-17 - US-030: Add Trust Badges to Hero Section
+
+- What was implemented:
+  - Updated trust badges to use emoji format per acceptance criteria
+  - Changed from Lucide icon components to emojis: 🔒, ⚡, ✓
+  - Added responsive pipe separators (hidden on mobile via `hidden sm:inline`)
+  - Badges display: "🔒 Privacy-first | ⚡ AI-powered | ✓ Multi-platform"
+  - Consistent typography with `font-medium` on text and `text-base` on emojis
+
+- Files changed:
+  - `components/sections/hero.tsx`
+
+- **Learnings for future iterations:**
+  - Trust badges section was using Lucide icons (Shield, Sparkles, Check) - replaced with emojis per spec
+  - Use `hidden sm:inline` for responsive separators that hide on mobile
+  - Emoji sizing: use `text-base` class for consistent emoji display
+  - Shield import now unused in hero.tsx but kept for future use if needed
+  - Build passes even with unused imports (no strict lint on imports)
+
+---
