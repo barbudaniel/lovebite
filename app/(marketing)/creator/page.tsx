@@ -14,14 +14,28 @@ import { Navigation, Footer } from "@/components/sections";
 import { ScrollProgress } from "@/components/motion/smooth-scroll";
 
 export const metadata: Metadata = {
-  title: "Lovdash for Creators | Upload Once, Publish Everywhere",
-  description: "Simplify your content workflow. Upload once and publish to all your platforms. AI-powered organization, scheduling, and analytics for individual creators.",
+  title: "For Creators",
+  description: "Simplify your content workflow. Upload once and publish to all your platforms with AI-powered organization, scheduling, and analytics.",
   keywords: ["content creator tools", "multi-platform publishing", "creator workflow", "content scheduling", "bio link builder"],
   openGraph: {
-    title: "Lovdash for Creators | Upload Once, Publish Everywhere",
-    description: "Simplify your content workflow. Upload once and publish to all your platforms.",
+    title: "Lovdash for Creators - Upload Once, Publish Everywhere",
+    description: "Simplify your content workflow. Upload once and publish to all your platforms with AI-powered organization.",
     type: "website",
     url: "https://lovdash.com/creator",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Lovdash for Creators",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lovdash for Creators - Upload Once, Publish Everywhere",
+    description: "Simplify your content workflow. Upload once and publish to all your platforms with AI-powered organization.",
+    images: ["/og-image.png"],
   },
 };
 

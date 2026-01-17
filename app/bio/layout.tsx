@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Lovdash BIO | The Ultimate Bio Link for Adult Creators",
-  description: "Create your custom bio link profile. Synced with your live activity on OnlyFans, Chaturbate, and more. Customizable, secure, and built for creators.",
+  title: "Bio Link",
+  description: "Create your custom bio link profile synced with live activity on OnlyFans, Fansly, and more. Custom domains, click analytics, and zero bans.",
   keywords: [
     "bio link",
     "link in bio",
@@ -13,9 +13,24 @@ export const metadata: Metadata = {
     "linktree alternative",
   ],
   openGraph: {
-    title: "Lovdash BIO | The Ultimate Bio Link for Adult Creators",
-    description: "One link for all your platforms. Synced live activity, custom domains, and zero bans.",
+    title: "Bio Link - Lovdash Creator Operating System",
+    description: "Create your custom bio link profile synced with live activity on OnlyFans, Fansly, and more.",
     type: "website",
+    url: "https://lovdash.com/bio",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Lovdash Bio Link",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Bio Link - Lovdash Creator Operating System",
+    description: "Create your custom bio link profile synced with live activity on OnlyFans, Fansly, and more.",
+    images: ["/og-image.png"],
   },
 };
 

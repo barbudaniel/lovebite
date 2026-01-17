@@ -562,3 +562,38 @@ Design tokens:
   - Use `flex-shrink-0 mt-0.5` on icons to prevent squishing and align with first line of text
 
 ---
+
+### 2026-01-17 - US-024: Update Meta Tags Across All Pages
+
+- What was implemented:
+  - Updated root layout template from `%s | Lovdash` to `%s | Lovdash - Creator Operating System`
+  - Added og:image to all pages pointing to `/og-image.png`
+  - Added Twitter card tags (card, title, description, images) to all pages
+  - Created new layout files for pricing and AI pages (client components need metadata in layout)
+  - Updated all feature page layouts with proper format titles and social tags
+  - Updated creator, studio, bio layouts with complete OG and Twitter metadata
+
+- Files changed:
+  - `app/layout.tsx` - root layout template update
+  - `app/(marketing)/layout.tsx` - homepage metadata with OG image
+  - `app/(marketing)/creator/page.tsx` - added Twitter cards
+  - `app/(marketing)/studio/page.tsx` - added Twitter cards
+  - `app/(marketing)/pricing/layout.tsx` (new) - full metadata for pricing
+  - `app/ai/layout.tsx` (new) - full metadata for AI/Bite page
+  - `app/(marketing)/features/layout.tsx` - updated with Twitter cards
+  - `app/(marketing)/features/media-library/layout.tsx` - updated
+  - `app/(marketing)/features/ai-tagging/layout.tsx` - updated
+  - `app/(marketing)/features/scheduling/layout.tsx` - updated
+  - `app/(marketing)/features/publishing/layout.tsx` - updated
+  - `app/(marketing)/features/analytics/layout.tsx` - updated
+  - `app/bio/layout.tsx` - updated with Twitter cards
+
+- **Learnings for future iterations:**
+  - Client components ("use client") cannot export metadata - use layout.tsx in the same route segment instead
+  - Next.js metadata template in root layout uses `%s` as placeholder for page titles
+  - OG image should be 1200x630 pixels for optimal display across social platforms
+  - Twitter card type "summary_large_image" provides the best visual presence
+  - Keep descriptions 150-160 chars for optimal SEO display in search results
+  - All layouts already existed for feature pages - just needed Twitter card additions
+
+---

@@ -13,9 +13,9 @@ import { Navigation, Footer } from "@/components/sections";
 import { ScrollProgress } from "@/components/motion/smooth-scroll";
 
 export const metadata: Metadata = {
-  title: "Lovdash for Agencies | Multi-Creator Management Platform",
+  title: "For Agencies",
   description:
-    "Manage every creator from one dashboard. Organize, schedule, and track content across your entire roster with role-based access and cross-creator analytics.",
+    "Manage every creator from one dashboard. Organize, schedule, and track content across your entire roster with role-based access and analytics.",
   keywords: [
     "creator management platform",
     "agency creator tools",
@@ -24,10 +24,24 @@ export const metadata: Metadata = {
     "creator agency software",
   ],
   openGraph: {
-    title: "Lovdash for Agencies | Multi-Creator Management",
-    description: "Manage every creator from one dashboard.",
+    title: "Lovdash for Agencies - Multi-Creator Management Platform",
+    description: "Manage every creator from one dashboard with role-based access and cross-creator analytics.",
     type: "website",
     url: "https://lovdash.com/studio",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Lovdash for Agencies",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lovdash for Agencies - Multi-Creator Management Platform",
+    description: "Manage every creator from one dashboard with role-based access and cross-creator analytics.",
+    images: ["/og-image.png"],
   },
 };
 

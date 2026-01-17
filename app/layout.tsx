@@ -18,8 +18,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Lovdash — The Creator Operating System | AI-Powered Media Management",
-    template: "%s | Lovdash",
+    default: "Lovdash - Creator Operating System | AI-Powered Content Management",
+    template: "%s | Lovdash - Creator Operating System",
   },
   description:
     "Upload once, publish everywhere. Lovdash is the AI-powered operating system for creators and agencies. Organize media, schedule posts, and track engagement across every platform.",
@@ -33,18 +33,27 @@ export const metadata: Metadata = {
   ],
   metadataBase: new URL("https://lovdash.com"),
   openGraph: {
-    title: "Lovdash — The Creator Operating System",
+    title: "Lovdash - Creator Operating System",
     description:
       "Upload once, publish everywhere. AI-powered media management for creators and agencies.",
     type: "website",
     siteName: "Lovdash",
     url: "https://lovdash.com",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Lovdash - Creator Operating System",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lovdash — The Creator Operating System",
+    title: "Lovdash - Creator Operating System",
     description:
       "Upload once, publish everywhere. AI-powered media management for creators and agencies.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
