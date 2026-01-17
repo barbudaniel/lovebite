@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Feature items for the full-screen menu
+// Feature items for the dropdown menu
 const featureItems = [
   {
     icon: ImageIcon,
@@ -51,18 +51,18 @@ const featureItems = [
     color: "text-purple-500",
   },
   {
-    icon: Send,
-    title: "Publishing",
-    description: "Post to multiple platforms at once",
-    href: "/features/publishing",
-    color: "text-green-500",
-  },
-  {
     icon: Calendar,
     title: "Scheduling",
     description: "Plan your content calendar",
     href: "/features/scheduling",
     color: "text-orange-500",
+  },
+  {
+    icon: Send,
+    title: "Publishing",
+    description: "Post to multiple platforms at once",
+    href: "/features/publishing",
+    color: "text-green-500",
   },
   {
     icon: BarChart3,
@@ -71,21 +71,14 @@ const featureItems = [
     href: "/features/analytics",
     color: "text-pink-500",
   },
-  {
-    icon: Link2,
-    title: "Bio Links",
-    description: "Create your custom link-in-bio page",
-    href: "/bio",
-    color: "text-cyan-500",
-  },
 ];
 
 // Quick links for the menu
 const quickLinks = [
   { label: "Pricing", href: "/pricing", icon: Zap },
+  { label: "AI", href: "/ai", icon: Sparkles },
   { label: "Privacy", href: "/privacy", icon: Shield },
   { label: "Terms", href: "/terms", icon: FileText },
-  { label: "Help", href: "#", icon: HelpCircle },
 ];
 
 interface NavigationProps {
@@ -95,8 +88,10 @@ interface NavigationProps {
 export function Navigation({ variant = "light" }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFeaturesOpen, setIsFeaturesOpen] = useState(false);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const featuresDropdownRef = useRef<HTMLDivElement>(null);
 
   // Drag controls for sheet
   const dragControls = useDragControls();
@@ -129,10 +124,25 @@ export function Navigation({ variant = "light" }: NavigationProps) {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsMenuOpen(false);
+        setIsFeaturesOpen(false);
       }
     };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
+  }, []);
+
+  // Close features dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        featuresDropdownRef.current &&
+        !featuresDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsFeaturesOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Check scroll position of sheet content
@@ -181,67 +191,101 @@ export function Navigation({ variant = "light" }: NavigationProps) {
                 />
               </Link>
 
-              {/* Desktop Navigation - Centered icons */}
+              {/* Desktop Navigation - Main Links */}
               <nav className="flex items-center justify-center absolute left-1/2 -translate-x-1/2">
                 <div className="flex items-center gap-8">
-                  <Link
-                    href="/features"
-                    className="group flex flex-col items-center justify-center transition-all duration-200 text-slate-600 hover:text-slate-900"
-                  >
-                    <LayoutGrid
-                      className="w-5 h-5 mb-1 transition-transform duration-200 group-hover:scale-110"
-                      strokeWidth={1.5}
-                    />
-                    <span className="text-[11px] font-medium tracking-tight">
+                  {/* Features Dropdown */}
+                  <div ref={featuresDropdownRef} className="relative">
+                    <button
+                      onClick={() => setIsFeaturesOpen(!isFeaturesOpen)}
+                      className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                    >
                       Features
-                    </span>
-                  </Link>
+                      <ChevronDown
+                        className={cn(
+                          "w-4 h-4 transition-transform duration-200",
+                          isFeaturesOpen && "rotate-180"
+                        )}
+                      />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    <AnimatePresence>
+                      {isFeaturesOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 8 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50"
+                        >
+                          <div className="py-2">
+                            {featureItems.map((item) => (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={() => setIsFeaturesOpen(false)}
+                                className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
+                              >
+                                <item.icon
+                                  className={cn("w-5 h-5 mt-0.5", item.color)}
+                                />
+                                <div>
+                                  <div className="text-sm font-medium text-slate-900">
+                                    {item.title}
+                                  </div>
+                                  <div className="text-xs text-slate-500">
+                                    {item.description}
+                                  </div>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
                   <Link
-                    href="/ai"
-                    className="group flex flex-col items-center justify-center transition-all duration-200 text-slate-600 hover:text-slate-900"
+                    href="/pricing"
+                    className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
                   >
-                    <Sparkles
-                      className="w-5 h-5 mb-1 transition-transform duration-200 group-hover:scale-110"
-                      strokeWidth={1.5}
-                    />
-                    <span className="text-[11px] font-medium tracking-tight">
-                      AI
-                    </span>
+                    Pricing
                   </Link>
                   <Link
                     href="/creator"
-                    className="group flex flex-col items-center justify-center transition-all duration-200 text-slate-600 hover:text-slate-900"
+                    className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
                   >
-                    <Users
-                      className="w-5 h-5 mb-1 transition-transform duration-200 group-hover:scale-110"
-                      strokeWidth={1.5}
-                    />
-                    <span className="text-[11px] font-medium tracking-tight">
-                      Creator
-                    </span>
+                    For Creators
                   </Link>
                   <Link
                     href="/studio"
-                    className="group flex flex-col items-center justify-center transition-all duration-200 text-slate-600 hover:text-slate-900"
+                    className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
                   >
-                    <Building2
-                      className="w-5 h-5 mb-1 transition-transform duration-200 group-hover:scale-110"
-                      strokeWidth={1.5}
-                    />
-                    <span className="text-[11px] font-medium tracking-tight">
-                      Agency
-                    </span>
+                    For Agencies
+                  </Link>
+                  <Link
+                    href="/ai"
+                    className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                  >
+                    AI
                   </Link>
                 </div>
               </nav>
 
-              {/* Desktop CTA */}
+              {/* Desktop CTAs */}
               <div className="flex items-center gap-3">
                 <Link
-                  href="#cta"
-                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-brand-500 text-white rounded-full hover:bg-brand-600 transition-all duration-200 shadow-lg shadow-brand-500/20"
+                  href="/contact?type=demo"
+                  className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
                 >
-                  Get Started
+                  Book a Demo
+                </Link>
+                <Link
+                  href="/join"
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-full hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-lg shadow-emerald-500/25"
+                >
+                  Start Free Trial
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
@@ -273,12 +317,12 @@ export function Navigation({ variant = "light" }: NavigationProps) {
             </motion.div>
           </Link>
 
-          {/* Right - Publish Media CTA */}
+          {/* Right - Start Free Trial CTA */}
           <Link
-            href="#cta"
-            className="text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+            href="/join"
+            className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
           >
-            Publish Media
+            Start Free Trial
           </Link>
         </div>
       </header>
@@ -298,14 +342,13 @@ export function Navigation({ variant = "light" }: NavigationProps) {
             <Menu className="w-5 h-5 text-slate-700" />
           </motion.button>
 
-          {/* Center: Upload CTA Button */}
+          {/* Center: Start Trial CTA Button */}
           <motion.div whileTap={{ scale: 0.95 }}>
             <Link
-              href="#cta"
-              className="flex items-center gap-2 px-3.5 py-3.5 bg-brand-500 rounded-full shadow-lg shadow-brand-500/30"
+              href="/join"
+              className="flex items-center gap-2 px-3.5 py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full shadow-lg shadow-emerald-500/30"
             >
               <Plus className="w-5 h-5 text-white" strokeWidth={2.5} />
-              {/* <span className="text-sm font-semibold text-white">Upload</span> */}
             </Link>
           </motion.div>
 
@@ -468,15 +511,22 @@ export function Navigation({ variant = "light" }: NavigationProps) {
                   </div>
                 </div>
 
-                {/* CTA */}
-                <div className="px-5 pt-4 pb-8">
+                {/* CTAs */}
+                <div className="px-5 pt-4 pb-8 space-y-3">
                   <Link
-                    href="#cta"
+                    href="/join"
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full py-4 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-semibold transition-all shadow-lg shadow-brand-500/20 active:scale-[0.98]"
+                    className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-2xl font-semibold transition-all shadow-lg shadow-emerald-500/25 active:scale-[0.98]"
                   >
-                    Get Started Free
+                    Start Free Trial
                     <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href="/contact?type=demo"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full py-4 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-semibold transition-all active:scale-[0.98]"
+                  >
+                    Book a Demo
                   </Link>
                 </div>
 
