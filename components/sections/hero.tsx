@@ -666,18 +666,22 @@ export function Hero() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="flex flex-wrap gap-4 sm:gap-6 justify-center text-sm text-slate-500 mb-6"
+            className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-sm text-slate-600 mb-6"
           >
-            {[
-              { icon: Shield, text: "Privacy-first" },
-              { icon: Sparkles, text: "AI-powered" },
-              { icon: Check, text: "Multi-platform" },
-            ].map((badge) => (
-              <div key={badge.text} className="flex items-center gap-2">
-                <badge.icon className="w-4 h-4 text-brand-500" />
-                <span>{badge.text}</span>
-              </div>
-            ))}
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">🔒</span>
+              <span className="font-medium">Privacy-first</span>
+            </div>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">⚡</span>
+              <span className="font-medium">AI-powered</span>
+            </div>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">✓</span>
+              <span className="font-medium">Multi-platform</span>
+            </div>
           </motion.div>
 
           {/* Social Proof Platform Bar */}
