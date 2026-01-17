@@ -7,53 +7,54 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Navigation, Footer } from "@/components/sections";
 import {
-  Zap,
+  Tag,
   Brain,
-  MessageCircle,
+  MessageSquare,
   TrendingUp,
-  Clock,
-  Shield,
+  FileText,
+  DollarSign,
   Sparkles,
   CheckCircle2,
   ArrowRight,
+  RefreshCw,
 } from "lucide-react";
 
 const features = [
   {
-    icon: Brain,
-    title: "Natural Conversations",
+    icon: Tag,
+    title: "Smart Tagging",
     description:
-      "Never loops or repeats. Lovdash remembers every conversation detail and builds genuine connections.",
+      "Automatically categorizes your content with AI-powered tags. SFW/NSFW classification, themes, and more — all organized instantly.",
   },
   {
-    icon: MessageCircle,
-    title: "Remembers Everything",
+    icon: MessageSquare,
+    title: "Chat Intelligence",
     description:
-      "Remembers fan preferences, past purchases, and personal details from months ago.",
+      "Context-aware suggestions that understand your fans, remember conversations, and help you respond faster with your authentic voice.",
   },
   {
     icon: TrendingUp,
-    title: "Smart Timing",
+    title: "Performance Insights",
     description:
-      "Knows the perfect moment to make offers, when fans are most engaged and ready to buy.",
+      "Know exactly what content converts. Track engagement, revenue attribution, and identify your top-performing media.",
   },
   {
-    icon: Clock,
-    title: "24/7 Engagement",
+    icon: FileText,
+    title: "Auto-Descriptions",
     description:
-      "Your fans never sleep. Now neither does your response rate. Earn while you rest.",
+      "Generate captions, descriptions, and hashtags automatically. Bite learns your style and writes copy that sounds like you.",
   },
   {
-    icon: Shield,
-    title: "Safe & Secure",
+    icon: DollarSign,
+    title: "PPV Optimization",
     description:
-      "Built with safety first. Human-like timing, works with all major platforms.",
+      "Know the perfect moment to make offers. Bite identifies when fans are engaged and suggests optimal pricing strategies.",
   },
   {
-    icon: Zap,
-    title: "VIP Detection",
+    icon: RefreshCw,
+    title: "Continuous Learning",
     description:
-      "Instantly identifies your biggest fans and gives them special attention.",
+      "Bite gets smarter the more you use it. It learns your voice, your fans, and what converts — improving over time.",
   },
 ];
 
@@ -261,12 +262,15 @@ export default function LovdashAIPage() {
             viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16"
           >
-            <span className="text-product-400 font-semibold text-sm uppercase tracking-wider">
-              Features
+            <span className="text-violet-400 font-semibold text-sm uppercase tracking-wider">
+              Bite AI Capabilities
             </span>
             <h2 className="mt-3 text-3xl sm:text-4xl md:text-5xl font-bold text-white">
-              Built for Top Creators
+              Everything Bite Can Do
             </h2>
+            <p className="mt-4 text-slate-400 max-w-2xl mx-auto">
+              Six powerful AI capabilities working together to run your creator business smarter.
+            </p>
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -277,10 +281,10 @@ export default function LovdashAIPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 sm:p-6 hover:border-product-500/30 transition-colors group"
+                className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 sm:p-6 hover:border-violet-500/30 transition-colors group"
               >
-                <div className="w-10 h-10 bg-product-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-product-500/20 transition-colors">
-                  <feature.icon className="w-5 h-5 text-product-400" />
+                <div className="w-10 h-10 bg-violet-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-violet-500/20 transition-colors">
+                  <feature.icon className="w-5 h-5 text-violet-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">
                   {feature.title}
