@@ -397,3 +397,23 @@ Design tokens:
   - SFW/NSFW classification is a key differentiator for creator platforms
 
 ---
+
+### 2026-01-17 - US-017: Update AI Tagging Feature Page
+
+- What was implemented:
+  - Headline already uses "AI That Understands Your Content" (no changes needed)
+  - Added "Platform-Aware Classification" feature explaining SFW, soft NSFW, explicit classification
+  - Updated "Learns Your Style" description to include "AI built specifically for creators"
+  - Added disclaimer section with Info icon: "AI-generated tags and descriptions are assistive and may require review"
+  - Disclaimer styled as subtle info box (slate-50 bg with border)
+
+- Files changed:
+  - `app/(marketing)/features/ai-tagging/page.tsx`
+
+- **Learnings for future iterations:**
+  - Disclaimer sections use Info icon with slate-50 background for subtle but visible presentation
+  - Platform-aware classification terminology: SFW, soft NSFW, explicit (avoid "uncensored" or explicit language)
+  - Shield icon works well for classification/safety-related features
+  - Position disclaimer before CTA section but after benefits grid
+
+---

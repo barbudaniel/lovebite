@@ -4,15 +4,15 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { Navigation, Footer } from "@/components/sections";
 import { PlatformLogosRow } from "@/components/ui/platform-logos";
-import { Brain, Tag, FileText, Search, Sparkles, Zap, ArrowRight } from "lucide-react";
+import { Brain, Tag, FileText, Search, Sparkles, Zap, ArrowRight, Shield, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const benefits = [
   { icon: Tag, title: "Auto-Generated Tags", description: "AI analyzes your content and adds relevant, searchable tags automatically." },
+  { icon: Shield, title: "Platform-Aware Classification", description: "AI classifies content as SFW, soft NSFW, or explicit—so you can publish to the right platforms seamlessly." },
   { icon: FileText, title: "Smart Descriptions", description: "Generate captions and descriptions ready for posting on any platform." },
   { icon: Search, title: "Better Search", description: "Find exactly what you need with AI-enhanced search across your library." },
-  { icon: Sparkles, title: "Content Insights", description: "Understand what content performs best with AI-powered analysis." },
-  { icon: Brain, title: "Learns Your Style", description: "Our AI adapts to your preferences and improves over time." },
+  { icon: Brain, title: "Learns Your Style", description: "AI built specifically for creators—adapts to your preferences and improves over time." },
   { icon: Zap, title: "Instant Processing", description: "Tags appear seconds after upload. No waiting, no manual work." },
 ];
 
@@ -120,6 +120,23 @@ export default function AITaggingPage() {
                 </motion.div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Disclaimer */}
+        <section className="py-8 bg-white">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-xl p-4"
+            >
+              <Info className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-slate-600 leading-relaxed">
+                AI-generated tags and descriptions are assistive and may require review. We recommend checking auto-generated content before publishing to ensure accuracy and alignment with your brand voice.
+              </p>
+            </motion.div>
           </div>
         </section>
 
