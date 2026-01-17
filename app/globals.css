@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* shadcn/ui base variables */
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
@@ -24,6 +25,32 @@
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
     --radius: 0.5rem;
+
+    /* Lovdash Design System Colors */
+    /* Primary - Coral Pink */
+    --color-primary: #F03C4E;
+    --color-primary-light: #FF6B7A;
+    --color-primary-dark: #D62839;
+
+    /* Success/CTA - Emerald Green */
+    --color-success: #10B981;
+    --color-success-light: #34D399;
+    --color-success-dark: #059669;
+
+    /* Text Colors */
+    --text-primary: #04071E;
+    --text-secondary: #666666;
+    --text-muted: #94A3B8;
+
+    /* Backgrounds */
+    --bg-dark: #1A1A2E;
+    --bg-light: #F8FAFC;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, #fff1f2 0%, #ffffff 60%, #f8fafc 100%);
+    --gradient-cta: linear-gradient(to right, #10B981, #059669);
+    --gradient-cta-hover: linear-gradient(to right, #059669, #047857);
+    --gradient-brand: linear-gradient(135deg, #F03C4E 0%, #D62839 100%);
   }
 
   * {

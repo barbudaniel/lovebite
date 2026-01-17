@@ -17,36 +17,48 @@ export default {
   				'sans-serif'
   			]
   		},
-  		colors: {
-  			brand: {
-  				// Rose palette - warmer, more premium
-  				'50': '#fff1f2',
-  				'100': '#ffe4e6',
-  				'200': '#fecdd3',
-  				'300': '#fda4af',
-  				'400': '#fb7185',
-  				'500': '#f43f5e',
-  				'600': '#e11d48',
-  				'700': '#be123c',
-  				'800': '#9f1239',
-  				'900': '#881337',
-  				'950': '#4c0519'
-  			},
-  			product: {
-  				'50': '#f5f3ff',
-  				'100': '#ede9fe',
-  				'200': '#ddd6fe',
-  				'300': '#c4b5fd',
-  				'400': '#a78bfa',
-  				'500': '#8b5cf6',
-  				'600': '#7c3aed',
-  				'700': '#6d28d9',
-  				'800': '#5b21b6',
-  				'900': '#4c1d95',
-  				'950': '#2e1065',
-  				from: '#7c3aed',
-  				to: '#db2777'
-  			},
+		colors: {
+			// Design System Colors (using CSS variables)
+			'ds-primary': 'var(--color-primary)',
+			'ds-primary-light': 'var(--color-primary-light)',
+			'ds-primary-dark': 'var(--color-primary-dark)',
+			'ds-success': 'var(--color-success)',
+			'ds-success-light': 'var(--color-success-light)',
+			'ds-success-dark': 'var(--color-success-dark)',
+			'ds-text-primary': 'var(--text-primary)',
+			'ds-text-secondary': 'var(--text-secondary)',
+			'ds-text-muted': 'var(--text-muted)',
+			'ds-bg-dark': 'var(--bg-dark)',
+			'ds-bg-light': 'var(--bg-light)',
+			brand: {
+				// Rose palette - warmer, more premium
+				'50': '#fff1f2',
+				'100': '#ffe4e6',
+				'200': '#fecdd3',
+				'300': '#fda4af',
+				'400': '#fb7185',
+				'500': '#F03C4E', // Updated to match --color-primary
+				'600': '#D62839', // Updated to match --color-primary-dark
+				'700': '#be123c',
+				'800': '#9f1239',
+				'900': '#881337',
+				'950': '#4c0519'
+			},
+			product: {
+				'50': '#f5f3ff',
+				'100': '#ede9fe',
+				'200': '#ddd6fe',
+				'300': '#c4b5fd',
+				'400': '#a78bfa',
+				'500': '#8b5cf6',
+				'600': '#7c3aed',
+				'700': '#6d28d9',
+				'800': '#5b21b6',
+				'900': '#4c1d95',
+				'950': '#2e1065',
+				from: '#7c3aed',
+				to: '#db2777'
+			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -98,10 +110,13 @@ export default {
   				}
   			}
   		},
-  		backgroundImage: {
-  			'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-  			'hero-pattern': 'radial-gradient(#f43f5e 0.5px, transparent 0.5px), radial-gradient(#f43f5e 0.5px, #fff1f2 0.5px)'
-  		},
+		backgroundImage: {
+			'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+			'hero-pattern': 'radial-gradient(#F03C4E 0.5px, transparent 0.5px), radial-gradient(#F03C4E 0.5px, #fff1f2 0.5px)',
+			'gradient-hero': 'var(--gradient-hero)',
+			'gradient-cta': 'var(--gradient-cta)',
+			'gradient-brand': 'var(--gradient-brand)'
+		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
