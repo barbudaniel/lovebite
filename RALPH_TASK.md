@@ -1,13 +1,21 @@
 ---
 task: Audit and align landing page with Lovdash business knowledge
+branchName: ralph/landing-page-alignment
 test_command: "npm run build && npm run lint"
+ralph_files:
+  prd_json: prd.json
+  prd_markdown: tasks/prd-landing-page-business-alignment.md
+  progress: progress.txt
 knowledge_sources:
-  - /Volumes/Development/of/lovdash_app/frontend/docs/DESIGN_SYSTEM.md
-  - /Volumes/Development/of/lovdash_app/frontend/business/ABOUT_LOVDASH.md
-  - /Volumes/Development/of/lovdash_app/frontend/business/BUSINESS_ANALYSIS.md
+  # Primary documentation (MUST READ)
   - /Volumes/Development/of/lovdash_app/frontend/business/BUSINESS_CONTEXT.md
-  - /Volumes/Development/of/lovdash_app/frontend/business/BUSINESS_STRATEGY.md
   - /Volumes/Development/of/lovdash_app/frontend/business/LANDING_PAGE_BRIEF.md
+  
+  # Supporting documentation
+  - /Volumes/Development/of/lovdash_app/frontend/ABOUT_LOVDASH.md
+  - /Volumes/Development/of/lovdash_app/frontend/BUSINESS_ANALYSIS.md
+  - /Volumes/Development/of/lovdash_app/frontend/docs/DESIGN_SYSTEM.md
+  - /Volumes/Development/of/lovdash_app/frontend/business/BUSINESS_STRATEGY.md
   - /Volumes/Development/of/lovdash_app/frontend/business/LANDING_PAGE_IMPLEMENTATION.md
   - /Volumes/Development/of/lovdash_app/frontend/business/SALES_DECK.md
 ---
@@ -175,18 +183,93 @@ components/sections/
 
 ---
 
-## Ralph Instructions
+## Ralph Execution Protocol
 
-1. **Read ALL knowledge sources first** before making any changes
-2. Work on criteria in phase order (Phase 1 → Phase 2 → etc.)
-3. Check off completed criteria (change [ ] to [x]) after verifying each
-4. Run `npm run build && npm run lint` after significant changes
-5. Commit frequently with descriptive messages referencing the criteria number
-6. When ALL criteria are [x], output: `<ralph>COMPLETE</ralph>`
-7. If stuck on the same issue 3+ times, output: `<ralph>GUTTER</ralph>`
+Following [ralph-main](https://github.com/flourishprosper/ralph-main) conventions.
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `prd.json` | User stories with `passes` status — **THE TASK LIST** |
+| `progress.txt` | Append-only learnings, Codebase Patterns section at top |
+| `AGENTS.md` | Update when reusable patterns discovered |
+| `tasks/prd-landing-page-business-alignment.md` | Detailed PRD reference |
+
+### Each Iteration Must:
+1. **Read `progress.txt`** (especially Codebase Patterns) for context
+2. **Pick highest priority story** where `passes: false` in `prd.json`
+3. **Implement that single story** — don't over-engineer
+4. **Run quality checks:** `npm run build && npm run lint`
+5. **For UI stories:** Verify in browser using dev-browser skill (REQUIRED)
+6. **Update `AGENTS.md`** if reusable patterns discovered
+7. **If checks pass:** Commit with message `feat: [Story ID] - [Story Title]`
+8. **Update `prd.json`** to mark story as `passes: true`
+9. **Append learnings** to `progress.txt`
+
+### Browser Verification (Critical for UI Stories)
+Frontend stories are NOT complete until browser verification passes:
+- Navigate to the relevant page
+- Interact with UI to verify changes work
+- Confirm functionality matches acceptance criteria
+- Take screenshots if helpful
+
+### Commit Format
+```
+feat: US-001 - Update Hero Section Headlines
+```
+
+### Stop Conditions
+- **Success:** All stories `passes: true` → Output `<ralph>COMPLETE</ralph>`
+- **Stuck:** Same issue 3+ times → Output `<ralph>GUTTER</ralph>`
 
 ### Priority Notes
 - **Phase 1-2** are highest priority (most user-facing)
 - **AI Chat Assistant prominence** is critical — this is our key differentiator
 - **CTA changes** from waitlist to trial reflect our operational status
 - Preserve existing animations and UI polish while updating content
+
+### Small Task Principle
+Each story should be completable in one context window:
+- Right-sized: Update a component, add a section, change copy
+- Too big: "Rebuild entire page" → Break into smaller stories
+
+---
+
+## Documentation Review Summary (January 17, 2026)
+
+All 8 knowledge source documents have been reviewed and synthesized into a comprehensive PRD.
+
+### Key Business Facts Confirmed:
+| Fact | Source | Status |
+|------|--------|--------|
+| Company: TRUST CHARGE SOLUTIONS LTD (No. 16584325) | ABOUT_LOVDASH.md | ✅ Confirmed |
+| Status: Operational with paying customers | BUSINESS_CONTEXT.md | ✅ Confirmed |
+| MRR: $210 (1 agency, 6 creators) | BUSINESS_STRATEGY.md | ✅ Confirmed |
+| Pricing: $39/$59/Agency tiers validated | BUSINESS_CONTEXT.md | ✅ Confirmed |
+| Key Differentiator: AI Chat Assistant | BUSINESS_CONTEXT.md | ✅ Confirmed |
+| Platforms: OnlyFans, Fansly, LoyalFans, X, Instagram | ABOUT_LOVDASH.md | ✅ Confirmed |
+| CTA Strategy: "Start Free Trial" (creators), "Book a Demo" (agencies) | LANDING_PAGE_BRIEF.md | ✅ Confirmed |
+
+### Critical Messaging Updates Required:
+1. **Hero**: "Join Waitlist" → "Start Free Trial"
+2. **Positioning**: Pre-launch concept → Operational platform
+3. **AI Feature**: Must be prominently featured (not buried)
+4. **Pricing**: Show transparent tiers, not "Early Access"
+
+### Design Tokens Confirmed:
+- Primary: `#F03C4E` (Coral Pink)
+- Success/CTA: `#10B981` (Emerald Green)
+- Dark: `#1A1A2E` (Navy)
+- Button radius: 9999px (fully rounded)
+- Card radius: 12-16px
+
+### PRD Generated:
+📄 `tasks/prd-landing-page-business-alignment.md` - Contains 30 user stories with detailed acceptance criteria
+
+---
+
+## Execution Ready
+
+All criteria from the original RALPH_TASK.md have been confirmed against the business documentation. The 7-phase structure is correct and aligns with the business priorities.
+
+**Next Step:** Begin Phase 1 implementation starting with US-001 (Hero Section Headlines).

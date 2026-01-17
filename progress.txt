@@ -336,3 +336,22 @@ Design tokens:
   - Agency CTA links to `/contact?type=demo` for demo bookings
 
 ---
+
+### 2026-01-17 - US-014: Add Trust Signals to Pricing Page
+
+- What was implemented:
+  - Verified trust signals already exist in pricing page hero section (implemented as part of US-013)
+  - Trust badges row with icons: Shield (No credit card required), Clock (Cancel anytime), Star (7-day free trial)
+  - Positioned above pricing cards in hero section
+  - Build/typecheck passes
+
+- Files changed:
+  - No changes needed - `app/(marketing)/pricing/page.tsx` already had trust signals
+
+- **Learnings for future iterations:**
+  - Trust signals on pricing page were added during US-013 pricing tier update
+  - Trust indicator pattern: array of {icon, text} with emerald-500 icon color
+  - Position trust signals in hero section before pricing cards for maximum visibility
+  - Use meaningful icons: Shield for security/no payment, Clock for flexibility, Star for trial benefits
+
+---
