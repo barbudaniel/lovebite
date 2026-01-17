@@ -64,6 +64,27 @@ export const metadata: Metadata = {
   },
 };
 
+// Organization schema for SEO
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Lovdash",
+  url: "https://lovdash.com",
+  logo: "https://lovdash.com/logo.png",
+  description:
+    "Lovdash is the AI-powered operating system for creators and agencies. Upload once, publish everywhere, track what works.",
+  foundingDate: "2025",
+  sameAs: [
+    "https://twitter.com/lovdash",
+    "https://instagram.com/lovdash",
+  ],
+  contactPoint: {
+    "@type": "ContactPoint",
+    email: "hello@lovdash.com",
+    contactType: "customer service",
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -71,6 +92,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationSchema),
+          }}
+        />
+      </head>
       <body
         className={`${outfit.variable} font-sans text-slate-800 antialiased selection:bg-brand-200 selection:text-brand-900`}
       >
